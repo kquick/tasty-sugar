@@ -1,0 +1,67 @@
+cabal-version:       2.0
+
+name:                tasty-sugar
+version:             0.1.0.0
+synopsis:            Tests defined by Search Using Golden Answer References
+description:
+  .
+  A tasty testing framework that builds individual test configurations
+  from a set of input files and expected results (golden) files along
+  with associated files, where multiple expected results and
+  associated files for each input file can be parameterized by
+  filename.
+  .
+  Additionally a tasty ingredient is supplied that can be used to show
+  the search process and resulting test configurations without
+  actually running the tests.
+
+homepage:            https://github.com/kquick/tasty-sugar
+-- bug-reports:
+license:             ISC
+license-file:        LICENSE
+author:              Kevin Quick
+maintainer:          kquick@galois.com
+copyright:           Kevin Quick, 2019
+category:            Testing
+build-type:          Simple
+
+extra-source-files:  Changelog.md
+                     README.org
+
+source-repository head
+  type: git
+  location: git://github.com/kquick/tasty-sugar.git
+
+library
+  exposed-modules:   Test.Tasty.Sugar
+  build-depends:       base >=4.10
+                     , directory
+                     , filepath
+                     , filemanip
+                     , optparse-applicative
+                     , prettyprinter
+                     , tagged
+                     , tasty
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  GHC-options:         -Wall -Werror -Wcompat
+  -- other-modules:
+  -- other-extensions:
+
+
+test-suite test-sugar
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  default-language:    Haskell2010
+  main-is:             TestMain.hs
+  other-modules:       TestMultiAssoc
+                       TestNoAssoc
+                       TestSingleAssoc
+                       TestUtils
+  build-depends: base >= 4
+               , filepath
+               , raw-strings-qq
+               , tasty
+               , tasty-quickcheck
+               , tasty-hunit
+               , tasty-sugar
