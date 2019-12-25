@@ -27,9 +27,9 @@
          outputting a list of Sweets representing the existing test
          data.
 
-    * KWQ: something to generate the tests
-    * KWQ: name of the test runner to show the tests
-    * KWQ: a test runner or option to write new outputs
+#     * KWQ: something to generate the tests
+#     * KWQ: name of the test runner to show the tests
+#     * KWQ: a test runner or option to write new outputs
 
 * How to use tasty-sugar
 
@@ -366,7 +366,7 @@
 
 * Examples
 
-** Example KWQ: check this
+** Example:
 
  For example, a test which would verify that the size of a compiled
  file meets the expectations would specify:
