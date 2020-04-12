@@ -56,7 +56,7 @@ import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.Function
-import           Data.List ( intercalate, sort, sortBy, isPrefixOf, isSuffixOf )
+import           Data.List ( intercalate, sort, sortBy, isPrefixOf, isSuffixOf, uncons )
 import           Data.Maybe ( catMaybes )
 import           Data.Proxy
 import           Data.Semigroup ( (<>) )
@@ -305,13 +305,32 @@ findSugarIn pat allFiles =
     findExpectation :: FilePath -> [FilePath] -> Separators -> [ParameterPattern]
                     -> FilePath -> FPGP.GlobPattern -> ( [Sweets], Doc ann )
     findExpectation srcPath allNames seps params srcMatch expSuffix =
-      let expGlob = srcMatch <> "*" <> (dropWhile (== '*') expSuffix)
-          expNames = filter (~~ expGlob) allNames
+      let fixedSuffix = dropWhile (== '*') expSuffix
+
+          -- Construct a set of glob-matches for the current srcMatch
+          -- and suffix for each separator between the two.  The
+          -- srcMatch might already end with a separator, or the
+          -- fixedSuffix might start with one.
+          expGlob s =
+            let direct = srcMatch <> "*" <> fixedSuffix
+                withSep = srcMatch <> "*" <> (s:[]) <> fixedSuffix
+            in case (uncons fixedSuffix, uncons $ reverse srcMatch) of
+              (Just (c, r), Just (e, _))
+                | c == s && e == s -> Just [ srcMatch <> r, direct ]
+                | c == s -> Just [ direct ]
+                | e == s -> Just [ direct ]
+                | c `elem` seps -> Nothing
+              _ -> Just [ withSep ]
+          expGlobs = if null seps
+                     then [ srcMatch <> "*" <> fixedSuffix ]
+                     else join $ catMaybes $ map expGlob seps
+
+          expNames = filter (\n -> n /= srcPath && any (n ~~) expGlobs) allNames
           expMatches = longestMatches srcMatch seps params expSuffix expNames
           result = mkInpSpec srcMatch srcPath expMatches allNames
           explF = vsep [ pretty "srcPath" <+> dquotes (pretty srcPath) <>
                          pretty ", base" <+> dquotes (pretty srcMatch) <>
-                         pretty ", expGlob" <+> dquotes (pretty expGlob) <>
+                         pretty ", expGlobs" <+> (hsep $ map (dquotes . pretty) expGlobs) <>
                          (if null expNames
                            then pretty ": no matches"
                            else pretty ":" <+> (pretty $ length expNames) <+>
