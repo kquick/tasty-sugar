@@ -6,6 +6,7 @@ import Test.Tasty.Sugar
 import TestMultiAssoc
 import TestNoAssoc
 import TestSingleAssoc
+import TestWildcard
 import TestUtils
 
 
@@ -15,4 +16,5 @@ main = defaultMain $
        , testGroup "no associated file" $ noAssocTests
        , testGroup "single associated file" $ singleAssocTests
        , testGroup "multiple associated files" $ multiAssocTests
+       , testGroup "wildcard tests" $ wildcardAssocTests
        ]

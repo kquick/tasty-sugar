@@ -58,6 +58,7 @@ test-suite test-sugar
                        TestNoAssoc
                        TestSingleAssoc
                        TestUtils
+                       TestWildcard
   build-depends: base >= 4
                , filepath
                , raw-strings-qq
