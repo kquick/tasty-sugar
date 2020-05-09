@@ -150,7 +150,7 @@ mkCUBE = CUBE { inputDir = "test/samples"
               , separators = ".-"
               , sourceName = "*"
               , associatedNames = []
-              , expectedSuffix = "*.expected"
+              , expectedSuffix = "exp"
               , validParams = []
               }
 
