@@ -1,6 +1,10 @@
 -- | Provides test identification by Search Using Golden Answer
 -- References.  This is similar in principle to Tasty.KAT and
--- Tasty.Golden, but with different input selection processes.
+-- Tasty.Golden, but with different input selection processes.  The
+-- intent is that there are multiple different test scenarios, which
+-- may all originate with the same input, and that all scenarios are
+-- specified by the presence of an "expected" result file along with
+-- optional support files.
 --
 -- A 'Tasty.Sugar.CUBE' object is provided to the 'findSugar' function
 -- which returns an array of 'Tasty.Sugar.Sweets' that describe test
@@ -79,15 +83,50 @@ type FileSuffix = String
 
 
 -- | Specifies the parameters and patterns to use when searching for
--- samples to build tests from.
+-- samples to build tests from.  The 'mkCUBE' function should be used
+-- to obtain a 'CUBE' structure initialized with overrideable
+-- defaults.
 data CUBE = CUBE
-   { inputDir :: FilePath -- ^ directory in which samples are stored
-                          -- (either absolute or relative to the cabal
-                          -- file).
-   , separators :: Separators
-   , sourceName :: FPGP.GlobPattern
+   {
+     -- | The directory in which the sample files that drive the
+     -- testing exist.  When specified as a relative filepath
+     -- (suggested) then this directory is relative to the cabal file.
+     inputDir :: FilePath
+
+     -- | The name of the "source" file for each test scenario.  The
+     -- contents of this file are opaque to 'tasty-sweet' and are
+     -- interpreted by the tests themselves.  Each "source" file is
+     -- the kernel for a set of test cases.
+     --
+     -- The source file should not be specified with any path element,
+     -- and it can be specified as a glob pattern.
+     --
+     -- The corresponding expected results files will be identified by
+     -- finding files which match this name with a "*{expectedSuffix}"
+     -- appended to it.
+     , sourceName :: FPGP.GlobPattern
+
+     -- | The expected suffix for a target pattern for running a test.
+     -- There may be multiple files specifying expected results for a
+     -- test (see the 'validParams' below), but a particular test case
+     -- is comprised of a source file along with a corresponding
+     -- "expected result" file that is the name of the source file
+     -- with the expectedSuffix suffix.  The suffix should not contain
+     -- any glob match characters.
+     , expectedSuffix :: String
+
+     -- | The separators specify the characters which separate the
+     -- expected suffix from the sourceName, and which also separate
+     -- the various parameters (if any, see 'validParams' below).  Any
+     -- one of the separators in this list can be used, and a file can
+     -- used a mixture of the separators in the filename.
+     --
+     -- It is also valid to specify no separators, in which case the
+     -- sourceName and expectedSuffix are directly concatenated.  This
+     -- is not a typical usage, however.
+     , separators :: Separators
+
    , associatedNames :: [ (String, FileSuffix) ] -- ^ name of associated, suffix for associated (no '.')
-   , expectedSuffix :: FPGP.GlobPattern  -- KWQ: allow a glob?  If so, remove preceeding * to avoid eating params? (no, we match longest to shortest)
    , validParams :: [ParameterPattern] -- KWQ: no empty strings or glob chars allowed in Just values?  OR does the matching methodology support this?
    }
    deriving (Show, Read)
