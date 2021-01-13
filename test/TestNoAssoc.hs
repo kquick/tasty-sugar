@@ -26,7 +26,7 @@ sugarCube = mkCUBE
 noAssocTests :: [TT.TestTree]
 noAssocTests =
   let (sugar1,s1desc) = findSugarIn sugarCube sample1
-  in [ testCase "valid sample" $ 48 @=? length sample1
+  in [ testCase "valid sample" $ 50 @=? length sample1
      , sugarTestEq "correct found count" sugarCube sample1 5 length
      , testCase "results" $ compareBags "results" sugar1
        $ let p = (testInpPath </>) in

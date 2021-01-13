@@ -17,8 +17,6 @@ import           Test.Tasty.Sugar.ParamCheck
 import           Test.Tasty.Sugar.Types
 
 
-
-
 -- | For a specific NamedParamMatch, find all associated files having
 -- the rootMatch plus the named parameter values (in the same order
 -- but with any combination of separators) and the specified suffix
@@ -41,7 +39,10 @@ getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
       do pseq <- npseq pmatch
          (assocPfx, assocSfx) <- sepParams seps (fmap snd pseq)
          if null assocSfx
-           then do let assocNm = rootPrefix <> assocPfx <> (snd assoc)
+           then do let assocNm = if null (snd assoc) &&
+                                    length assocPfx == 1 -- just a separator
+                                 then rootPrefix
+                                 else rootPrefix <> assocPfx <> (snd assoc)
                    guard (assocNm `elem` allNames)
                    return (fst assoc, assocNm)
            else let assocStart = rootPrefix <> assocPfx

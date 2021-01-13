@@ -19,7 +19,12 @@ sugarCube = mkCUBE
               { rootName = "*.c"
               , expectedSuffix = "expected"
               , inputDir = testInpPath
-              , associatedNames = [ ("exe", "exe"), ("obj", "o"), ("include", "h"), ("c++-include", "hh") ]
+              , associatedNames = [ ("exe", "exe")
+                                  , ("obj", "o")
+                                  , ("include", "h")
+                                  , ("c++-include", "hh")
+                                  , ("plain", "")
+                                  ]
               , validParams = [ ("arch", Just ["x86", "ppc"])
                               , ("form", Just ["base", "refined"])
                               ]
@@ -28,7 +33,7 @@ sugarCube = mkCUBE
 multiAssocTests :: [TT.TestTree]
 multiAssocTests =
   let (sugar1,_s1desc) = findSugarIn sugarCube sample1
-  in [ testCase "valid sample" $ 48 @=? length sample1
+  in [ testCase "valid sample" $ 50 @=? length sample1
      , sugarTestEq "correct found count" sugarCube sample1 5 length
      , testCase "results" $ compareBags "results" sugar1 $
        let p = (testInpPath </>) in
@@ -159,6 +164,7 @@ multiAssocTests =
                     , associated = [ ("exe", p "switching.x86.exe")
                                    , ("include", p "switching.h")
                                    , ("c++-include", p "switching.hh")
+                                   , ("plain", p "switching")
                                    ]
                     }
                   , Expectation
@@ -170,6 +176,7 @@ multiAssocTests =
                                    , ("obj", p "switching.ppc.o")
                                    , ("include", p "switching.h")
                                    , ("c++-include", p "switching.hh")
+                                   , ("plain", p "switching")
                                    ]
                     }
                   , Expectation
@@ -181,6 +188,7 @@ multiAssocTests =
                                    , ("obj", p "switching-refined.x86.o")
                                    , ("include", p "switching.h")
                                    , ("c++-include", p "switching.hh")
+                                   , ("plain", p "switching")
                                    ]
                     }
             ]

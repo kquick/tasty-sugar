@@ -123,10 +123,7 @@ expectedSearch inpDir rootPrefix rootPVMatches seps params expSuffix assocNames 
                      L.permutations params
              pvals <- getPVals pseq
              getExp rootPrefix rootPVMatches seps pvals expSuffix allNames
-     assocFiles <- getAssoc rootPrefix seps pmatch assocNames $
-                   -- filter out source and exp for small optimization
-                   filter (not . flip elem [ rootPrefix, expFile ])
-                   allNames
+     assocFiles <- getAssoc rootPrefix seps pmatch assocNames allNames
      return $ Expectation { expectedFile = inpDir </> expFile
                           , associated = fmap (inpDir </>) <$> assocFiles
                           , expParamsMatch = pmatch

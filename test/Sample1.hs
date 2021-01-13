@@ -25,6 +25,8 @@ looping.x86.exe
 looping.x86.expected
 Makefile
 README.org
+switching
+switching_stuff
 switching.c
 switching.h
 switching.hh
