@@ -25,9 +25,29 @@ copyright:           Kevin Quick, 2019-2021
 category:            Testing
 build-type:          Simple
 
-extra-source-files:  Changelog.md
+extra-source-files:  CHANGELOG.md
                      README.org
-                     examples/**
+                     examples/example1/NiftyText.hs
+                     examples/example1/README.org
+                     examples/example1/test-passthru-ascii.hs
+                     examples/example1/testdata/counting
+                     examples/example1/testdata/counting.exp
+                     examples/example1/testdata/hello_inp
+                     examples/example1/testdata/hello_inp.exp
+                     examples/params/test-params.hs
+                     examples/params/samples/foo.c
+                     examples/params/samples/functional.O2.expct
+                     examples/params/samples/functional.hs
+                     examples/params/samples/recursive.fast.expct
+                     examples/params/samples/recursive.rs
+                     examples/params/samples/simple-opt.expct
+                     examples/params/samples/simple-opt.gcc-exe
+                     examples/params/samples/simple.c
+                     examples/params/samples/simple.expct
+                     examples/params/samples/simple.noopt-gcc.expct
+                     examples/params/samples/simple.noopt.clang.exe
+                     examples/params/samples/simple.noopt.gcc.exe
+                     examples/params/samples/simple.opt-clang.exe
 
 source-repository head
   type: git
@@ -35,7 +55,7 @@ source-repository head
 
 library
   exposed-modules:   Test.Tasty.Sugar
-  build-depends:       base >=4.10
+  build-depends:       base >=4.10 && < 5
                      , directory
                      , filepath
                      , filemanip
@@ -47,7 +67,7 @@ library
                      , tasty-sugar-internal
   hs-source-dirs:      src
   default-language:    Haskell2010
-  GHC-options:         -Wall -Werror -Wcompat -fhide-source-paths
+  GHC-options:         -Wall -Wcompat -fhide-source-paths
   -- other-modules:
   -- other-extensions:
 
@@ -66,7 +86,7 @@ library tasty-sugar-internal
                    , prettyprinter
   hs-source-dirs:    src/internal
   default-language:    Haskell2010
-  GHC-options:         -Wall -Werror -Wcompat -fhide-source-paths
+  GHC-options:         -Wall -Wcompat -fhide-source-paths
 
 
 test-suite test-sugar
