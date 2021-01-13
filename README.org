@@ -56,10 +56,14 @@
    #+BEGIN_EXAMPLE
    $ ls test/samples
    empty.txt
+   fibonacci.c
    fibonacci
    foo.tar
+   hello.c
    hello
+   ls.c
    ls
+   tmux.c
    tmux
    $
    #+END_EXAMPLE
@@ -71,7 +75,23 @@
    that.  Setup the tasty-sugar CUBE configuration as follows:
 
    #+BEGIN_EXAMPLE
-   TBD...
+   cube = mkCUBE { inputDir = "test/samples"
+                 , sourceName = "*.c"
+                 , expectedSuffix = "exp"
+                 , associatedNames = [ ("binary", "") ]
+                 }
+   main = do testSweets <- findSugar cube
+             defaultMain $ testGroup "elf" $
+             withSugarGroups testSweets testGroup $
+             \sweets expIdx expectation ->
+               testCase (inputName sweets <> " #" <> show expIdx) $ do
+                 let Just binaryName = lookup "binary" $ associated expectation
+                 r <- runTestOn binaryName
+                 e <- readFile $ expectedFile expectation
+                 r @?= e
+
+   runTestOn :: FilePath -> IO String
+   runTestOn f = ...
    #+END_EXAMPLE
 
    The tasty-sugar framework does not provide the actual testing: that
@@ -99,47 +119,38 @@
    any random data.
 
    Running the tests now will result in a test created for each input
-   file that has a corresponding ~*.expected~ file.  The tests will al
-   fail however because the contents of the expected files don't match
-   the actual output.  However, inspecting the ~test/samples~
-   directory reveals an additional ~FILE.actual~ file, for each pair
-   of ~FILE~ and ~FILE.expected~.
+   file that has a corresponding ~*.exp~ file.  Note that tasty-sweet
+   doesn't actually read in any of the files, just invokes the test
+   creation function with the Sweets and Expectation data structures
+   that let the test do whatever is appropriate.
 
    #+BEGIN_EXAMPLE
    $ ls test/samples
    empty.txt
-   empty.txt.actual
-   empty.txt.expected
+   empty.txt.exp
    fibonacci
-   fibonacci.actual
-   fibonacci.expected
+   finonacci.c
+   fibonacci.exp
    foo.tar
-   foo.tar.actual
-   foo.tar.expected
+   foo.tar.exp
    hello
-   hello.actual
-   hello.expected
+   hello.c
+   hello.exp
    ls
-   ls.actual
-   ls.expected
+   ls.c
+   ls.exp
    tmux
-   tmux.actual
-   tmux.expected
+   tmux.c
    $
    #+END_EXAMPLE
 
-   The ~.actual~ file contains the actual results obtained from the
-   test.  The actual files contents can be visually inspected to
-   verify that they contains the output desired from the run and then
-   copied over the invalid ~.expected~ file.
-
-   If the tests are run again they should all pass.
+   Note that ~empty.txt~ and ~foo.tar~ will be ignored, even though
+   there is an ~.exp~ file for them because they don't match the
+   source target of ~*.c~.  Similarly, ~tmux~ will be ignored because
+   there is no ~.exp~ file for it.
 
    At this point, any changes to the target library that cause output
    changes will be identified when running the tests.
-
-   The ~.actual~ files should be added to the "ignored" files list for
-   your version control system.
 
 ** Single Input and Output per Test
 
@@ -157,12 +168,16 @@
   $ ls test/src_samples
   foo.c
   foo
+  foo.expct
   simple.c
   simple
+  simple.expct
   recursive.rs
   recursive
+  recursive.expct
   functional.hs
   functional
+  functional.expct
   $
   #+END_EXAMPLE
 
@@ -171,7 +186,7 @@
   that the target library should be tested on.
 
   In an initial approach, the source files can be ignored by the
-  testing code: simply create a ~FILE.expected~ file for each of the
+  testing code: simply create a ~FILE.expct~ file for each of the
   binaries and use the same ~Tasty.Sugar.CUBE~ configuration for this
   directory as for the previous directory.
 
@@ -181,7 +196,39 @@
   ~Tasty.Sugar.CUBE~ configuration:
 
    #+BEGIN_EXAMPLE
-   TBD...
+   cube = mkCUBE { inputDir = "test/samples"
+                 , sourceName = "*.exe"
+                 , expectedSuffix = "expct"
+                 , associatedNames = [ ("c-source", ".c")
+                                     , ("rust-source", ".rs")
+                                     , ("haskell", ".hs)
+                                     ]
+                 }
+   main = do testSweets <- findSugar cube
+             defaultMain $ testGroup "elf" $
+             withSugarGroups testSweets testGroup $
+             \sweets expIdx expectation ->
+               testCase (inputName sweets <> " #" <> show expIdx) $ do
+                 e <- readFile $ expectedFile expectation
+                 let Just binaryName = lookup "binary" $ associated expectation
+                 let assoc = associated expectation
+                 r <- case lookup "c-source" assoc of
+                        Just c -> runCTestOn (sourceFile sweets)
+                        Nothing ->
+                          case lookup "rust-source" assoc of
+                            Just r -> runRustTestOn (sourceFile sweets)
+                            Nothing ->
+                              runHaskellTestOn (sourceFile sweets)
+                 r @?= e
+
+   runCTestOn :: FilePath -> IO String
+   runCTestOn f = ...
+
+   runRustTestOn :: FilePath -> IO String
+   runRustTestOn f = ...
+
+   runHaskellTestOn :: FilePath -> IO String
+   runHaskellTestOn f = ...
    #+END_EXAMPLE
 
   Now when tasty-sugar generates the test configurations, each test
@@ -190,12 +237,12 @@
   sees fit.  For the configuration above, there would be 4 test
   configurations provided to the test:
 
-  | Test Name  | Input File | Expected File       | Associated Files                    |
-  |------------+------------+---------------------+-------------------------------------|
-  | simple     | simple     | simple.expected     | ("C-source", "simple.c")            |
-  | foo        | foo        | foo.expected        | ("C-source", "foo.c")               |
-  | recursive  | recursive  | recursive.expected  | ("Rust-source", "recursive.rs")     |
-  | functional | functional | functional.expected | ("Haskell-source", "functional.hs") |
+  | Test Name  | Input File | Expected File    | Associated Files                |
+  |------------+------------+------------------+---------------------------------|
+  | simple     | simple     | simple.expct     | ("c-source", "simple.c")        |
+  | foo        | foo        | foo.expct        | ("c-source", "foo.c")           |
+  | recursive  | recursive  | recursive.expct  | ("rust-source", "recursive.rs") |
+  | functional | functional | functional.expct | ("haskell", "functional.hs")    |
 
   Note that if both "simple.c" and "simple.hs" files existed, then the
   simple test configuration would get both as associated files.
@@ -245,9 +292,46 @@
 
   The ~Tasty.Sugar.CUBE~ confguration for is scenario is updated to:
 
-  #+BEGIN_EXAMPLE
-  TBD...
-  #+END_EXAMPLE
+   #+BEGIN_EXAMPLE
+   cube = mkCUBE { inputDir = "test/samples"
+                 , sourceName = "*"
+                 , separators = "-."
+                 , expectedSuffix = "expct"
+                 , associatedNames = [ ("c-source", ".c")
+                                     , ("rust-source", ".rs")
+                                     , ("haskell", ".hs")
+                                     ]
+                 , validParams = [
+                    ("optimization", Nothing)
+                   ,("c-compiler", Just ["gcc", "clang"])
+                   ]
+                 }
+   main = do testSweets <- findSugar cube
+             defaultMain $ testGroup "elf" $
+             withSugarGroups testSweets testGroup $
+             \sweets expIdx expectation ->
+               testCase (inputName sweets <> " #" <> show expIdx) $ do
+                 e <- readFile $ expectedFile expectation
+                 let Just binaryName = lookup "binary" $ associated expectation
+                 let assoc = associated expectation
+                 r <- case lookup "c-source" assoc of
+                        Just c -> runCTestOn (sourceFile sweets)
+                        Nothing ->
+                          case lookup "rust-source" assoc of
+                            Just r -> runRustTestOn (sourceFile sweets)
+                            Nothing ->
+                              runHaskellTestOn (sourceFile sweets)
+                 r @?= e
+
+   runCTestOn :: FilePath -> String
+   runCTestOn f = ...
+
+   runRustTestOn :: FilePath -> String
+   runRustTestOn f = ...
+
+   runHaskellTestOn :: FilePath -> String
+   runHaskellTestOn f = ...
+   #+END_EXAMPLE
 
   Parameters are separated by designated separator characters and must
   appear in the order declared.  The default separators are "." and
@@ -267,10 +351,9 @@
   leaving the ~sample.expected~ to be used only for the
   ~simple.opt-clang.exe~ file.
 
-
-** Multiple Inputs with different parameters producing different outputs
-
-    KWQ...
+# ** Multiple Inputs with different parameters producing different outputs
+# 
+#     KWQ...
 
 * Comparisons
 

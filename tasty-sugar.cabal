@@ -1,7 +1,7 @@
 cabal-version:       2.0
 
 name:                tasty-sugar
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            Tests defined by Search Using Golden Answer References
 description:
   .
@@ -21,12 +21,13 @@ license:             ISC
 license-file:        LICENSE
 author:              Kevin Quick
 maintainer:          kquick@galois.com
-copyright:           Kevin Quick, 2019
+copyright:           Kevin Quick, 2019-2021
 category:            Testing
 build-type:          Simple
 
 extra-source-files:  Changelog.md
                      README.org
+                     examples/**
 
 source-repository head
   type: git
@@ -38,31 +39,82 @@ library
                      , directory
                      , filepath
                      , filemanip
+                     , logict
                      , optparse-applicative
-                     , prettyprinter
+                     , prettyprinter >= 1.7.0
                      , tagged
                      , tasty
+                     , tasty-sugar-internal
   hs-source-dirs:      src
   default-language:    Haskell2010
-  GHC-options:         -Wall -Werror -Wcompat
+  GHC-options:         -Wall -Werror -Wcompat -fhide-source-paths
   -- other-modules:
   -- other-extensions:
+
+
+library tasty-sugar-internal
+  exposed-modules:   Test.Tasty.Sugar.Analysis
+                   , Test.Tasty.Sugar.AssocCheck
+                   , Test.Tasty.Sugar.ExpectCheck
+                   , Test.Tasty.Sugar.ParamCheck
+                   , Test.Tasty.Sugar.RootCheck
+                   , Test.Tasty.Sugar.Types
+  build-depends:     base >= 4.10
+                   , filepath
+                   , filemanip
+                   , logict
+                   , prettyprinter
+  hs-source-dirs:    src/internal
+  default-language:    Haskell2010
+  GHC-options:         -Wall -Werror -Wcompat -fhide-source-paths
 
 
 test-suite test-sugar
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   default-language:    Haskell2010
+  GHC-options:         -fhide-source-paths
   main-is:             TestMain.hs
   other-modules:       TestMultiAssoc
                        TestNoAssoc
                        TestSingleAssoc
+                       TestParamsAssoc
                        TestUtils
                        TestWildcard
+                       Sample1
   build-depends: base >= 4
                , filepath
+               , hedgehog
+               , logict
+               , pretty-show
+               , prettyprinter
                , raw-strings-qq
                , tasty
-               , tasty-quickcheck
+               , tasty-hedgehog
+               , tasty-hunit
+               , tasty-sugar
+
+
+test-suite test-passthru-ascii
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   examples/example1
+  default-language: Haskell2010
+  GHC-options:      -fhide-source-paths
+  main-is:          test-passthru-ascii.hs
+  other-modules:    NiftyText
+  build-depends: base
+               , tasty
+               , tasty-hunit
+               , tasty-sugar
+
+test-suite test-params
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   examples/params
+  default-language: Haskell2010
+  GHC-options:      -fhide-source-paths
+  main-is:          test-params.hs
+  build-depends: base
+               , pretty-show
+               , tasty
                , tasty-hunit
                , tasty-sugar
