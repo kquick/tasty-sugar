@@ -76,7 +76,7 @@
 
    #+BEGIN_EXAMPLE
    cube = mkCUBE { inputDir = "test/samples"
-                 , sourceName = "*.c"
+                 , rootName = "*.c"
                  , expectedSuffix = "exp"
                  , associatedNames = [ ("binary", "") ]
                  }
@@ -84,7 +84,7 @@
              defaultMain $ testGroup "elf" $
              withSugarGroups testSweets testGroup $
              \sweets expIdx expectation ->
-               testCase (inputName sweets <> " #" <> show expIdx) $ do
+               testCase (rootMatchName sweets <> " #" <> show expIdx) $ do
                  let Just binaryName = lookup "binary" $ associated expectation
                  r <- runTestOn binaryName
                  e <- readFile $ expectedFile expectation
@@ -197,28 +197,33 @@
 
    #+BEGIN_EXAMPLE
    cube = mkCUBE { inputDir = "test/samples"
-                 , sourceName = "*.exe"
+                 , rootName = "*.exe"
                  , expectedSuffix = "expct"
                  , associatedNames = [ ("c-source", ".c")
                                      , ("rust-source", ".rs")
                                      , ("haskell", ".hs)
                                      ]
                  }
+
+   ingredients = includingOptions sugarOptions :
+                 sugarIngredients cube <> defaultIngredients
+
    main = do testSweets <- findSugar cube
-             defaultMain $ testGroup "elf" $
+             defaultMainWithIngredients ingredients $
+             testGroup "elf" $
              withSugarGroups testSweets testGroup $
              \sweets expIdx expectation ->
-               testCase (inputName sweets <> " #" <> show expIdx) $ do
+               testCase (rootMatchName sweets <> " #" <> show expIdx) $ do
                  e <- readFile $ expectedFile expectation
-                 let Just binaryName = lookup "binary" $ associated expectation
                  let assoc = associated expectation
+                     f = rootFile sweets
                  r <- case lookup "c-source" assoc of
-                        Just c -> runCTestOn (sourceFile sweets)
+                        Just c -> runCTestOn f
                         Nothing ->
                           case lookup "rust-source" assoc of
-                            Just r -> runRustTestOn (sourceFile sweets)
+                            Just r -> runRustTestOn f
                             Nothing ->
-                              runHaskellTestOn (sourceFile sweets)
+                              runHaskellTestOn f
                  r @?= e
 
    runCTestOn :: FilePath -> IO String
@@ -294,7 +299,7 @@
 
    #+BEGIN_EXAMPLE
    cube = mkCUBE { inputDir = "test/samples"
-                 , sourceName = "*"
+                 , rootName = "*"
                  , separators = "-."
                  , expectedSuffix = "expct"
                  , associatedNames = [ ("c-source", ".c")
@@ -306,21 +311,26 @@
                    ,("c-compiler", Just ["gcc", "clang"])
                    ]
                  }
+
+   ingredients = includingOptions sugarOptions :
+                 sugarIngredients cube <> defaultIngredients
+
    main = do testSweets <- findSugar cube
-             defaultMain $ testGroup "elf" $
+             defaultMainWithIngredients ingredients $
+             testGroup "elf" $
              withSugarGroups testSweets testGroup $
              \sweets expIdx expectation ->
-               testCase (inputName sweets <> " #" <> show expIdx) $ do
+               testCase (rootMatchName sweets <> " #" <> show expIdx) $ do
                  e <- readFile $ expectedFile expectation
-                 let Just binaryName = lookup "binary" $ associated expectation
                  let assoc = associated expectation
+                     f = rootFile sweets
                  r <- case lookup "c-source" assoc of
-                        Just c -> runCTestOn (sourceFile sweets)
+                        Just c -> runCTestOn f
                         Nothing ->
                           case lookup "rust-source" assoc of
-                            Just r -> runRustTestOn (sourceFile sweets)
+                            Just r -> runRustTestOn f
                             Nothing ->
-                              runHaskellTestOn (sourceFile sweets)
+                              runHaskellTestOn f
                  r @?= e
 
    runCTestOn :: FilePath -> String
@@ -433,11 +443,11 @@
 
 ** Requirements
 
-  * There must be a source (input) file to feed to the test
+  * There must be a root (input) file to feed to the test
 
-  * There must be one or more "expected" results files for a source file
+  * There must be one or more "expected" results files for a root file
 
-  * There may be associated files for the source file required for the test
+  * There may be associated files for the root file required for the test
 
   * All three groups of files may be parameterized by additional fields.
 
@@ -458,7 +468,7 @@
  CUBE =
    { inputDir = "tests/samples"  -- relative to cabal file
    , separators = ".-"
-   , sourceName = "*.c"
+   , rootName = "*.c"
    , associatedNames = [ ("exe", "exe")
                        , ("object", "o")
                        ]
@@ -494,8 +504,9 @@
  #+BEGIN_EXAMPLE
  sweets =
    [ Sweets
-     { inputName = "bar"
-     , sourceFile = "tests/samples/bar.c"
+     { rootMatchName = "bar"
+     , rootBaseName = "bar"
+     , rootFile = "tests/samples/bar.c"
      , expected =
          [ Expectation
            { expectedFile = "tests/samples/bar.expected"
@@ -510,8 +521,9 @@
          ]
      },
    , Sweets
-     { inputName = "cow"
-     , sourceFile = "tests/samples/cow.c"
+     { rootMatchName = "cow"
+     , rootBaseName = "cow"
+     , rootFile = "tests/samples/cow.c"
      , expected =
          [ Expectation
            { expectedFile = "tests/samples/cow.ppc-expected"
@@ -526,8 +538,9 @@
          ]
      },
    , Sweets
-     { inputName = "moo"
-     , sourceFile = "tests/samples/moo.c"
+     { rootMatchName = "moo"
+     , rootBaseName = "moo"
+     , rootFile = "tests/samples/moo.c"
      , expected =
          [ Expectation
            { expectedFile = "tests/samples/moo-expected"
