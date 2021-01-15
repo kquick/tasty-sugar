@@ -299,32 +299,34 @@ findSugarIn pat allFiles =
 --    relationship to elements of the 'Sweets' (such as parameters or
 --    associated sets).
 --
-withSugarGroups :: [Sweets]
+withSugarGroups :: MonadIO m
+                => [Sweets]
                 -> (String -> [a] -> a)
                    --  Given a name and list of tests (aka
                    -- 'TestTree'), group them (usually 'testGroup')
-                -> (Sweets -> Natural -> Expectation -> a)
+                -> (Sweets -> Natural -> Expectation -> m a)
                    -- Generate a test for this 'Expectation' (usually
                    -- @a ~ TestTree@)
-                -> [a]
+                -> m [a]
 withSugarGroups sweets mkGroup mkLeaf =
   let mkSweetTests sweet =
-        mkGroup (rootMatchName sweet) $
-        mkParams sweet (expected sweet) $ cubeParams sweet
+        mkGroup (rootMatchName sweet) <$>
+        (mkParams sweet (expected sweet) $ cubeParams sweet)
 
       -- mkParams iterates through the declared expected values to
       -- create a group for each actual value per expectation, calling
       -- the user-supplied mkLeaf at the leaf of each path.
-      mkParams sweet exp [] = map (uncurry $ mkLeaf sweet) $ zip [1..] exp
+      mkParams sweet exp [] = mapM (uncurry $ mkLeaf sweet) $ zip [1..] exp
       mkParams sweet exp ((name,vspec):ps) =
         case vspec of
-          Nothing -> [mkGroup name $ mkParams sweet exp ps]
-          Just vs -> let f v = mkGroup v $ mkParams sweet (subExp v) ps
+          Nothing -> do ts <- mkParams sweet exp ps
+                        return [mkGroup name ts]
+          Just vs -> let f v = mkGroup v <$> mkParams sweet (subExp v) ps
                          subExp v = expMatching name v exp
-                     in f <$> L.sort vs
+                     in sequence $ f <$> L.sort vs
 
       expMatching :: String -> String -> [Expectation] -> [Expectation]
       expMatching p v exp =
         filter (\e -> maybe False (paramMatchVal v) (lookup p (expParamsMatch e))) exp
 
-  in map mkSweetTests $ L.sortBy (compare `on` rootMatchName) sweets
+  in mapM mkSweetTests $ L.sortBy (compare `on` rootMatchName) sweets

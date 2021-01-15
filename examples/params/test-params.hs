@@ -27,10 +27,8 @@ ingredients = includingOptions sugarOptions :
 main :: IO ()
 main =
   do testSweets <- findSugar cube
-     defaultMainWithIngredients ingredients $
-       testGroup "elf" $
-       withSugarGroups testSweets testGroup $
-       \sweets expIdx expectation ->
+     elfTests <- withSugarGroups testSweets testGroup $
+       \sweets expIdx expectation -> return $
          testCase (rootMatchName sweets <> " #" <> show expIdx) $ do
          e <- readFile $ expectedFile expectation
          let assoc = associated expectation
@@ -54,6 +52,7 @@ main =
                           else runUnexpTestOn sweets expectation f
          putStrLn $ ppShow sweets
          r @?= e
+     defaultMainWithIngredients ingredients $ testGroup "elf" elfTests
 
 runCTestOn :: FilePath -> IO String
 runCTestOn _ = return $ "Simple C file expected output"

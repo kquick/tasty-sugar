@@ -11,13 +11,13 @@ cube = mkCUBE { inputDir = "examples/example1/testdata" }
 
 
 main = do sweets <- findSugar cube
-          defaultMain $ testGroup "passthru ascii tests" $
+          defaultMain . testGroup "passthru ascii tests" =<<
             withSugarGroups sweets testGroup test_passthru_ascii
 
 
-test_passthru_ascii sweet cnt exp =
-  testCase ("checking #" <> show cnt <> ": " <> expectedFile exp) $ do
+test_passthru_ascii sweet cnt exp = do
   inp <- readFile $ rootFile sweet
-  let testout = NiftyText.processText "passthru" "ascii" inp
-  out <- readFile $ expectedFile exp
-  out @=? testout
+  return $ testCase ("checking #" <> show cnt <> ": " <> expectedFile exp) $ do
+    let testout = NiftyText.processText "passthru" "ascii" inp
+    out <- readFile $ expectedFile exp
+    out @=? testout
