@@ -9,7 +9,7 @@
   parameterization, and there can be associated files that are
   presented to the test as well.
 
-  The primary use of tasty-sugar is to generate test cases based on
+  The primary use of tasty-sugar is to _generate test cases_ based on
   the contents of a directory, where the presence of various files
   determine which tests are generated.
 
@@ -81,14 +81,14 @@
                  , associatedNames = [ ("binary", "") ]
                  }
    main = do testSweets <- findSugar cube
-             defaultMain $ testGroup "elf" $
-             withSugarGroups testSweets testGroup $
-             \sweets expIdx expectation ->
-               testCase (rootMatchName sweets <> " #" <> show expIdx) $ do
-                 let Just binaryName = lookup "binary" $ associated expectation
-                 r <- runTestOn binaryName
-                 e <- readFile $ expectedFile expectation
-                 r @?= e
+             tests <- withSugarGroups testSweets testGroup $
+               \sweets expIdx expectation -> return $
+                 testCase (rootMatchName sweets <> " #" <> show expIdx) $ do
+                   let Just binaryName = lookup "binary" $ associated expectation
+                   r <- runTestOn binaryName
+                   e <- readFile $ expectedFile expectation
+                   r @?= e
+             defaultMain $ testGroup "elf" tests
 
    runTestOn :: FilePath -> IO String
    runTestOn f = ...
@@ -206,25 +206,25 @@
                  }
 
    ingredients = includingOptions sugarOptions :
-                 sugarIngredients cube <> defaultIngredients
+                 sugarIngredients [cube] <> defaultIngredients
 
    main = do testSweets <- findSugar cube
+             tests <- withSugarGroups testSweets testGroup $
+               \sweets expIdx expectation -> return $
+                 testCase (rootMatchName sweets <> " #" <> show expIdx) $ do
+                   e <- readFile $ expectedFile expectation
+                   let assoc = associated expectation
+                       f = rootFile sweets
+                   r <- case lookup "c-source" assoc of
+                          Just c -> runCTestOn f
+                          Nothing ->
+                            case lookup "rust-source" assoc of
+                              Just r -> runRustTestOn f
+                              Nothing ->
+                                runHaskellTestOn f
+                   r @?= e
              defaultMainWithIngredients ingredients $
-             testGroup "elf" $
-             withSugarGroups testSweets testGroup $
-             \sweets expIdx expectation ->
-               testCase (rootMatchName sweets <> " #" <> show expIdx) $ do
-                 e <- readFile $ expectedFile expectation
-                 let assoc = associated expectation
-                     f = rootFile sweets
-                 r <- case lookup "c-source" assoc of
-                        Just c -> runCTestOn f
-                        Nothing ->
-                          case lookup "rust-source" assoc of
-                            Just r -> runRustTestOn f
-                            Nothing ->
-                              runHaskellTestOn f
-                 r @?= e
+               testGroup "elf" tests
 
    runCTestOn :: FilePath -> IO String
    runCTestOn f = ...
@@ -313,25 +313,24 @@
                  }
 
    ingredients = includingOptions sugarOptions :
-                 sugarIngredients cube <> defaultIngredients
+                 sugarIngredients [cube] <> defaultIngredients
 
    main = do testSweets <- findSugar cube
+             tests <- withSugarGroups testSweets testGroup $
+               \sweets expIdx expectation -> return $
+                 testCase (rootMatchName sweets <> " #" <> show expIdx) $ do
+                   e <- readFile $ expectedFile expectation
+                   let assoc = associated expectation
+                       f = rootFile sweets
+                   r <- case lookup "c-source" assoc of
+                          Just c -> runCTestOn f
+                          Nothing ->
+                            case lookup "rust-source" assoc of
+                              Just r -> runRustTestOn f
+                              Nothing -> runHaskellTestOn f
+                   r @?= e
              defaultMainWithIngredients ingredients $
-             testGroup "elf" $
-             withSugarGroups testSweets testGroup $
-             \sweets expIdx expectation ->
-               testCase (rootMatchName sweets <> " #" <> show expIdx) $ do
-                 e <- readFile $ expectedFile expectation
-                 let assoc = associated expectation
-                     f = rootFile sweets
-                 r <- case lookup "c-source" assoc of
-                        Just c -> runCTestOn f
-                        Nothing ->
-                          case lookup "rust-source" assoc of
-                            Just r -> runRustTestOn f
-                            Nothing ->
-                              runHaskellTestOn f
-                 r @?= e
+             testGroup "elf" tests
 
    runCTestOn :: FilePath -> String
    runCTestOn f = ...
