@@ -192,20 +192,20 @@ instance Pretty CUBE where
                  brackets (pretty $ separators cube) <>
                  pretty (expectedSuffix cube)
                ]
-    in "Sugar.CUBE" <> (indent 1 $ vsep $ hdrs <> [assoc, parms])
+    in "Sugar.CUBE" <> (indent 1 $ vsep $ hdrs <> catMaybes [assoc, parms])
 
 
 -- | Pretty printing for a set of associated names
-prettyAssocNames :: [(String, String)] -> Doc ann
+prettyAssocNames :: [(String, String)] -> Maybe (Doc ann)
 prettyAssocNames = \case
-  [] -> mempty
-  nms -> "associated:" <> (indent 1 $ vsep $ map (pretty . fmap show) nms)
+  [] -> Nothing
+  nms -> Just $ "associated:" <> (indent 1 $ vsep $ map (pretty . fmap show) nms)
 
 -- | Pretty printing for a list of parameter patterns
-prettyParamPatterns :: [ParameterPattern] -> Doc ann
+prettyParamPatterns :: [ParameterPattern] -> Maybe (Doc ann)
 prettyParamPatterns = \case
-  [] -> mempty
-  prms -> "params:" <>
+  [] -> Nothing
+  prms -> Just $ "params:" <>
           (let pp (pn,mpv) =
                  pretty pn <+> equals <+>
                  case mpv of
@@ -229,14 +229,14 @@ data Sweets = Sweets
 
 instance Pretty Sweets where
   pretty inp = "Sweet" <+>
-               (align $ vsep
-                 [ pretty (rootMatchName inp)
-                 , "root:" <+>
+               (align $ vsep $ catMaybes
+                 [ Just $ pretty (rootMatchName inp)
+                 , Just $ "root:" <+>
                    align (vsep [ pretty (rootBaseName inp)
                                , pretty (rootFile inp)
                                ])
                  , prettyParamPatterns $ cubeParams inp
-                 , vsep $ map pretty $ expected inp
+                 , Just $ vsep $ map pretty $ expected inp
                  ])
 
 -- | The 'Association' specifies the name of the associated file entry
