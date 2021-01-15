@@ -409,12 +409,11 @@
   * The tasty-golden package will write the expected results if the
     expected file is missing.
 
-    + The tasty-sugar package will write the actual output to a
-      *separate* file, but it will not overwrite or assume
-      expectations.  This allows the user to validate the output
-      before declaring it to be the proper expected value (simply by
-      copying the actual output file to the expected output file).
-  
+    + The tasty-sugar package does not actually read or write any of
+      the files identified, it simply provides the names of the files
+      to the test generator function.  The user's test code is
+      responsible for all file processing.
+
 ** tasty-silver
 
   Similar to tasty-golden in functionality.
