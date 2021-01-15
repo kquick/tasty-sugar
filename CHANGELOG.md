@@ -1,5 +1,13 @@
 # Revision history for tasty-sugar
 
+## 1.0.0.0 -- 2021-01-14
+
+ * Allow multiple CUBE inputs for a single test session; Sweets are a semigroup.
+
+ * Run the withSugarGroups mkSweets in MonadIO instead of pure.
+
+ * Remove blank lines in --showsearch output.
+
 ## 0.2.0.0 -- 2021-01-12
 
  * Renamed CUBE "source" to "rootName"
