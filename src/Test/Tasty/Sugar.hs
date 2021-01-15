@@ -125,8 +125,8 @@ sugarOptions = [ Option (Proxy :: Proxy ShowSugarSearch)
 
 -- | Provides the Tasty Ingredients that can be used to inform the
 -- testing process.
-sugarIngredients :: CUBE -> [Ingredient]
-sugarIngredients pat = [ searchResultsSugarReport pat ]
+sugarIngredients :: [CUBE] -> [Ingredient]
+sugarIngredients pats = [ searchResultsSugarReport pats ]
 
 
 -- | This is a Tasty "Ingredient" (aka test runner) that can be used
@@ -134,17 +134,18 @@ sugarIngredients pat = [ searchResultsSugarReport pat ]
 -- This output can be requested by the "--showsearch" argument to the
 -- test executable.
 
-searchResultsSugarReport :: CUBE -> Ingredient
-searchResultsSugarReport pat = TestManager [] $ \opts _tests ->
+searchResultsSugarReport :: [CUBE] -> Ingredient
+searchResultsSugarReport pats = TestManager [] $ \opts _tests ->
   if lookupOption opts == ShowSugarSearch True
-  then Just $ do searchinfo <- findSugar' pat
-                 let (inps, expl) = searchinfo
-                 putStrLn $ show $ pretty pat
+  then Just $ do searchinfo <- mapM findSugar' pats
+                 mapM_ (putStrLn . show . pretty) pats
                  putStrLn ""
-                 putStrLn $ show expl
+                 mapM_ (putStrLn . show . snd) searchinfo
                  putStrLn ""
-                 putStrLn $ "Final set of tests [" ++ show (length inps) ++ "]:"
-                 putStrLn $ show $ vsep $ map (("•" <+>) . align . pretty) inps
+                 putStrLn ("Final set of tests [" ++
+                           show (sum $ fmap (length . fst) searchinfo) ++
+                           "]:")
+                 putStrLn $ show $ vsep $ concatMap (map (("•" <+>) . align . pretty) . fst) searchinfo
                  return True
   else Nothing
 

@@ -22,7 +22,7 @@ cube = mkCUBE { inputDir = "examples/params/samples"
               }
 
 ingredients = includingOptions sugarOptions :
-              sugarIngredients cube <> defaultIngredients
+              sugarIngredients [cube] <> defaultIngredients
 
 main :: IO ()
 main =
