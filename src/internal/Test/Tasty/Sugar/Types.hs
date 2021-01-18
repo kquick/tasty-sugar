@@ -288,7 +288,7 @@ instance Pretty Expectation where
         pa = if null a
              then Nothing
              else Just $ "Associated:" <+> (align $ vsep $ map pretty a)
-    in align $ vsep $ catMaybes
+    in hang 4 $ vsep $ catMaybes
        [ Just $ "Expected: " <+> (align $ pretty (expectedFile exp))
        , pp
        , pa
