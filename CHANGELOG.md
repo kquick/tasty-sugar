@@ -1,5 +1,16 @@
 # Revision history for tasty-sugar
 
+## 1.0.1.0 -- 2021-01-18
+
+ * Associated files are now ranked based on the number of parameter
+   components in the name and only the highest number of matches are
+   provided.  Previously all possible matches were supplied, which
+   meant that "more generic" associations caused an Expectation in
+   addition to the "more specific" associations.  Now only the "more
+   specific" assocations cause an Expectation.
+
+ * Better indentation on Expectation information for --showsearch.
+
 ## 1.0.0.0 -- 2021-01-14
 
  * Allow multiple CUBE inputs for a single test session; Sweets are a semigroup.
