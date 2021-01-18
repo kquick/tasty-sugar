@@ -33,8 +33,15 @@ sugarCube = mkCUBE
 multiAssocTests :: [TT.TestTree]
 multiAssocTests =
   let (sugar1,_s1desc) = findSugarIn sugarCube sample1
-  in [ testCase "valid sample" $ 50 @=? length sample1
+  in [
+
+       -- This is simply the number of entries in sample1; if this
+       -- fails in means that sample1 has been changed and the other
+       -- tests here are likely to need updating.
+       testCase "valid sample" $ 53 @=? length sample1
+
      , sugarTestEq "correct found count" sugarCube sample1 5 length
+
      , testCase "results" $ compareBags "results" sugar1 $
        let p = (testInpPath </>) in
        [
@@ -104,6 +111,8 @@ multiAssocTests =
                                        , ("form" , Assumed "base") ]
                     , associated = [ ("exe", p "jumpfar.ppc.exe")
                                    , ("include", p "jumpfar.h")
+                                   -- The x86 versions should not match this
+                                   , ("obj", p "jumpfar.ppc.o")
                                    ]
                     }
                   , Expectation
@@ -112,6 +121,8 @@ multiAssocTests =
                                        , ("form" , Assumed "refined") ]
                     , associated = [ ("exe", p "jumpfar.ppc.exe")
                                    , ("include", p "jumpfar.h")
+                                   -- The x86 versions should not match this
+                                   , ("obj", p "jumpfar.ppc.o")
                                    ]
                     }
                   ]
@@ -173,7 +184,12 @@ multiAssocTests =
                                        , ("arch", Explicit "ppc")
                                        ]
                     , associated = [ ("exe", p "switching.ppc.exe")
-                                   , ("obj", p "switching.ppc.o")
+                                   -- Note: uses switching.ppc.base.o
+                                   -- and not switching.ppc.o--or
+                                   -- both--because the former is a
+                                   -- more explicit match against the
+                                   -- expParamsMatch.
+                                   , ("obj", p "switching.ppc.base.o")
                                    , ("include", p "switching.h")
                                    , ("c++-include", p "switching.hh")
                                    , ("plain", p "switching")

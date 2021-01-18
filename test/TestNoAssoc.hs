@@ -26,8 +26,15 @@ sugarCube = mkCUBE
 noAssocTests :: [TT.TestTree]
 noAssocTests =
   let (sugar1,s1desc) = findSugarIn sugarCube sample1
-  in [ testCase "valid sample" $ 50 @=? length sample1
+  in [
+
+       -- This is simply the number of entries in sample1; if this
+       -- fails in means that sample1 has been changed and the other
+       -- tests here are likely to need updating.
+       testCase "valid sample" $ 53 @=? length sample1
+
      , sugarTestEq "correct found count" sugarCube sample1 5 length
+
      , testCase "results" $ compareBags "results" sugar1
        $ let p = (testInpPath </>) in
        [

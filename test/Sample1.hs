@@ -15,6 +15,7 @@ global-max-good.x86.expected
 jumpfar.c
 jumpfar.h
 jumpfar.ppc.exe
+jumpfar.ppc.o
 jumpfar.ppc.expected
 jumpfar.x86.exe
 jumpfar.x86.expected
@@ -39,6 +40,8 @@ switching_many_llvm.x86.exe
 switching_many.ppc.exe
 switching.ppc.base-expected
 switching.ppc.o
+switching.ppc.base.o
+switching.ppc.extra.o
 switching.ppc.other
 switching.ppc.exe
 switching.x86.base-expected
