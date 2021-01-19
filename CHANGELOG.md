@@ -1,5 +1,10 @@
 # Revision history for tasty-sugar
 
+## 1.0.1.1 -- 2021-01-18
+
+ * Fix error where an expected set of matches could match multiple
+   root names where the root names contain separators.
+
 ## 1.0.1.0 -- 2021-01-18
 
  * Associated files are now ranked based on the number of parameter
