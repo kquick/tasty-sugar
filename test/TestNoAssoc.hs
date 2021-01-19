@@ -31,9 +31,9 @@ noAssocTests =
        -- This is simply the number of entries in sample1; if this
        -- fails in means that sample1 has been changed and the other
        -- tests here are likely to need updating.
-       testCase "valid sample" $ 53 @=? length sample1
+       testCase "valid sample" $ 58 @=? length sample1
 
-     , sugarTestEq "correct found count" sugarCube sample1 5 length
+     , sugarTestEq "correct found count" sugarCube sample1 6 length
 
      , testCase "results" $ compareBags "results" sugar1
        $ let p = (testInpPath </>) in
@@ -127,6 +127,37 @@ noAssocTests =
                     }
                   , Expectation
                     { expectedFile = p "looping.ppc.expected"
+                    , expParamsMatch = [ ("arch" , Explicit "ppc")
+                                       , ("form" , Assumed "refined") ]
+                    , associated = []
+                    }
+                  ]
+                }
+       , Sweets { rootMatchName = "looping-around.c"
+                , rootBaseName = "looping-around"
+                , rootFile = p "looping-around.c"
+                , cubeParams = validParams sugarCube
+                , expected =
+                  [ Expectation
+                    { expectedFile = p "looping-around.expected"
+                    , expParamsMatch = [ ("arch", Assumed "x86")
+                                       , ("form", Assumed "base") ]
+                    , associated = []
+                    }
+                  , Expectation
+                    { expectedFile = p "looping-around.expected"
+                    , expParamsMatch = [ ("arch", Assumed "x86")
+                                       , ("form", Assumed "refined")]
+                    , associated = []
+                    }
+                  , Expectation
+                    { expectedFile = p "looping-around.ppc.expected"
+                    , expParamsMatch = [ ("arch" , Explicit "ppc")
+                                       , ("form" , Assumed "base") ]
+                    , associated = []
+                    }
+                  , Expectation
+                    { expectedFile = p "looping-around.ppc.expected"
                     , expParamsMatch = [ ("arch" , Explicit "ppc")
                                        , ("form" , Assumed "refined") ]
                     , associated = []

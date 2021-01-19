@@ -47,7 +47,23 @@ checkRoot pat allNames rootNm =
   let seps = separators pat
       params = validParams pat
       combineExpRes (swts, expl) = bimap (swts :) (expl :)
+
+      trimSweets :: [(Sweets, SweetExplanation)] ->
+                    [(Sweets, SweetExplanation)]
+      trimSweets =
+        -- If multiple Sweets have the same rootMatchName, use the one
+        -- with the longer rootBaseName.  This prevents "foo.exp" and
+        -- "foo-bar.exp" from both matching "foo-bar.c".
+        (\l -> let removeShorterBases lst (entry,_) =
+                     let notShorterBase (s,_) = not $
+                           and [ rootMatchName s == rootMatchName entry
+                               , rootBaseName s < rootBaseName entry
+                               ]
+                     in filter notShorterBase lst
+               in foldl removeShorterBases l l)
+
   in foldr combineExpRes ([], []) $
+     trimSweets $
      catMaybes $
      fmap (findExpectation pat rootNm allNames) $
      observeAll $

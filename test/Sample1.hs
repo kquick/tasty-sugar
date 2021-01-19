@@ -24,6 +24,11 @@ looping.ppc.exe
 looping.ppc.expected
 looping.x86.exe
 looping.x86.expected
+looping-around.c
+looping-around.ppc.exe
+looping-around.ppc.expected
+looping-around.x86.exe
+looping-around.expected
 Makefile
 README.org
 switching
