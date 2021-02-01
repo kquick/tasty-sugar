@@ -1,5 +1,14 @@
 # Revision history for tasty-sugar
 
+## 1.0.2.0 -- 2021-01-31
+
+ * Export `paramMatchVal` utility function
+
+ * Fix over-trimming of Expectation matches
+
+ * Fix identification ranking of associated files
+
+
 ## 1.0.1.1 -- 2021-01-18
 
  * Fix error where an expected set of matches could match multiple
