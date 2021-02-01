@@ -113,7 +113,6 @@ main =
        , testGroup "wildcard tests" $ wildcardAssocTests
        , testGroup "gcd sample tests" $ gcdSampleTests
        , testGroup "strlen2 sample tests" $ strlen2SampleTests
-       , testGroup "samples tests" $ samplesTests
        ] <> generatedTests
 
 
