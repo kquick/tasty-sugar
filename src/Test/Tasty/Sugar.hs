@@ -75,6 +75,7 @@ module Test.Tasty.Sugar
   , Association
   , NamedParamMatch
   , ParamMatch(..)
+  , paramMatchVal
   )
 where
 
