@@ -1,10 +1,22 @@
 # Revision history for tasty-sugar
 
+## 1.1.0.0 -- 2021-01-31
+
+ * Allow multiple tests to be generated for each `Expectation` via
+   `withSugarGroups` function.  The `withSugarGroups` third argument
+   function (the test generator) now returns a list instead of a
+   single test.  While roughly the same effect could have been
+   achieved by the test generator function using a `testGroup` to wrap
+   multiple tests, this change allows both (a) multiple tests to be
+   generated without requiring another level in the test heirarchy,
+   and (b) the generator can return an empty list if there should not
+   be any tests generated for the specified `Expectation`.
+
 ## 1.0.2.0 -- 2021-01-31
 
  * Export `paramMatchVal` utility function
 
- * Fix over-trimming of Expectation matches
+ * Fix over-trimming of `Expectation` matches
 
  * Fix identification ranking of associated files
 

@@ -17,7 +17,8 @@ main = do sweets <- findSugar cube
 
 test_passthru_ascii sweet cnt exp = do
   inp <- readFile $ rootFile sweet
-  return $ testCase ("checking #" <> show cnt <> ": " <> expectedFile exp) $ do
-    let testout = NiftyText.processText "passthru" "ascii" inp
-    out <- readFile $ expectedFile exp
-    out @=? testout
+  return [ testCase ("checking #" <> show cnt <> ": " <> expectedFile exp) $ do
+             let testout = NiftyText.processText "passthru" "ascii" inp
+             out <- readFile $ expectedFile exp
+             out @=? testout
+         ]

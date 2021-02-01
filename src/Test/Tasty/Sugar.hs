@@ -275,13 +275,13 @@ findSugarIn pat allFiles =
 -- | The 'withSugarGroups' is the primary function used to run tests.
 -- Given a list of 'Sweets' returned by 'findSugar', a function to
 -- mark a group of tests (usually @Tasty.testGroup@), and a function
--- to generate a test from a 'Sweets' and a specific 'Expectation',
--- this will iterate over the supplied 'Sweets' and call the test
--- generator for each valid test configuration.
+-- to generate a number of tests from a 'Sweets' and a specific
+-- 'Expectation', this will iterate over the supplied 'Sweets' and
+-- call the test generator for each valid test configuration.
 --
 -- Note that 'Sweets' contains all expectations (@[Expectation]@), but
 -- the passed 'Expectation' is the only one that should be tested for
--- this generated test.
+-- this set of generated tests.
 --
 -- > withSugarGroups sweets groupFun mkTestFun
 --
@@ -290,23 +290,25 @@ findSugarIn pat allFiles =
 --  * @groupFun@ is the function to group a set of tests with a
 --    specific name.  Typically this can just be 'tasty.testGroup'
 --
---  * @mkTestFun@ is the function to create a specific test for the
+--  * @mkTestFun@ is the function to create any specific tests for the
 --    specified expectation.  The output type is usually a
---    'tasty.TestTree'.  This is passed the general 'Sweets', the
---    specific 'Expectation' for the test that should be created, and
---    a numeric iteration indicating the test number within this
---    group.  The iteration number can be used for differentiation
---    against the other tests, but there is no determinate
---    relationship to elements of the 'Sweets' (such as parameters or
---    associated sets).
---
+--    @['Tasty.TestTree']@.  This is passed the general 'Sweets', the
+--    specific 'Expectation' for the tests that should be created, and
+--    a numeric iteration indicating the 'Expectation' number within
+--    this group.  The iteration number can be used for
+--    differentiation against the other tests, but there is no
+--    determinate relationship to elements of the 'Sweets' (such as
+--    parameters or associated sets).  It is also possible to suppress
+--    the generation of any tests for a particular 'Expectation' by
+--    returning an empty list from the @mkTestFun@.
+
 withSugarGroups :: MonadIO m
                 => [Sweets]
                 -> (String -> [a] -> a)
                    --  Given a name and list of tests (aka
                    -- 'TestTree'), group them (usually 'testGroup')
-                -> (Sweets -> Natural -> Expectation -> m a)
-                   -- Generate a test for this 'Expectation' (usually
+                -> (Sweets -> Natural -> Expectation -> m [a])
+                   -- Generate any tests for this 'Expectation' (usually
                    -- @a ~ TestTree@)
                 -> m [a]
 withSugarGroups sweets mkGroup mkLeaf =
@@ -317,7 +319,7 @@ withSugarGroups sweets mkGroup mkLeaf =
       -- mkParams iterates through the declared expected values to
       -- create a group for each actual value per expectation, calling
       -- the user-supplied mkLeaf at the leaf of each path.
-      mkParams sweet exp [] = mapM (uncurry $ mkLeaf sweet) $ zip [1..] exp
+      mkParams sweet exp [] = concat <$> (mapM (uncurry $ mkLeaf sweet) $ zip [1..] exp)
       mkParams sweet exp ((name,vspec):ps) =
         case vspec of
           Nothing -> do ts <- mkParams sweet exp ps

@@ -28,8 +28,13 @@ import           TestWildcard
 
 
 main :: IO ()
-main = defaultMain $
-       testGroup "tasty-sweet tests"
+main =
+  let namedGenGroup groupName tests =
+        return $ testGroup (groupName <> " generated") tests
+  in
+  do generatedTests <- namedGenGroup "no association" <$> mkNoAssocTests
+     defaultMain $
+       testGroup "tasty-sweet tests" $
        [ testProperty "empty file list" $
          HH.withTests 10000 $ HH.property $ do
            cube <- HH.forAll $ genCube
@@ -108,7 +113,8 @@ main = defaultMain $
        , testGroup "wildcard tests" $ wildcardAssocTests
        , testGroup "gcd sample tests" $ gcdSampleTests
        , testGroup "strlen2 sample tests" $ strlen2SampleTests
-       ]
+       , testGroup "samples tests" $ samplesTests
+       ] <> generatedTests
 
 
 runTestOrErr :: CUBE -> IO (Either String String)

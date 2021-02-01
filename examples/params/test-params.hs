@@ -28,7 +28,7 @@ main :: IO ()
 main =
   do testSweets <- findSugar cube
      elfTests <- withSugarGroups testSweets testGroup $
-       \sweets expIdx expectation -> return $
+       \sweets expIdx expectation -> return $ pure $
          testCase (rootMatchName sweets <> " #" <> show expIdx) $ do
          e <- readFile $ expectedFile expectation
          let assoc = associated expectation

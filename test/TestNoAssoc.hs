@@ -1,11 +1,12 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestNoAssoc ( noAssocTests ) where
+module TestNoAssoc ( noAssocTests, mkNoAssocTests ) where
 
 import           Data.List
 import           System.FilePath ( (</>) )
 import qualified Test.Tasty as TT
 import           Test.Tasty.HUnit
+import           Test.Tasty.Runners ( testsNames )
 import           Test.Tasty.Sugar
 import           TestUtils
 
@@ -225,3 +226,21 @@ noAssocTests =
                 }
        ]
      ]
+
+
+mkNoAssocTests :: IO [TT.TestTree]
+mkNoAssocTests =
+  let (sugar1,s1desc) = findSugarIn sugarCube sample1
+  in do tt <- withSugarGroups sugar1 TT.testGroup $
+          \sw idx exp ->
+            -- Verify this will suppress the "refined" tests for
+            -- "looping-around.c"
+            if (rootMatchName sw == "looping-around.c" &&
+                Just (Assumed "refined") == lookup "form" (expParamsMatch exp))
+            then (return [])
+            else return [ testCase (rootMatchName sw <> "." <> show idx) $
+                          return ()
+                        ]
+        return $
+          (testCase "generated count" $ 21 @=? length (concatMap (testsNames mempty) tt))
+          : tt
