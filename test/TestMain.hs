@@ -17,6 +17,7 @@ import           Prettyprinter
 import           Data.Text.Prettyprint.Doc
 #endif
 
+import           TestGCD
 import           TestMultiAssoc
 import           TestNoAssoc
 import           TestSingleAssoc
@@ -104,6 +105,7 @@ main = defaultMain $
        , testGroup "multiple associated files" $ multiAssocTests
        , testGroup "params association" $ paramsAssocTests
        , testGroup "wildcard tests" $ wildcardAssocTests
+       , testGroup "gcd sample tests" $ gcdSampleTests
        ]
 
 

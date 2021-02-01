@@ -92,9 +92,9 @@ getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
                                           return (n+1, [s] <> v <> l, r)
         ((Assumed  v):ps) -> do (n,l,r) <- sepParams sl ps
                                 if null sl
-                                  then return (n, v <> l, r)
+                                  then return (n+1, v <> l, r)
                                   else do s <- eachFrom sl
-                                          return (n, [s] <> v <> l, r)
+                                          return (n+1, [s] <> v <> l, r)
 
     npseq = eachFrom
             . ([]:)                -- consider no parameters just once
