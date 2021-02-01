@@ -20,9 +20,10 @@ import           Data.Text.Prettyprint.Doc
 import           TestGCD
 import           TestMultiAssoc
 import           TestNoAssoc
-import           TestSingleAssoc
-import           TestUtils
 import           TestParamsAssoc
+import           TestSingleAssoc
+import           TestStrlen2
+import           TestUtils
 import           TestWildcard
 
 
@@ -106,6 +107,7 @@ main = defaultMain $
        , testGroup "params association" $ paramsAssocTests
        , testGroup "wildcard tests" $ wildcardAssocTests
        , testGroup "gcd sample tests" $ gcdSampleTests
+       , testGroup "strlen2 sample tests" $ strlen2SampleTests
        ]
 
 

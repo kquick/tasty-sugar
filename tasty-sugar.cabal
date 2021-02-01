@@ -101,6 +101,7 @@ test-suite test-sugar
                        TestNoAssoc
                        TestGCD
                        TestSingleAssoc
+                       TestStrlen2
                        TestParamsAssoc
                        TestUtils
                        TestWildcard
@@ -141,3 +142,15 @@ test-suite test-params
                , tasty
                , tasty-hunit
                , tasty-sugar
+
+test-suite test-internals
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test/internals
+  default-language: Haskell2010
+  GHC-options:      -fhide-source-paths
+  main-is:          test-internals.hs
+  build-depends: base
+               , pretty-show
+               , tasty
+               , tasty-hunit
+               , tasty-sugar-internal

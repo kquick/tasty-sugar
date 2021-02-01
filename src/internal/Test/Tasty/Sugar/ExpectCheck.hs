@@ -4,6 +4,7 @@
 module Test.Tasty.Sugar.ExpectCheck
   (
     findExpectation
+  , removeNonExplicitMatchingExpectations
   )
   where
 
@@ -14,7 +15,6 @@ import qualified Data.List as L
 import           Test.Tasty.Sugar.AssocCheck
 import           Test.Tasty.Sugar.ParamCheck
 import           Test.Tasty.Sugar.Types
-
 
 
 -- | Finds the possible expected files matching the selected
@@ -53,25 +53,9 @@ findExpectation pat rootN allNames (rootPMatches, matchPrefix, _) =
       -- expectations.
       trimExpectations :: [Expectation] -> [Expectation]
       trimExpectations =
-
         -- If a parameter is Explicitly matched, discard any
-        -- Expectation with Assumed matches.
-        (\l -> let removeNonExplicits lst entry =
-                     let explParams = filter (isExplicit . snd)
-                                      (expParamsMatch entry)
-                         removeNonExpl es explParam =
-                           filter (noNonExplicit explParam) es
-                         noNonExplicit (pn, Explicit pv) expl=
-                           let chkPV (pn', pv') =
-                                 pn /= pn' || case pv' of
-                                                Explicit _ -> True
-                                                Assumed v -> v /= pv
-                                                NotSpecified -> False
-                           in all chkPV $ expParamsMatch expl
-                         noNonExplicit _ _ = True
-                     in foldl removeNonExpl lst explParams
-               in foldl removeNonExplicits l l)
-
+        -- Expectation with the same Assumed matches.
+        removeNonExplicitMatchingExpectations
         -- remove duplicates (uses the Eq instance for Expectation
         -- that ignores the order of the expParamsMatch and associated
         -- to ensure that different ordering with the same values
@@ -158,3 +142,39 @@ getExp rootPrefix rootPMatches seps pvals expSuffix allNames =
                    else rootPrefix <> pmstr <> expSuffix
      guard (expFile `elem` allNames)
      return (expFile, pmcnt, pm)
+
+
+removeNonExplicitMatchingExpectations :: [Expectation] -> [Expectation]
+removeNonExplicitMatchingExpectations l =
+  let removeNonExplicits lst entry =
+        let (explParams, assumedParams) =
+              L.partition (isExplicit . snd) (expParamsMatch entry)
+
+            -- only return False if oneExp should be
+            -- removed: i.e. it is an Expectation that
+            -- matches all non-explicit parameters and
+            -- has non-explicit matches for any of the
+            -- Explicit matches.
+            nonExplMatch oneExp =
+              or [ oneExp == entry
+                 , not $ all nonExplParamCheck $ expParamsMatch oneExp
+                 ]
+
+            -- return True if this parameter check would
+            -- allow removal of this Explicit based on
+            -- _this_ parameter.
+            nonExplParamCheck (pn, pv) =
+              case lookup pn explParams of
+                Just (Explicit ev) ->
+                  case pv of
+                    Assumed av -> ev == av
+                    NotSpecified -> True
+                    Explicit ev' -> ev == ev'
+                _ ->  -- generally nothing; other Just values not possible from explParams
+                  case lookup pn assumedParams of
+                    Nothing -> False
+                    Just av -> av == pv
+
+        in filter nonExplMatch lst
+
+  in foldl removeNonExplicits l l
