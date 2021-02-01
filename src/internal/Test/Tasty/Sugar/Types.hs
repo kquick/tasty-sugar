@@ -270,6 +270,8 @@ data Expectation = Expectation
   }
   deriving Show
 
+-- | Equality comparisons of two 'Expectation' objects ignores the
+-- order of the 'expParamsMatch' and 'associated' fields.
 instance Eq Expectation where
   e1 == e2 = let bagCmp a b = any (a ==) $ L.permutations b
              in and [ expectedFile e1 == expectedFile e2
