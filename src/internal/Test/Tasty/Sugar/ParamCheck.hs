@@ -95,6 +95,6 @@ pvalMatch seps preset pvals =
         candidateVals <- pvVal rpv
         let rset = preset <> candidateVals
             orderedRset = fmap from_rset $ fmap fst pvals
-            from_rset n = let Just v = L.lookup n rset in (n,v)
+            from_rset n = let v = maybe NotSpecified id $ L.lookup n rset in (n,v)
         pvstr <- genPVStr orderedRset
         return (rset, length orderedRset, pvstr)
