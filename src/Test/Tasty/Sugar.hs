@@ -117,12 +117,9 @@ instance IsOption ShowSugarSearch where
   parseValue = fmap ShowSugarSearch . safeRead
   optionName = pure $ "showsearch"
   optionHelp = pure $ "Show details of the search for the set of\n\
-                      \sample-file driven tests that would be\n\
-                      \performed based on the search."
-  optionCLParser = ShowSugarSearch <$> switch
-                      ( long (untag (optionName :: Tagged ShowSugarSearch String))
-                      <> help (untag (optionHelp :: Tagged ShowSugarSearch String))
-                      )
+                      \ sample-file driven tests that would be\n\
+                      \ performed based on the search."
+  optionCLParser = flagCLParser Nothing (ShowSugarSearch True)
 
 
 -- | Specify the Sugar-specific Tasty command-line options
