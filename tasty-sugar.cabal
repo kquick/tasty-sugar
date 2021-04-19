@@ -70,7 +70,10 @@ library
                      , text >= 1.2 && < 1.3
   hs-source-dirs:      src
   default-language:    Haskell2010
-  GHC-options:         -Wall -Wcompat -fhide-source-paths
+  GHC-options:         -Wall -Wcompat
+                       -Wincomplete-uni-patterns
+                       -Wpartial-fields
+                       -fhide-source-paths
   -- other-modules:
   -- other-extensions:
 
@@ -92,8 +95,11 @@ library tasty-sugar-internal
                    , prettyprinter >= 1.7 && < 1.8
                    , text >= 1.2 && < 1.3
   hs-source-dirs:    src/internal
-  default-language:    Haskell2010
-  GHC-options:         -Wall -Wcompat -fhide-source-paths
+  default-language:  Haskell2010
+  GHC-options:      -Wall -Wcompat
+                    -Wincomplete-uni-patterns
+                    -Wpartial-fields
+                    -fhide-source-paths
 
 
 test-suite test-sugar
