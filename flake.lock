@@ -1,0 +1,107 @@
+{
+  "nodes": {
+    "html-parse-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1589862524,
+        "narHash": "sha256-EmFSDENFggdpK/84cjRK4broz4khn+vxP2VTzdl84ds=",
+        "owner": "bgamari",
+        "repo": "html-parse",
+        "rev": "555ddc7ba9a029c94b66e89b3569fa5a59e6d856",
+        "type": "github"
+      },
+      "original": {
+        "owner": "bgamari",
+        "repo": "html-parse",
+        "type": "github"
+      }
+    },
+    "kvitable": {
+      "inputs": {
+        "html-parse-src": "html-parse-src",
+        "levers": [
+          "levers"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "prettyprinter-src": [
+          "prettyprinter-src"
+        ]
+      },
+      "locked": {
+        "narHash": "sha256-NSOWj/VfGK4vSR0ZBCuj67cNJEd1rzUf0L1tPrRvzMc=",
+        "path": "/home/kquick/Projects/kvitable/kvitable",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/kquick/Projects/kvitable/kvitable",
+        "type": "path"
+      }
+    },
+    "levers": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1618328346,
+        "narHash": "sha256-xksyNOkO/WgOruzpcVDc3wsHtjkciDlvME5YL7JKqP4=",
+        "owner": "kquick",
+        "repo": "nix-levers",
+        "rev": "a1b2505117606db1ffea4a2871c0f2d6c09697a5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kquick",
+        "repo": "nix-levers",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1618628710,
+        "narHash": "sha256-9xIoU+BrCpjs5nfWcd/GlU7XCVdnNKJPffoNTxgGfhs=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "7919518f0235106d050c77837df5e338fb94de5d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "prettyprinter-src": {
+      "flake": false,
+      "locked": {
+        "dir": "prettyprinter",
+        "lastModified": 1612788978,
+        "narHash": "sha256-uktcuwhxmeBDiyFOPPUG/7HzNjdOXbeMKsdfObMF0uk=",
+        "owner": "quchen",
+        "repo": "prettyprinter",
+        "rev": "11e8bf12aed2f698e619c3a8c07eca3af4da1aed",
+        "type": "github"
+      },
+      "original": {
+        "dir": "prettyprinter",
+        "owner": "quchen",
+        "repo": "prettyprinter",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "kvitable": "kvitable",
+        "levers": "levers",
+        "nixpkgs": "nixpkgs",
+        "prettyprinter-src": "prettyprinter-src"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
