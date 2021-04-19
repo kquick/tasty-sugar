@@ -1,5 +1,14 @@
 # Revision history for tasty-sugar
 
+## 1.1.1.0 -- 2021-04-19
+
+ * Use 'kvitable' to render `--showsearch` output.
+ * Update build warnings and refactor code to remove potential partial
+   results.
+ * Fix tasty ingredients option double-defaulting.
+ * Add dependency constraint bounds.
+ * Update haddock usage for usage changes.
+
 ## 1.1.0.0 -- 2021-01-31
 
  * Allow multiple tests to be generated for each `Expectation` via
