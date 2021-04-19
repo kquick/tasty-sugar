@@ -23,6 +23,7 @@
 -- > import Test.Tasty as T
 -- > import Test.Tasty.Options
 -- > import Test.Tasty.Sugar
+-- > import Numeric.Natural
 -- >
 -- > sugarCube = mkCUBE { inputDir = "test/samples"
 -- >                    , rootName = "*.c"
@@ -31,22 +32,24 @@
 -- >                    }
 -- >
 -- > ingredients = T.includingOptions sugarOptions :
--- >               sugarIngredients sugarCube <>
+-- >               sugarIngredients [sugarCube] <>
 -- >               T.defaultIngredients
 -- >
 -- > main =
 -- >   do testSweets <- findSugar sugarCube
--- >      T.defaultMainWithIngredients ingredients $
--- >      T.testGroup "sweet tests" $
--- >      withSugarGroups testSweets T.testGroup mkTest
+-- >      T.defaultMainWithIngredients ingredients .
+-- >        T.testGroup "sweet tests" =<<
+-- >        withSugarGroups testSweets T.testGroup mkTest
 -- >
--- > mkTest :: Sweets -> Natural -> Expectation -> T.TestTree
--- > mkTest s n e = testCase (rootMatchName s <> " #" <> show n) $ do
--- >                Just inpF <- lookup "inputs" $ associated e
--- >                inp <- readFile inpF
--- >                exp <- reads <$> readFile $ expectedFile e
--- >                result <- testSomething inp
--- >                result @?= exp
+-- > mkTest :: Sweets -> Natural -> Expectation -> IO [T.TestTree]
+-- > mkTest s n e = do
+-- >    inp <- readFile inpF
+-- >    exp <- reads <$> readFile $ expectedFile e
+-- >    return [ testCase (rootMatchName s <> " #" <> show n) $ do
+-- >               Just inpF <- lookup "inputs" $ associated e
+-- >               result <- testSomething inp
+-- >               result @?= exp
+-- >           ]
 --
 -- See the README for more information.
 
