@@ -43,10 +43,6 @@ isRootSep :: RootPart -> Bool
 isRootSep (RootSep _) = True
 isRootSep _ = False
 
-isRootSuffix :: RootPart -> Bool
-isRootSuffix (RootSuffix _) = True
-isRootSuffix _ = False
-
 rpStr :: [RootPart] -> String
 rpStr = let s = \case
               RootSep x -> x
@@ -143,13 +139,14 @@ rootParamMatches rootNm seps parms rMatch = do
                Nothing -> mzero
                Just p ->
                  do idx <- eachFrom [i | i <- [2..length allRP], even i]
-                    let free = RootParNm (fst p) idxv
-                        RootText idxv = head $ drop idx allRP
-                        start = take (idx - 1) allRP
-                    guard (not $ isRootSuffix $ head $ drop idx allRP)
-                    return ( rpNPM [free]
-                           , rpStr $ start
-                           , rpStr $ drop (idx + 2) allRP )
+                    case drop idx allRP of
+                      (RootText idxv:_) -> do
+                        let free = RootParNm (fst p) idxv
+                            start = take (idx - 1) allRP
+                        return ( rpNPM [free]
+                               , rpStr $ start
+                               , rpStr $ drop (idx + 2) allRP )
+                      _ -> mzero
       freeFirst (Just (Left (pfx, pl1, sfx))) =
         if length pfx < 3
         then mzero
@@ -161,13 +158,12 @@ rootParamMatches rootNm seps parms rMatch = do
                Just p ->
                  -- There is a wildcard parameter, try it at the end
                  -- of pfx and before pl1
-                 let free = RootParNm (fst p) lpv
-                     RootText lpv = last start
-                     start = init pfx
-                 in do guard (not . isRootSuffix $ last start)
-                       return ( rpNPM $ free : pl1
-                              , rpStr $ reverse $ drop 3 $ reverse pfx
-                              , rpStr sfx )
+                 case reverse pfx of
+                   (_:RootText lpv:_) ->
+                     return ( rpNPM $ RootParNm (fst p) lpv : pl1
+                            , rpStr $ reverse $ drop 3 $ reverse pfx
+                            , rpStr sfx )
+                   _ -> mzero
 
       freeLast Nothing = mzero
       freeLast (Just (Right _)) = mzero
@@ -180,12 +176,12 @@ rootParamMatches rootNm seps parms rMatch = do
                Just p ->
                  -- There is a wildcard parameter, try it at the end
                  -- of pfx and before pl1
-                 let free = [RootParNm (fst p) fsv]
-                     RootText fsv = head sfx
-                 in do guard (not $ isRootSuffix $ head sfx)
-                       return ( rpNPM $ parms1 <> free
+                 case sfx of
+                   (RootText fsv:_) ->
+                       return ( rpNPM $ parms1 <> [RootParNm (fst p) fsv]
                               , rpStr pfx
                               , rpStr $ tail sfx )
+                   _ -> mzero
 
       freeMid Nothing = mzero
       freeMid (Just (Left _)) = mzero
@@ -198,11 +194,13 @@ rootParamMatches rootNm seps parms rMatch = do
         else case freeValueParm of
                Nothing -> mzero
                Just p ->
-                 let free = [RootParNm (fst p) mv]
-                     (ms1:RootText mv:ms2:[]) = mid
-                 in return ( rpNPM $ parms1 <> free <> parms2
-                           , rpStr $ pfx <> [ms1]
-                           , rpStr $ ms2 : sfx )
+                 case mid of
+                   (ms1:RootText mv:ms2:[]) ->
+                     return ( rpNPM ( parms1 <> [RootParNm (fst p) mv] <>
+                                      parms2 )
+                            , rpStr $ pfx <> [ms1]
+                            , rpStr $ ms2 : sfx )
+                   _ -> mzero
 
   (freeFirst rnChunks)
     `mplus` (freeLast rnChunks)
@@ -225,14 +223,16 @@ rootParamMatchNoSeps rootNm seps' parms = do
              , pvstr `L.isInfixOf` rootNm
              , not $ pvstr `L.isPrefixOf` rootNm
              ])
-  let (basename, suffix) =
-        let l1 = length rootNm
-            l2 = length pvstr
-            bslen = l1 - l2
-            matches n = pvstr `L.isPrefixOf` (drop n rootNm)
-            Just pfxlen = L.find matches $ reverse [1..bslen]
-        in (take pfxlen rootNm, drop (pfxlen + l2) rootNm)
-  return (explicit, basename, suffix)
+  let l1 = length rootNm
+      l2 = length pvstr
+      bslen = l1 - l2
+      matches n = pvstr `L.isPrefixOf` (drop n rootNm)
+  case L.find matches $ reverse [1..bslen] of
+    Just pfxlen ->
+      let basename = take pfxlen rootNm
+          suffix = drop (pfxlen + l2) rootNm
+      in return (explicit, basename, suffix)
+    _ -> mzero
 
 -- Return origRootName up to each sep-indicated point.
 noRootParamMatch :: FilePath -> Separators
