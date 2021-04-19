@@ -3,7 +3,7 @@
 
 module TestGCD ( gcdSampleTests ) where
 
-import           Data.List
+import qualified Data.Text as T
 import           System.FilePath ( (</>) )
 import qualified Test.Tasty as TT
 import           Test.Tasty.HUnit
@@ -34,6 +34,12 @@ gcdSampleTests =
   let (sugar,sdesc) = findSugarIn sugarCube gcdSamples
   in [ testCase "valid sample" $ 20 @=? length gcdSamples
      , sugarTestEq "correct found count" sugarCube gcdSamples 1 length
+
+     , testCase "sweets rendering" $
+       let actual = sweetsTextTable [sugarCube] sugar
+       in do putStrLn "Table" -- try to start table on its own line
+             putStrLn $ T.unpack actual
+             T.length actual > 0 @? "change this to see the table"
 
      , testCaseSteps "sweets info" $ \step -> do
          step "rootMatchName"

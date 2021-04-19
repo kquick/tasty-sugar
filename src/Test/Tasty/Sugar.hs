@@ -76,6 +76,9 @@ module Test.Tasty.Sugar
   , NamedParamMatch
   , ParamMatch(..)
   , paramMatchVal
+    -- ** Reporting
+  , sweetsKVITable
+  , sweetsTextTable
   )
 where
 
@@ -83,11 +86,13 @@ import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Control.Monad.Logic
+import qualified Data.Foldable as F
 import           Data.Function
 import qualified Data.List as L
 import           Data.Maybe ( isJust, isNothing, fromJust )
 import           Data.Proxy
 import           Data.Tagged
+import qualified Data.Text as T
 import           Data.Typeable ( Typeable )
 import           Numeric.Natural ( Natural )
 import           Options.Applicative
@@ -96,6 +101,7 @@ import           System.Directory ( listDirectory )
 import           Test.Tasty.Ingredients
 import           Test.Tasty.Options
 
+import Test.Tasty.Sugar.Report
 import Test.Tasty.Sugar.Analysis
 import Test.Tasty.Sugar.Types
 
@@ -147,6 +153,9 @@ searchResultsSugarReport pats = TestManager [] $ \opts _tests ->
                            show (sum $ fmap (length . fst) searchinfo) ++
                            "]:")
                  putStrLn $ show $ vsep $ concatMap (map (("•" <+>) . align . pretty) . fst) searchinfo
+                 putStrLn ""
+                 putStrLn $ T.unpack $ sweetsTextTable pats $
+                   F.fold (fst <$> searchinfo)
                  return True
   else Nothing
 

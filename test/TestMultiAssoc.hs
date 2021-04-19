@@ -1,7 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module TestMultiAssoc ( multiAssocTests ) where
 
+import qualified Data.Text as T
 import           System.FilePath ( (</>) )
 import qualified Test.Tasty as TT
 import           Test.Tasty.HUnit
@@ -30,15 +32,21 @@ sugarCube = mkCUBE
                               ]
               }
 
+
 multiAssocTests :: [TT.TestTree]
 multiAssocTests =
   let (sugar1,_s1desc) = findSugarIn sugarCube sample1
   in [
-
        -- This is simply the number of entries in sample1; if this
        -- fails in means that sample1 has been changed and the other
        -- tests here are likely to need updating.
        testCase "valid sample" $ 58 @=? length sample1
+
+     , testCase "sweets rendering" $
+       let actual = sweetsTextTable [sugarCube] sugar1
+       in do putStrLn "Table" -- try to start table on its own line
+             putStrLn $ T.unpack actual
+             T.length actual > 0 @? "change this to see the table"
 
      , sugarTestEq "correct found count" sugarCube sample1 6 length
 
