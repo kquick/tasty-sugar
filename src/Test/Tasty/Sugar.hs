@@ -104,8 +104,8 @@ import           System.Directory ( listDirectory )
 import           Test.Tasty.Ingredients
 import           Test.Tasty.Options
 
-import Test.Tasty.Sugar.Report
 import Test.Tasty.Sugar.Analysis
+import Test.Tasty.Sugar.Report
 import Test.Tasty.Sugar.Types
 
 import Prelude hiding ( exp )
