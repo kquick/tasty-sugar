@@ -89,7 +89,7 @@ library tasty-sugar-internal
   build-depends:     base >= 4.10
                    , filepath
                    , filemanip
-                   , kvitable
+                   , kvitable >= 1.0 && < 1.1
                    , logict
                    , microlens >= 0.4 && < 0.5
                    , prettyprinter >= 1.7 && < 1.8
