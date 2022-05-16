@@ -8,6 +8,7 @@ module Test.Tasty.Sugar.ExpectCheck
   )
   where
 
+import           Control.Monad
 import           Control.Monad.Logic
 import           System.FilePath ( (</>) )
 import qualified Data.List as L

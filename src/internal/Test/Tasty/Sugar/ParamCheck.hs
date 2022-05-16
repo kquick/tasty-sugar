@@ -8,6 +8,7 @@ module Test.Tasty.Sugar.ParamCheck
   )
   where
 
+import           Control.Monad
 import           Control.Monad.Logic
 import qualified Data.List as L
 import           Data.Maybe ( fromMaybe )

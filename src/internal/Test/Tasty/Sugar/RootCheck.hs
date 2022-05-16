@@ -9,6 +9,7 @@ module Test.Tasty.Sugar.RootCheck
   )
   where
 
+import           Control.Monad
 import           Control.Monad.Logic
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes, isNothing )
