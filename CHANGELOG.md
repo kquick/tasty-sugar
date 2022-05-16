@@ -1,5 +1,10 @@
 # Revision history for tasty-sugar
 
+## 1.2.0.0 -- 2022-05-16
+
+ * Update for logict 0.8.0.0 breaking change.
+ * Fix small issues in example usage haddock.
+
 ## 1.1.1.0 -- 2021-04-19
 
  * Use 'kvitable' to render `--showsearch` output.
