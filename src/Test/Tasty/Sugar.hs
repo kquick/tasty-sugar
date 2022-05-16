@@ -93,11 +93,9 @@ import           Data.Function
 import qualified Data.List as L
 import           Data.Maybe ( isJust, isNothing, fromJust )
 import           Data.Proxy
-import           Data.Tagged
 import qualified Data.Text as T
 import           Data.Typeable ( Typeable )
 import           Numeric.Natural ( Natural )
-import           Options.Applicative
 import           Prettyprinter
 import           System.Directory ( listDirectory )
 import           Test.Tasty.Ingredients
