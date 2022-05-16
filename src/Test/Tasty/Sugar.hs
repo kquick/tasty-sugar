@@ -20,8 +20,8 @@
 --
 -- Example:
 --
--- > import Test.Tasty as T
--- > import Test.Tasty.Options
+-- > import qualified Test.Tasty as T
+-- > import Test.Tasty.Hunit ( testCase, (@?=) )
 -- > import Test.Tasty.Sugar
 -- > import Numeric.Natural
 -- >
@@ -43,11 +43,10 @@
 -- >
 -- > mkTest :: Sweets -> Natural -> Expectation -> IO [T.TestTree]
 -- > mkTest s n e = do
--- >    inp <- readFile inpF
 -- >    exp <- reads <$> readFile $ expectedFile e
 -- >    return [ testCase (rootMatchName s <> " #" <> show n) $ do
 -- >               Just inpF <- lookup "inputs" $ associated e
--- >               result <- testSomething inp
+-- >               result <- testSomething inpF
 -- >               result @?= exp
 -- >           ]
 --
