@@ -69,7 +69,7 @@ pvalMatch :: Separators
           -> [(String, Maybe String)]
           -> Logic ([NamedParamMatch], Int, String)
 pvalMatch seps preset pvals =
-  let (ppv, rpv) = L.partition isPreset pvals
+  let (ppv, _rpv) = L.partition isPreset pvals
       isPreset p = fst p `elem` (fmap fst preset)
 
       matchesPreset = all matchPreset ppv
@@ -105,7 +105,7 @@ pvalMatch seps preset pvals =
 -- set specified by the input.
 
 pvVals :: [NamedParamMatch] -> [(String, Maybe String)] -> Logic [NamedParamMatch]
-pvVals presets [] = return []
+pvVals _ [] = return []
 pvVals presets ((pn, mpv):ps) =
   do nxt <- pvVals presets ps
      let explicit v = return $ (pn, Explicit v) : nxt
@@ -113,7 +113,6 @@ pvVals presets ((pn, mpv):ps) =
                              case lookup pn presets of
                                Nothing -> maybe NotSpecified Assumed
                                Just presetV -> const presetV
-                           remPVMS = pvVals presets ps
                        in return $ (pn, pMatchImpl mpv) : nxt
      (maybe mzero explicit mpv) `mplus` notExplicit
 
@@ -173,11 +172,11 @@ dirMatches rootDir fname params = do
   dmatch <- fmap (fmap Explicit)
             . fmap (first fromJust)
             . filter (not . isNothing . fst)
-            <$> (return (zip pmatches pathPart)
+            <$> ((return (zip pmatches pathPart))
                  `mplus`
                  (inEachNothing freeParam $ zip pmatches pathPart))
 
-  let drem = filter (not . (`elem` (fst <$> dmatch)) . fst) params
+  let drem = removePVals params dmatch
 
   return (dmatch, drem)
 
