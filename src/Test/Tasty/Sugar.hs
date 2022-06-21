@@ -52,6 +52,7 @@
 --
 -- See the README for more information.
 
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-deprecations #-}
 
@@ -98,8 +99,10 @@ import qualified Data.Text as T
 import           Data.Typeable ( Typeable )
 import           Numeric.Natural ( Natural )
 import           Prettyprinter
-import           System.Directory ( listDirectory )
-import           System.FilePath ( (</>) )
+import           System.Directory ( doesDirectoryExist, getCurrentDirectory
+                                  , listDirectory )
+import           System.FilePath ( (</>), isRelative )
+import           System.IO ( hPutStrLn, stderr )
 import           Test.Tasty.Ingredients
 import           Test.Tasty.Options
 
@@ -171,7 +174,16 @@ findSugar cube = fst <$> findSugar' cube
 
 findSugar' :: MonadIO m => CUBE -> m ([Sweets], Doc ann)
 findSugar' pat =
-  let dirListWithPaths d = fmap (d </>) <$> listDirectory d
+  let dirListWithPaths d = do
+        doesDirectoryExist d >>= \case
+          True -> fmap (d </>) <$> listDirectory d
+          False -> do
+            showD <- case isRelative d of
+                       True -> do cwd <- getCurrentDirectory
+                                  return $ "[" <> cwd <> "/]" <> d
+                       False -> return d
+            hPutStrLn stderr $ "WARNING: " <> showD <> " does not exist"
+            return []
   in findSugarIn pat
      <$> liftIO (concat <$> (mapM dirListWithPaths
                              $ L.filter (not . null)
