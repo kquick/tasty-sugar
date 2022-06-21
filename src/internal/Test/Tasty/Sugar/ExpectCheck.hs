@@ -198,7 +198,22 @@ getExp inpDirs rootPrefix rootPMatches seps pvals expSuffix allNames =
 
          (fp, cnt, npm) <- getExpFileParams inpDir rootPrefix remRootMatches
                            seps remPVals expSuffix validNames
-         return (fp, cnt, inpDirMatch <> otherMatchesInSubdir <> npm)
+
+         -- Corner case: a wildcard parameter could be selected from both a
+         -- subdir and the filename... if the values are the same, that's OK, but
+         -- if the values are different it should be rejected.
+
+         let dpm = inpDirMatch <> otherMatchesInSubdir
+
+         let conflict =
+               let chkNPM (pn,pv) acc =
+                     acc || case lookup pn dpm of
+                              Nothing -> False
+                              Just v -> v /= pv
+               in foldr chkNPM False npm
+         guard (not conflict)
+
+         return (fp, length dpm + cnt, dpm <> npm)
 
        else getExpFileParams inpDir rootPrefix rootPMatches seps pvals
               expSuffix allNames
