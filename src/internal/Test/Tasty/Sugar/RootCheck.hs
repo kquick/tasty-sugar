@@ -109,6 +109,15 @@ rootParamMatches rootNm seps parms rMatch = do
   -- want [prefix, sep, MATCHES, [suffix]]
   guard (length rnSplit > 2 + length txtRootSfx)
 
+  let hasDupParNm =
+        let getParNm = \case
+              RootParNm pn _ -> Just pn
+              _ -> Nothing
+            parNms = catMaybes (getParNm <$> rnParts)
+        in not $ length parNms == length (L.nub parNms)
+
+  guard (not hasDupParNm)
+
   guard (not $ isRootParNm $ head rnParts) -- must have a prefix
 
   let rnChunks =
