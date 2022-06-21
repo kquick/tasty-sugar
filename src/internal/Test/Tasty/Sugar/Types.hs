@@ -340,7 +340,7 @@ data ParamMatch =
   -- 'NotSpecified' for this type of parameter.
   | NotSpecified
 
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 instance Pretty ParamMatch where
   pretty (Explicit s) = pretty s
