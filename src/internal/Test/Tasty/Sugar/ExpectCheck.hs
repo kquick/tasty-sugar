@@ -10,8 +10,9 @@ module Test.Tasty.Sugar.ExpectCheck
 
 import           Control.Monad
 import           Control.Monad.Logic
-import           System.FilePath ( takeFileName )
+import           Data.Function ( on )
 import qualified Data.List as L
+import           System.FilePath ( (</>), takeFileName )
 
 import           Test.Tasty.Sugar.AssocCheck
 import           Test.Tasty.Sugar.ParamCheck
@@ -112,7 +113,7 @@ expectedSearch inpDirs rootPrefix rootPVMatches seps params expSuffix assocNames
      inpDir <- eachFrom inpDirs
      return $ Expectation { expectedFile = expFile
                           , associated = assocFiles
-                          , expParamsMatch = pmatch
+                          , expParamsMatch = L.sortBy (compare `on` fst) pmatch
                           }
 
 -- Get all expected files for a particular sequence of param+value.
