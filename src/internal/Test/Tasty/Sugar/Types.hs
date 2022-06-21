@@ -219,9 +219,20 @@ prettyParamPatterns = \case
 -- object.. a Specifications With Existing Expected Testing Samples.
 
 data Sweets = Sweets
-  { rootBaseName :: String -- ^ base of root for matching to expected
-  , rootMatchName :: String -- ^ full name of matched root
-  , rootFile :: FilePath    -- ^ full filepath of matched root
+  { rootBaseName :: String
+    -- ^ The base of the root path for matching to expected.  This has no path
+    -- elements, no extensions and no parameters.  It can be useful to use to
+    -- compare to other fields in the 'expected' Expectation list of this
+    -- structure.
+  , rootMatchName :: String
+    -- ^ Matched root.  This is the name of the matched file, (no path elements)
+    -- that matched the rootName in the input CUBE.  This includes any extension
+    -- or parameter substitutions.  This is often the best name to use for
+    -- displaying this matched item.
+  , rootFile :: FilePath
+    -- ^ The full actual filepath of the matched root, with all path elements,
+    -- extensions, parameters, and suffixes present.  This is most useful to open
+    -- or otherwise access the file.
   , cubeParams :: [ParameterPattern] -- ^ parameters for match
   , expected :: [Expectation] -- ^ all expected files and associated
   }
