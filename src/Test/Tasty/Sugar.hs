@@ -180,7 +180,7 @@ findSugar' pat =
                             in dirListWithPaths recurse
                                $ if recurse then takeDirectory d else d
       dirListWithPaths recurse d =
-        putStrLn ("Reading " <> show d) >>
+        -- putStrLn ("Reading " <> show d) >>
         doesDirectoryExist d >>= \case
           True ->
             do dirContents <- fmap (d </>) <$> listDirectory d
