@@ -170,7 +170,14 @@ type ParameterPattern = (String, Maybe [String])
 type Separators = String
 
 -- | Generates the default 'CUBE' configuration; callers should override
--- individual fields as appropriate.
+-- individual fields as appropriate.  This is the preferred way to initialize a
+-- CUBE if defaults are to be used for various fields:
+--
+--   * inputDirs:      [ "test/samples" ]
+--   * inputDir:       "test/samples"
+--   * separators:     .-
+--   * rootName:       *
+--   * expectedSuffix: exp
 
 mkCUBE :: CUBE
 mkCUBE = CUBE { inputDir = "test/samples"
