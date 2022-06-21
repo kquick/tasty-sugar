@@ -13,6 +13,7 @@ import           Control.Monad
 import           Control.Monad.Logic
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes )
+import           System.FilePath ( (</>), takeFileName )
 
 import           Test.Tasty.Sugar.ParamCheck
 import           Test.Tasty.Sugar.Types
@@ -22,13 +23,14 @@ import           Test.Tasty.Sugar.Types
 -- the rootMatch plus the named parameter values (in the same order
 -- but with any combination of separators) and the specified suffix
 -- match.
-getAssoc :: FilePath
+getAssoc :: [FilePath]
+         -> FilePath
          -> Separators
          -> [NamedParamMatch]
          -> [ (String, FileSuffix) ]
          -> [FilePath]
          -> Logic [(String, FilePath)]
-getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
+getAssoc inpDirs rootPrefix seps pmatch assocNames allNames = assocSet
   where
     assocSet = concat <$> mapM fndBestAssoc assocNames
 
@@ -53,14 +55,16 @@ getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
     fndAssoc assoc =
       do pseq <- npseq pmatch
          (rank, assocPfx, assocSfx) <- sepParams seps (fmap snd pseq)
+         inpDir <- eachFrom inpDirs
+         let assocBase = inpDir </> takeFileName rootPrefix
          if null assocSfx
            then do let assocNm = if null (snd assoc) &&
                                     length assocPfx == 1 -- just a separator
-                                 then rootPrefix
-                                 else rootPrefix <> assocPfx <> (snd assoc)
+                                 then assocBase
+                                 else assocBase <> assocPfx <> (snd assoc)
                    guard (assocNm `elem` allNames)
                    return (rank, (fst assoc, assocNm))
-           else let assocStart = rootPrefix <> assocPfx
+           else let assocStart = assocBase <> assocPfx
                     assocEnd = assocSfx <> snd assoc
                     aSL = length assocStart
                     aEL = length assocEnd

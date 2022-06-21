@@ -38,7 +38,7 @@ findExpectation pat rootN allNames (rootPMatches, matchPrefix, _) =
       params = validParams pat
       expSuffix = expectedSuffix pat
       candidates = filter possible allNames
-      possible f = and [ matchPrefix `L.isPrefixOf` f
+      possible f = and [ takeFileName matchPrefix `L.isPrefixOf` takeFileName f
                        , rootN /= f
                        ]
       mkSweet e = Just $ Sweets { rootMatchName = takeFileName rootN
@@ -108,9 +108,8 @@ expectedSearch inpDirs rootPrefix rootPVMatches seps params expSuffix assocNames
                      concatMap L.inits $
                      L.permutations params
              pvals <- getPVals pseq
-             getExp rootPrefix rootPVMatches seps pvals expSuffix allNames
-     assocFiles <- getAssoc rootPrefix seps pmatch assocNames allNames
-     inpDir <- eachFrom inpDirs
+             getExp inpDirs rootPrefix rootPVMatches seps pvals expSuffix allNames
+     assocFiles <- getAssoc inpDirs rootPrefix seps pmatch assocNames allNames
      return $ Expectation { expectedFile = expFile
                           , associated = assocFiles
                           , expParamsMatch = L.sortBy (compare `on` fst) pmatch
@@ -120,14 +119,15 @@ expectedSearch inpDirs rootPrefix rootPVMatches seps params expSuffix assocNames
 -- Returns the expected file, the sequence of parameter values that
 -- match that expect file, and a ranking (the number of those paramter
 -- values that actually appear in the expect file.
-getExp :: FilePath
+getExp :: [FilePath]
+       -> FilePath
        -> [NamedParamMatch]
        -> Separators
        -> [(String, Maybe String)]
        -> FileSuffix
        -> [FilePath]
        -> Logic (FilePath, Int, [NamedParamMatch])
-getExp rootPrefix rootPMatches seps pvals expSuffix allNames =
+getExp inpDirs rootPrefix rootPMatches seps pvals expSuffix allNames =
   do (pm, pmcnt, pmstr) <- pvalMatch seps rootPMatches pvals
      -- If the expSuffix starts with a separator then *only that*
      -- separator is allowed for the suffix (other seps are still
@@ -140,9 +140,10 @@ getExp rootPrefix rootPMatches seps pvals expSuffix allNames =
                                  , last pmstr == head expSuffix
                                  ]
      guard suffixSepMatch
+     inpDir <- eachFrom inpDirs
      let expFile = if suffixSpecifiesSep
-                   then rootPrefix <> pmstr <> tail expSuffix
-                   else rootPrefix <> pmstr <> expSuffix
+                   then inpDir </> takeFileName rootPrefix <> pmstr <> tail expSuffix
+                   else inpDir </> takeFileName rootPrefix <> pmstr <> expSuffix
      guard (expFile `elem` allNames)
      return (expFile, pmcnt, pm)
 
