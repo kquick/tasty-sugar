@@ -92,9 +92,9 @@ pvalMatch seps preset pvals =
            else do s <- eachFrom seps
                    foldM sepJoin [s] pvs
 
-  in do guard matchesPreset
-        candidateVals <- pvVals rpv
-        let rset = preset <> candidateVals
+  in do guard $ matchesPreset
+        candidateVals <- pvVals preset pvals
+        let rset = preset <> removePVals candidateVals preset
             orderedRset = fmap from_rset $ fmap fst pvals
             from_rset n = let v = maybe NotSpecified id $ L.lookup n rset in (n,v)
         pvstr <- genPVStr orderedRset
@@ -104,15 +104,18 @@ pvalMatch seps preset pvals =
 -- | Generate the various combinations of parameters+values from the possible
 -- set specified by the input.
 
-pvVals :: [(String, Maybe String)] -> Logic [NamedParamMatch]
-pvVals [] = return []
-pvVals ((pn, mpv):ps) =
-  let explicit v = do nxt <- pvVals ps
-                      return $ (pn, Explicit v) : nxt
-      notExplicit = let pMatchImpl = maybe NotSpecified Assumed
-                        remPVMS = fmap (fmap pMatchImpl) ps
-                    in return $ (pn, pMatchImpl mpv) : remPVMS
-  in (maybe mzero explicit mpv) `mplus` notExplicit
+pvVals :: [NamedParamMatch] -> [(String, Maybe String)] -> Logic [NamedParamMatch]
+pvVals presets [] = return []
+pvVals presets ((pn, mpv):ps) =
+  do nxt <- pvVals presets ps
+     let explicit v = return $ (pn, Explicit v) : nxt
+         notExplicit = let pMatchImpl =
+                             case lookup pn presets of
+                               Nothing -> maybe NotSpecified Assumed
+                               Just presetV -> const presetV
+                           remPVMS = pvVals presets ps
+                       in return $ (pn, pMatchImpl mpv) : nxt
+     (maybe mzero explicit mpv) `mplus` notExplicit
 
 
 -- | Removes the second set of named params from the first set, leaving the
