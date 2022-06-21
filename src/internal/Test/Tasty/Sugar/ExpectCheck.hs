@@ -14,7 +14,8 @@ import           Control.Monad
 import           Control.Monad.Logic
 import           Data.Function ( on )
 import qualified Data.List as L
-import           System.FilePath ( (</>), takeFileName )
+import           System.FilePath ( (</>), takeDirectory, takeFileName
+                                 , splitPath )
 
 import           Test.Tasty.Sugar.AssocCheck
 import           Test.Tasty.Sugar.ParamCheck
@@ -130,22 +131,93 @@ getExp :: [FilePath]
        -> [FilePath]
        -> Logic (FilePath, Int, [NamedParamMatch])
 getExp inpDirs rootPrefix rootPMatches seps pvals expSuffix allNames =
-  do (pm, pmcnt, pmstr) <- pvalMatch seps rootPMatches pvals
+  do inpDir <- eachFrom inpDirs
+     let idLen = length $ splitPath inpDir
+
+     if takeFileName inpDir == "*"
+       then
+       do
+         -- Some of the params may be encoded in the subdirectories instead of in
+         -- the target filename (each param value could appear in either).  If a
+         -- rootPMatches value is in a subdirectory, no other values for that
+         -- parameter can appear, otherwise all possible values could appear.  A
+         -- subset of the rootPMatches may appear in the subdirs, but only the
+         -- maximal subset can be considered.
+
+         let dirNames = filter (takeDirectory inpDir `L.isPrefixOf`) allNames
+
+         let rootMatchesInSubdir :: FilePath -> [NamedParamMatch]
+             rootMatchesInSubdir f =
+               let sp = init <$> (init $ drop (idLen - 1) $ splitPath f)
+                   chkRootMatch d r =
+                     let chkRPMatch p r' =
+                           case getExplicit $ snd p of
+                             Just v -> if d == v then p : r' else r'
+                             Nothing -> r'
+                     in foldr chkRPMatch r rootPMatches
+               in foldr chkRootMatch mempty sp
+
+         let inpDirMatches = fmap rootMatchesInSubdir <$> zip dirNames dirNames
+
+         (dirName, inpDirMatch) <- eachFrom inpDirMatches
+
+         let nonRootMatchPVals =
+               removePVals pvals inpDirMatch
+
+         (otherMatchesInSubdir, _) <-
+           dirMatches inpDir dirName $ (fmap (fmap (:[])) <$> nonRootMatchPVals)
+
+         let remPVals = removePVals nonRootMatchPVals otherMatchesInSubdir
+
+         let remRootMatches = removePVals rootPMatches inpDirMatch
+         let validNames = [ dirName ]
+
+         (fp, cnt, npm) <- getExpFileParams inpDir rootPrefix remRootMatches
+                           seps remPVals expSuffix validNames
+         return (fp, cnt, inpDirMatch <> otherMatchesInSubdir <> npm)
+
+       else getExpFileParams inpDir rootPrefix rootPMatches seps pvals
+              expSuffix allNames
+
+
+
+getExpFileParams :: FilePath
+                 -> FilePath
+                 -> [NamedParamMatch]
+                 -> Separators
+                 -> [(String, Maybe String)]
+                 -> FileSuffix
+                 -> [FilePath]
+                 -> Logic (FilePath, Int, [NamedParamMatch])
+getExpFileParams inpDir rootPrefix rootPMatches seps pvals expSuffix allNames =
+  do let suffixSpecifiesSep = and [ not (null expSuffix)
+                                  , head expSuffix `elem` seps
+                                  ]
+     (pm, pmcnt, pmstr) <- pvalMatch seps rootPMatches pvals
+
      -- If the expSuffix starts with a separator then *only that*
      -- separator is allowed for the suffix (other seps are still
      -- allowed for parameter value separation).
-     let suffixSpecifiesSep = and [ not (null expSuffix)
-                                  , head expSuffix `elem` seps
-                                  ]
      let suffixSepMatch = not suffixSpecifiesSep
                           || and [ not (null pmstr)
                                  , last pmstr == head expSuffix
                                  ]
      guard suffixSepMatch
-     inpDir <- eachFrom inpDirs
-     let expFile = if suffixSpecifiesSep
-                   then inpDir </> takeFileName rootPrefix <> pmstr <> tail expSuffix
-                   else inpDir </> takeFileName rootPrefix <> pmstr <> expSuffix
+
+     let ending = if suffixSpecifiesSep then tail expSuffix else expSuffix
+
+     expFile <-
+       if takeFileName inpDir == "*"
+       then do
+         -- Some unknown number of path elements, so try each file in
+         -- allNames that matches the path prefix and filename suffix
+         -- portions
+         eachFrom
+         $ filter ((pmstr <> ending) `L.isSuffixOf`)
+         $ filter (takeDirectory inpDir `L.isPrefixOf`) allNames
+       else
+         return $ inpDir </> takeFileName rootPrefix <> pmstr <> ending
+
      guard (expFile `elem` allNames)
      return (expFile, pmcnt, pm)
 
