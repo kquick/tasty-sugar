@@ -368,6 +368,10 @@ getExplicit :: ParamMatch -> Maybe String
 getExplicit (Explicit v) = Just v
 getExplicit _            = Nothing
 
+getParamVal :: ParamMatch -> Maybe String
+getParamVal (Explicit v) = Just v
+getParamVal (Assumed v) = Just v
+getParamVal _            = Nothing
 
 ----------------------------------------------------------------------
 
