@@ -110,6 +110,7 @@ test-suite test-sugar
   main-is:             TestMain.hs
   other-modules:       TestMultiAssoc
                        TestNoAssoc
+                       TestFileSys
                        TestGCD
                        TestSingleAssoc
                        TestStrlen2

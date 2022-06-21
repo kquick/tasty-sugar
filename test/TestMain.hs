@@ -25,6 +25,7 @@ import           TestSingleAssoc
 import           TestStrlen2
 import           TestUtils
 import           TestWildcard
+import           TestFileSys
 
 
 main :: IO ()
@@ -33,6 +34,7 @@ main =
         return $ testGroup (groupName <> " generated") tests
   in
   do generatedTests <- namedGenGroup "no association" <$> mkNoAssocTests
+     fsTests <- fileSysTests
      defaultMain $
        testGroup "tasty-sweet tests" $
        [ testProperty "empty file list" $
@@ -135,7 +137,9 @@ main =
        , testGroup "wildcard tests" $ wildcardAssocTests
        , testGroup "gcd sample tests" $ gcdSampleTests
        , testGroup "strlen2 sample tests" $ strlen2SampleTests
-       ] <> generatedTests
+       ]
+       <> generatedTests
+       <> fsTests
 
 
 runTestOrErr :: CUBE -> IO (Either String String)
