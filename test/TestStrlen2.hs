@@ -21,7 +21,7 @@ testParams = [ ("solver", Just ["z3", "yices", "boolector", "cvc4"])
 sugarCube = mkCUBE
               { rootName = "*.c"
               , expectedSuffix = "good"
-              , inputDir = testInpPath
+              , inputDirs = [ testInpPath ]
               , associatedNames = [ ("config", "config")
                                   , ("stdio", "print")
                                   ]
@@ -135,7 +135,7 @@ strlen2SampleTests =
 -- against _each_ file with different sets of Assumed and Explicit
 -- parameters.
 
-strlen2Samples = lines [r|
+strlen2Samples = ("test-data/samples" </>) <$> lines [r|
 strlen_test2.boolector.boolector.out
 strlen_test2.boolector.boolector.print.out
 strlen_test2.boolector.good

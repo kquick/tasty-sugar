@@ -19,10 +19,10 @@ import           TestUtils
 import           Text.RawString.QQ
 
 
-testInpPath = "test/samples"
+testInpPath = "some/path/to/test/samples"
 
 
-sample1 = lines [r|
+sample1 = (testInpPath </>) <$> lines [r|
 foo
 foo.exp
 foo.ex
@@ -49,7 +49,7 @@ wildcardAssocTests =
        let sugarCube = mkCUBE
                        { rootName = "*"
                        , expectedSuffix = "exp"
-                       , inputDir = testInpPath
+                       , inputDirs = [ testInpPath ]
                        , associatedNames = [ ("extern", "ex") ]
                        }
            p = (testInpPath </>)
@@ -149,7 +149,7 @@ wildcardAssocTests =
                        { rootName = "*"
                        , expectedSuffix = "exp"
                        , separators = ""
-                       , inputDir = testInpPath
+                       , inputDirs = [ testInpPath ]
                        , associatedNames = [ ("extern", "ex") ]
                        }
            p = (testInpPath </>)
@@ -200,7 +200,7 @@ wildcardAssocTests =
        let sugarCube = mkCUBE
                        { rootName = "*"
                        , expectedSuffix = ".exp"
-                       , inputDir = testInpPath
+                       , inputDirs = [ testInpPath ]
                        , associatedNames = [ ("extern", "ex") ]
                        }
            p = (testInpPath </>)

@@ -7,7 +7,7 @@ import Test.Tasty.Sugar
 import NiftyText
 
 
-cube = mkCUBE { inputDir = "examples/example1/testdata" }
+cube = mkCUBE { inputDirs = [ "examples/example1/testdata" ] }
 
 
 main = do sweets <- findSugar cube

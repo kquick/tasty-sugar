@@ -17,7 +17,7 @@ testInpPath = "test/samples"
 sugarCube = mkCUBE
               { rootName = "*.c"
               , expectedSuffix = "expected"
-              , inputDir = testInpPath
+              , inputDirs = [ testInpPath ]
               , associatedNames = [ ("exe", "exe") ]
               , validParams = [ ("arch", Just ["x86", "ppc"])
                               , ("form", Just ["base", "refined"])
@@ -26,15 +26,15 @@ sugarCube = mkCUBE
 
 singleAssocTests :: [TT.TestTree]
 singleAssocTests =
-  let (sugar1,_s1desc) = findSugarIn sugarCube sample1
+  let (sugar1,_s1desc) = findSugarIn sugarCube (sample1 testInpPath)
   in [
 
        -- This is simply the number of entries in sample1; if this
        -- fails in means that sample1 has been changed and the other
        -- tests here are likely to need updating.
-       testCase "valid sample" $ 58 @=? length sample1
+       testCase "valid sample" $ 58 @=? length (sample1 testInpPath)
 
-     , sugarTestEq "correct found count" sugarCube sample1 6 length
+     , sugarTestEq "correct found count" sugarCube (sample1 testInpPath) 6 length
 
      , testCase "results" $ compareBags "results" sugar1 $
        let p = (testInpPath </>) in

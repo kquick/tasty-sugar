@@ -22,16 +22,16 @@ import           Test.Tasty.Sugar.ParamCheck ( pmatchCmp )
 import           Test.Tasty.Sugar.Types
 
 
--- | Given a 'CUBE' and a list of files in the target directory,
+-- | Given a 'CUBE' and a list of filepaths in the target directories,
 -- return all 'Sweets' matches along with an explanation of the search
 -- process.  This is the core implementation for the
 -- 'Test.Tasty.Sugar.findSugar' API interface.
 checkRoots :: CUBE -> [FilePath]
            -> (Int, [([Sweets], [SweetExplanation])])
-checkRoots pat allFiles =
-  let isRootMatch n = n FPGP.~~ (rootName pat)
-      rootNames = FP.takeFileName <$> (filter isRootMatch allFiles)
-  in (length rootNames, fmap (checkRoot pat allFiles) rootNames)
+checkRoots pat allFilePaths =
+  let isRootMatch n = FP.takeFileName n FPGP.~~ (rootName pat)
+      rootNames = filter isRootMatch allFilePaths
+  in (length rootNames, fmap (checkRoot pat allFilePaths) rootNames)
 
 
 -- checkRoot will attempt to split the identified root file into three
@@ -45,7 +45,7 @@ checkRoots pat allFiles =
 -- returned for each expected file matching this root configuration
 checkRoot :: CUBE
           -> [FilePath] --  all possible expect candidates
-          -> FilePath  --  root name
+          -> FilePath  --  root path
           -> ([Sweets], [SweetExplanation])
 checkRoot pat allNames rootNm =
   let seps = separators pat

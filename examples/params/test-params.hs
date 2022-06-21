@@ -7,7 +7,7 @@ import Text.Show.Pretty
 
 
 cube :: CUBE
-cube = mkCUBE { inputDir = "examples/params/samples"
+cube = mkCUBE { inputDirs = [ "examples/params/samples" ]
               , rootName = "*.exe"
               , separators = "-."
               , expectedSuffix = "expct"

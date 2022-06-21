@@ -33,7 +33,7 @@ type FileSuffix = String
 --
 -- The primary elements to specify are the 'rootName' and the
 -- 'expectedSuffix'.  With these two specifications (and possibly the
--- 'inputDir') the 'Test.Tasty.Sugar' functionality will be similar to
+-- 'inputDirs') the 'Test.Tasty.Sugar' functionality will be similar to
 -- a "golden" testing package.
 --
 -- The 'validParams' is an optional feature that is useful when
@@ -46,10 +46,15 @@ type FileSuffix = String
 --
 data CUBE = CUBE
    {
-     -- | The directory in which the sample files that drive the
-     -- testing exist.  When specified as a relative filepath
-     -- (suggested) then this directory is relative to the cabal file.
+     -- | The original directory in which the sample files can be found.  This is
+     -- provided for backward-compatibility, but the use of the 'inputDirs'
+     -- alternative is recommended.
      inputDir :: FilePath
+
+     -- | The directories in which the sample files that drive the
+     -- testing exist.  When specified as a relative filepath
+     -- (suggested) then a directory is relative to the cabal file.
+   , inputDirs :: [FilePath]
 
      -- | The name of the "root" file for each test scenario.  The
      -- contents of this file are opaque to 'tasty-sweet' and are
@@ -57,13 +62,13 @@ data CUBE = CUBE
      -- the kernel for a set of test cases.
      --
      -- The root file should not be specified with any path element,
-     -- it should exist in the 'inputDir' location and it can be
+     -- it should exist in one of the 'inputDirs' location and it can be
      -- specified as a glob pattern.
      --
      -- The corresponding expected results files will be identified by
      -- finding files which match a portion of this name with a
      -- "{separator}{expectedSuffix}" appended to it.
-     , rootName :: FPGP.GlobPattern
+   , rootName :: FPGP.GlobPattern
 
      -- | The expected suffix for a target pattern for running a test.
      -- There may be multiple files specifying expected results for a
@@ -79,7 +84,7 @@ data CUBE = CUBE
      -- considered if preceeded by that specific separator; otherwise
      -- any of the 'separators' may be used prior to the
      -- 'expectedSuffix'.
-     , expectedSuffix :: FileSuffix
+   , expectedSuffix :: FileSuffix
 
      -- | The 'separators' specify the characters which separate the
      -- expected suffix from the rootName, and which also separate
@@ -94,7 +99,7 @@ data CUBE = CUBE
      -- The default separators (returned by 'mkCUBE') are ".-" meaning
      -- that extensions (and parameters) can be separated from the
      -- base name by either a period or a dash.
-     , separators :: Separators
+   , separators :: Separators
 
      -- | The 'associatedNames' specifies other files that are
      -- associated with a particular test configuration.  These files
@@ -107,7 +112,7 @@ data CUBE = CUBE
      -- Specified as a list of tuples, where each tuple is the
      -- (arbitrary) name of the associated file type, and the file
      -- type suffix (with no period or other separator).
-     , associatedNames :: [ (String, FileSuffix) ]
+   , associatedNames :: [ (String, FileSuffix) ]
 
      -- | The 'validParams' can be used to specify various parameters
      -- that may be present in the filename.
@@ -150,10 +155,11 @@ data CUBE = CUBE
      -- must be explicit and precise matches) and they cannot be blank
      -- (the lack of a parameter is handled automatically rather than
      -- an explicit blank value).
-     , validParams :: [ParameterPattern]
+   , validParams :: [ParameterPattern]
    }
    deriving (Show, Read)
 
+{-# DEPRECATED inputDir "Use inputDirs instead" #-}
 
 -- | Parameters are specified by their name and a possible list of
 -- valid values.  If there is no list of valid values, any value is
@@ -180,7 +186,8 @@ type Separators = String
 --   * expectedSuffix: exp
 
 mkCUBE :: CUBE
-mkCUBE = CUBE { inputDir = "test/samples"
+mkCUBE = CUBE { inputDirs = ["test/samples"]
+              , inputDir = ""
               , separators = ".-"
               , rootName = "*"
               , associatedNames = []
@@ -193,7 +200,8 @@ instance Pretty CUBE where
   pretty cube =
     let assoc = prettyAssocNames $ associatedNames cube
         parms = prettyParamPatterns $ validParams cube
-        hdrs = [ "input dir: " <+> pretty (inputDir cube)
+        hdrs = [ "input dirs: "
+                 <+> pretty (L.nub $ inputDir cube : inputDirs cube)
                , "rootName: " <+> pretty (rootName cube)
                , "expected: " <+>
                  brackets (pretty $ separators cube) <>

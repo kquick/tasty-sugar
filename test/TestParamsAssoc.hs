@@ -13,7 +13,7 @@ import           Text.RawString.QQ
 
 
 sample :: [String]
-sample = lines [r|
+sample = (testInpPath </>) <$> lines [r|
 recursive.rs
 recursive.fast.exe
 recursive.fast.expct
@@ -38,7 +38,7 @@ testInpPath = "test/params/samples"
 -- identified and removed from the root to match corresponding expects
 -- and associated files.
 
-sugarCube = mkCUBE { inputDir = testInpPath
+sugarCube = mkCUBE { inputDirs = [ testInpPath ]
                    , rootName = "*.exe"
                    , separators = "-."
                    , expectedSuffix = "expct"

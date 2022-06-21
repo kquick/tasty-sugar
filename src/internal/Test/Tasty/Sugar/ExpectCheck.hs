@@ -10,7 +10,7 @@ module Test.Tasty.Sugar.ExpectCheck
 
 import           Control.Monad
 import           Control.Monad.Logic
-import           System.FilePath ( (</>) )
+import           System.FilePath ( takeFileName )
 import qualified Data.List as L
 
 import           Test.Tasty.Sugar.AssocCheck
@@ -31,7 +31,7 @@ findExpectation pat rootN allNames (rootPMatches, matchPrefix, _) =
           observeAll $
           expectedSearch d matchPrefix rootPMatches seps params expSuffix o
           candidates
-      d = inputDir pat
+      d = inputDirs pat
       o = associatedNames pat
       seps = separators pat
       params = validParams pat
@@ -40,9 +40,9 @@ findExpectation pat rootN allNames (rootPMatches, matchPrefix, _) =
       possible f = and [ matchPrefix `L.isPrefixOf` f
                        , rootN /= f
                        ]
-      mkSweet e = Just $ Sweets { rootMatchName = rootN
-                                , rootBaseName = matchPrefix
-                                , rootFile = inputDir pat </> rootN
+      mkSweet e = Just $ Sweets { rootMatchName = takeFileName rootN
+                                , rootBaseName = takeFileName matchPrefix
+                                , rootFile = rootN
                                 , cubeParams = validParams pat
                                 , expected = e
                                 }
@@ -78,7 +78,7 @@ findExpectation pat rootN allNames (rootPMatches, matchPrefix, _) =
                                    })
 
 -- Find all Expectations matching this rootMatch
-expectedSearch :: FilePath
+expectedSearch :: [FilePath]
                -> FilePath
                -> [NamedParamMatch]
                -> Separators
@@ -87,7 +87,7 @@ expectedSearch :: FilePath
                -> [ (String, FileSuffix) ]
                -> [FilePath]
                -> Logic Expectation
-expectedSearch inpDir rootPrefix rootPVMatches seps params expSuffix assocNames allNames =
+expectedSearch inpDirs rootPrefix rootPVMatches seps params expSuffix assocNames allNames =
   do (expFile, pmatch) <-
        let bestRanked :: [(FilePath, Int, [NamedParamMatch])]
                       -> Logic (FilePath, [NamedParamMatch])
@@ -109,8 +109,9 @@ expectedSearch inpDir rootPrefix rootPVMatches seps params expSuffix assocNames 
              pvals <- getPVals pseq
              getExp rootPrefix rootPVMatches seps pvals expSuffix allNames
      assocFiles <- getAssoc rootPrefix seps pmatch assocNames allNames
-     return $ Expectation { expectedFile = inpDir </> expFile
-                          , associated = fmap (inpDir </>) <$> assocFiles
+     inpDir <- eachFrom inpDirs
+     return $ Expectation { expectedFile = expFile
+                          , associated = assocFiles
                           , expParamsMatch = pmatch
                           }
 

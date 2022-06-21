@@ -75,7 +75,7 @@
    that.  Setup the tasty-sugar CUBE configuration as follows:
 
    #+BEGIN_EXAMPLE
-   cube = mkCUBE { inputDir = "test/samples"
+   cube = mkCUBE { inputDirs = [ "test/samples" ]
                  , rootName = "*.c"
                  , expectedSuffix = "exp"
                  , associatedNames = [ ("binary", "") ]
@@ -196,7 +196,7 @@
   ~Tasty.Sugar.CUBE~ configuration:
 
    #+BEGIN_EXAMPLE
-   cube = mkCUBE { inputDir = "test/samples"
+   cube = mkCUBE { inputDirs = [ "test/samples" ]
                  , rootName = "*.exe"
                  , expectedSuffix = "expct"
                  , associatedNames = [ ("c-source", ".c")
@@ -298,7 +298,7 @@
   The ~Tasty.Sugar.CUBE~ confguration for is scenario is updated to:
 
    #+BEGIN_EXAMPLE
-   cube = mkCUBE { inputDir = "test/samples"
+   cube = mkCUBE { inputDir = [ "test/samples" ]
                  , rootName = "*"
                  , separators = "-."
                  , expectedSuffix = "expct"
@@ -464,7 +464,7 @@
 
  #+BEGIN_EXAMPLE
  CUBE =
-   { inputDir = "tests/samples"  -- relative to cabal file
+   { inputDirs = [ "tests/samples" ]  -- relative to cabal file
    , separators = ".-"
    , rootName = "*.c"
    , associatedNames = [ ("exe", "exe")

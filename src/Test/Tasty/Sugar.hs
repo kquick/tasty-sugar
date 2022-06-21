@@ -25,7 +25,7 @@
 -- > import Test.Tasty.Sugar
 -- > import Numeric.Natural
 -- >
--- > sugarCube = mkCUBE { inputDir = "test/samples"
+-- > sugarCube = mkCUBE { inputDirs = [ "test/samples", "test/expected" ]
 -- >                    , rootName = "*.c"
 -- >                    , associatedNames = [ ("inputs", "inp") ]
 -- >                    , expectedSuffix = "exp"
@@ -53,6 +53,7 @@
 -- See the README for more information.
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-warn-deprecations #-}
 
 module Test.Tasty.Sugar
   (
@@ -98,6 +99,7 @@ import           Data.Typeable ( Typeable )
 import           Numeric.Natural ( Natural )
 import           Prettyprinter
 import           System.Directory ( listDirectory )
+import           System.FilePath ( (</>) )
 import           Test.Tasty.Ingredients
 import           Test.Tasty.Options
 
@@ -168,10 +170,16 @@ findSugar :: MonadIO m => CUBE -> m [Sweets]
 findSugar cube = fst <$> findSugar' cube
 
 findSugar' :: MonadIO m => CUBE -> m ([Sweets], Doc ann)
-findSugar' pat = findSugarIn pat <$> liftIO (listDirectory $ inputDir pat)
+findSugar' pat =
+  let dirListWithPaths d = fmap (d </>) <$> listDirectory d
+  in findSugarIn pat
+     <$> liftIO (concat <$> (mapM dirListWithPaths
+                             $ L.filter (not . null)
+                             $ L.nub
+                             $ inputDir pat : inputDirs pat))
 
 
--- | Given a list of files and a CUBE, returns the list of matching
+-- | Given a list of filepaths and a CUBE, returns the list of matching
 -- test Sweets that should be run, and an explanation of the search
 -- process (describing unmatched possibilities as well as valid test
 -- configurations).
@@ -180,14 +188,15 @@ findSugar' pat = findSugarIn pat <$> liftIO (listDirectory $ inputDir pat)
 -- the recommended interface functions to use for writing tests.
 
 findSugarIn :: CUBE -> [FilePath] -> ([Sweets], Doc ann)
-findSugarIn pat allFiles =
-  let (nCandidates, sres) = checkRoots pat allFiles
+findSugarIn pat allFilePaths =
+  let (nCandidates, sres) = checkRoots pat allFilePaths
       inps = concat $ fst <$> sres
       expl = vsep $
-             [ "Checking for test inputs in:" <+> pretty (inputDir pat)
+             [ "Checking for test inputs in:" <+>
+               pretty (L.nub $ inputDir pat : inputDirs pat)
              , indent 2 $
-               vsep $ [ "# files in directory =" <+>
-                        pretty (length allFiles)
+               vsep $ [ "# files in directories =" <+>
+                        pretty (length allFilePaths)
                       , "# root candidates matching" <+>
                         dquotes (pretty (rootName pat)) <+> equals <+>
                         pretty nCandidates

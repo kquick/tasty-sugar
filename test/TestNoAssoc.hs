@@ -17,7 +17,7 @@ testInpPath = "tests/samples"
 sugarCube = mkCUBE
               { rootName = "*.c"
               , expectedSuffix = "expected"
-              , inputDir = testInpPath
+              , inputDirs = [ testInpPath ]
               , associatedNames = []
               , validParams = [ ("arch", Just ["x86", "ppc"])
                               , ("form", Just ["base", "refined"])
@@ -26,15 +26,15 @@ sugarCube = mkCUBE
 
 noAssocTests :: [TT.TestTree]
 noAssocTests =
-  let (sugar1,s1desc) = findSugarIn sugarCube sample1
+  let (sugar1,s1desc) = findSugarIn sugarCube (sample1 testInpPath)
   in [
 
        -- This is simply the number of entries in sample1; if this
        -- fails in means that sample1 has been changed and the other
        -- tests here are likely to need updating.
-       testCase "valid sample" $ 58 @=? length sample1
+       testCase "valid sample" $ 58 @=? length (sample1 testInpPath)
 
-     , sugarTestEq "correct found count" sugarCube sample1 6 length
+     , sugarTestEq "correct found count" sugarCube (sample1 testInpPath) 6 length
 
      , testCase "results" $ compareBags "results" sugar1
        $ let p = (testInpPath </>) in
@@ -230,7 +230,7 @@ noAssocTests =
 
 mkNoAssocTests :: IO [TT.TestTree]
 mkNoAssocTests =
-  let (sugar1,s1desc) = findSugarIn sugarCube sample1
+  let (sugar1,s1desc) = findSugarIn sugarCube $ sample1 testInpPath
   in do tt <- withSugarGroups sugar1 TT.testGroup $
           \sw idx exp ->
             -- Verify this will suppress the "refined" tests for

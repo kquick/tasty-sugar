@@ -21,7 +21,7 @@ testParams = [ ("solver", Just ["z3", "yices", "boolector", "cvc4"])
 sugarCube = mkCUBE
               { rootName = "*.c"
               , expectedSuffix = "good"
-              , inputDir = testInpPath
+              , inputDirs = [ testInpPath ]
               , associatedNames = [ ("config", "config")
                                   , ("stdio", "print")
                                   , ("haskell", "hs")
@@ -132,7 +132,7 @@ gcdSampleTests =
          ]
      ]
 
-gcdSamples = lines [r|
+gcdSamples = (testInpPath </>) <$> lines [r|
 gcd-test.boolector.boolector.out
 gcd-test.boolector.boolector.print.out
 gcd-test.boolector.good

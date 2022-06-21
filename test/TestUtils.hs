@@ -24,11 +24,18 @@ genCube = do inpDir <- someStr
                      Gen.string (Range.linear 0 3) Gen.alpha
              assocs <- Gen.list (Range.linear 0 10) assoc
              params <- Gen.list (Range.linear 0 5) param
-             return $ CUBE inpDir srcName expSfx seps [] []
+             return $ mkCUBE { inputDirs = [ inpDir ]
+                             , rootName = srcName
+                             , expectedSuffix = expSfx
+                             , separators = seps
+                             , associatedNames = []
+                             , validParams = []
+                             }
  where
   assoc = (,) <$> someStr <*> someStr
   param = (,) <$> someStr <*> Gen.maybe (Gen.list (Range.linear 1 6) someStr)
   someStr = Gen.string (Range.linear 0 10) Gen.alpha
+
 
 testWithFailInfo desc test testInp = E.catch (test testInp) (\(_e::E.SomeException) -> assertFailure (show desc))
 
