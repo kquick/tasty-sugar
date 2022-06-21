@@ -5,11 +5,13 @@ module Test.Tasty.Sugar.ParamCheck
     eachFrom
   , getPVals
   , pvalMatch
+  , pmatchCmp
   )
   where
 
 import           Control.Monad
 import           Control.Monad.Logic
+import           Data.Function ( on )
 import qualified Data.List as L
 import           Data.Maybe ( fromMaybe )
 
@@ -99,3 +101,25 @@ pvalMatch seps preset pvals =
             from_rset n = let v = maybe NotSpecified id $ L.lookup n rset in (n,v)
         pvstr <- genPVStr orderedRset
         return (rset, length orderedRset, pvstr)
+
+
+pmatchCmp :: [ NamedParamMatch ] -> [ NamedParamMatch ] -> Ordering
+pmatchCmp p1 p2 =
+  let comparisons =
+        [
+          -- the one with more Explicit matches is better
+          compare `on` (length . filter (isExplicit . snd))
+          -- the one iwth more parameters (usually the same)
+        , compare `on` (length . fmap fst)
+          -- comparing keys
+        , compare `on` (L.sort . fmap fst)
+        ]
+        -- comparing the correlated ParamMatch values
+        <> map (\k -> compare `on` (lookup k)) (fst <$> p1)
+  in cascadeCompare comparisons p1 p2
+
+cascadeCompare :: [ a -> a -> Ordering ] -> a -> a -> Ordering
+cascadeCompare [] _ _ = EQ
+cascadeCompare (o:os) a b = case o a b of
+                              EQ -> cascadeCompare os a b
+                              x -> x
