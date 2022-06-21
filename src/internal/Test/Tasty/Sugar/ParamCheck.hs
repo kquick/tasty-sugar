@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 -- | Functions for checking different parameter/value combinations.
 
 module Test.Tasty.Sugar.ParamCheck
@@ -5,7 +7,10 @@ module Test.Tasty.Sugar.ParamCheck
     eachFrom
   , getPVals
   , pvalMatch
+  , removePVals
   , pmatchCmp
+  , dirMatches
+  , inEachNothing
   )
   where
 
@@ -13,6 +18,9 @@ import           Control.Monad
 import           Control.Monad.Logic
 import           Data.Function ( on )
 import qualified Data.List as L
+import           Data.Maybe ( catMaybes, fromJust, isNothing, listToMaybe )
+import           System.FilePath ( splitPath, takeFileName )
+import           Data.Bifunctor ( first )
 import           Data.Maybe ( fromMaybe )
 
 import           Test.Tasty.Sugar.Types
@@ -71,16 +79,6 @@ pvalMatch seps preset pvals =
                                 Just v -> paramMatchVal v pv
                                 Nothing -> True
 
-      pvVal :: [(String, Maybe String)] -> Logic [NamedParamMatch]
-      pvVal [] = return []
-      pvVal ((pn, mpv):ps) =
-        let explicit v = do nxt <- pvVal ps
-                            return $ (pn, Explicit v) : nxt
-            notExplicit = let pMatchImpl = maybe NotSpecified Assumed
-                              remPVMS = fmap (fmap pMatchImpl) ps
-                          in return $ (pn, pMatchImpl mpv) : remPVMS
-        in (maybe mzero explicit mpv) `mplus` notExplicit
-
       genPVStr :: [NamedParamMatch] -> Logic String
       genPVStr pvs =
         let vstr = fromMaybe "" . getExplicit . snd
@@ -95,12 +93,33 @@ pvalMatch seps preset pvals =
                    foldM sepJoin [s] pvs
 
   in do guard matchesPreset
-        candidateVals <- pvVal rpv
+        candidateVals <- pvVals rpv
         let rset = preset <> candidateVals
             orderedRset = fmap from_rset $ fmap fst pvals
             from_rset n = let v = maybe NotSpecified id $ L.lookup n rset in (n,v)
         pvstr <- genPVStr orderedRset
         return (rset, length orderedRset, pvstr)
+
+
+-- | Generate the various combinations of parameters+values from the possible
+-- set specified by the input.
+
+pvVals :: [(String, Maybe String)] -> Logic [NamedParamMatch]
+pvVals [] = return []
+pvVals ((pn, mpv):ps) =
+  let explicit v = do nxt <- pvVals ps
+                      return $ (pn, Explicit v) : nxt
+      notExplicit = let pMatchImpl = maybe NotSpecified Assumed
+                        remPVMS = fmap (fmap pMatchImpl) ps
+                    in return $ (pn, pMatchImpl mpv) : remPVMS
+  in (maybe mzero explicit mpv) `mplus` notExplicit
+
+
+-- | Removes the second set of named params from the first set, leaving the
+-- remainder of the first set that isn't matched in the second set.
+
+removePVals :: [(String, a)] -> [(String, b)] -> [(String, a)]
+removePVals main rmv = filter (not . (`elem` (fst <$> rmv)) . fst) main
 
 
 pmatchCmp :: [ NamedParamMatch ] -> [ NamedParamMatch ] -> Ordering
@@ -123,3 +142,49 @@ cascadeCompare [] _ _ = EQ
 cascadeCompare (o:os) a b = case o a b of
                               EQ -> cascadeCompare os a b
                               x -> x
+
+
+-- | Given the root directory and a file in that directory, along with the
+-- possible parameters and values, return each valid set of parameter matches
+-- from that file, along with the remaining unmatched parameter possibilities.
+
+dirMatches :: FilePath -> FilePath -> [ParameterPattern]
+           -> Logic ([NamedParamMatch], [ParameterPattern])
+dirMatches rootDir fname params = do
+  let rDLen = let l = length $ splitPath rootDir
+              in if takeFileName rootDir == "*" then l - 1 else l
+      pathPart = init <$> (init $ drop rDLen $ splitPath fname)
+
+  let findVMatch :: FilePath -> (String, Maybe [String]) -> Maybe String
+      findVMatch e (pn,pv) =
+        case pv of
+          Nothing -> Nothing
+          Just vs -> if e `elem` vs then Just pn else Nothing
+  let findPVMatch parms pthPartE found =
+        listToMaybe (catMaybes (map (findVMatch pthPartE) parms)) : found
+
+  let pmatches = foldr (findPVMatch params) [] pathPart
+
+  let freeParam = fst <$> L.find (isNothing . snd) params
+
+  dmatch <- fmap (fmap Explicit)
+            . fmap (first fromJust)
+            . filter (not . isNothing . fst)
+            <$> (return (zip pmatches pathPart)
+                 `mplus`
+                 (inEachNothing freeParam $ zip pmatches pathPart))
+
+  let drem = filter (not . (`elem` (fst <$> dmatch)) . fst) params
+
+  return (dmatch, drem)
+
+
+-- | Return each substitution of the first argument for each location in the
+-- second list that has a Nothing label; leave non-Nothings in the second list
+-- unchanged.
+
+inEachNothing :: Maybe a -> [(Maybe a,b)] -> Logic [(Maybe a,b)]
+inEachNothing mark into = do
+  let spots = filter (\i -> isNothing $ fst (into !! i)) $ [0..(length into) - 1]
+  i <- eachFrom spots
+  return $ (take i into) <> [ (mark, snd (into !! i)) ] <> (drop (i + 1) into)
