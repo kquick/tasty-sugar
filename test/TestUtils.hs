@@ -101,7 +101,7 @@ compareBags name gotBag expBag =
               else map (showEnt "expected") expUnique)
           <> (if null gotUnique
               then [Nothing]
-              else map (showEnt "actual") gotUnique)
+              else map (showEnt "ACTUAL") gotUnique)
 
 sugarTest name cube sample test =
   let (r,d) = findSugarIn cube sample
