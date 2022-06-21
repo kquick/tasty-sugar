@@ -19,15 +19,18 @@ import           Test.Tasty.Sugar.Types
 
 
 -- | Determine which parts of the input name form the basePrefix and any
--- parameter values for searching for related files (expected and
--- associated)
-rootMatch :: FilePath -> Separators -> [ParameterPattern] -> String
+-- parameter values for searching for related files (expected and associated).
+-- Parameter values are taken from subdirectory paths or filename elements (in
+-- that order).
+rootMatch :: FilePath -> FilePath -> Separators -> [ParameterPattern] -> String
           -> Logic ([NamedParamMatch], FilePath, FilePath)
-rootMatch origRootName seps params rootCmp =
-  ifte
-  (rootParamMatch origRootName seps params rootCmp)
-  return
-  (noRootParamMatch origRootName seps)
+rootMatch rootDir origRootName seps params rootCmp = do
+  (dmatch, drem) <- dirMatches rootDir origRootName params
+  (rpm, p, s) <- ifte
+                 (rootParamMatch rootDir origRootName seps drem rootCmp)
+                 return
+                 (noRootParamMatch origRootName seps)
+  return (dmatch <> rpm, p, s)
 
 
 data RootPart = RootSep String
@@ -63,16 +66,19 @@ rpNPM = let bld (RootParNm n v) = Just [(n, Explicit v)]
 
 -- Return the prefix and suffix of the root name along with the
 -- explicit parameter matches that comprise the central portion.
-rootParamMatch :: FilePath -> Separators -> [ParameterPattern] -> String
+rootParamMatch :: FilePath -> FilePath
+               -> Separators -> [ParameterPattern] -> String
                -> Logic ([NamedParamMatch], FilePath, FilePath)
-rootParamMatch origRootName seps params rootCmp =
+rootParamMatch rootDir origRootName seps params rootCmp =
   if null seps
   then rootParamMatchNoSeps origRootName seps params
-  else rootParamMatches origRootName seps params rootCmp
+  else rootParamFileMatches rootDir origRootName seps params rootCmp
 
-rootParamMatches :: FilePath -> Separators -> [ParameterPattern] -> String
-                 -> Logic ([NamedParamMatch], FilePath, FilePath)
-rootParamMatches rootNm seps parms rMatch = do
+
+rootParamFileMatches :: FilePath -> FilePath
+                     -> Separators -> [ParameterPattern] -> String
+                     -> Logic ([NamedParamMatch], FilePath, FilePath)
+rootParamFileMatches rootDir rootNm seps parms rMatch = do
   let rnSplit = sepSplit rootNm
       sepSplit = L.groupBy sepPoint
       sepPoint a b = not $ or [a `elem` seps, b `elem` seps ]
@@ -82,7 +88,7 @@ rootParamMatches rootNm seps parms rMatch = do
       txtRootSfx = sepSplit $ reverse $
                    -- Find the concrete extension in the
                    -- rootName. Somewhat crude, but basically stops at
-                   -- any charcter that could be part of a filemanip
+                   -- any character that could be part of a filemanip
                    -- GlobPattern.
                    takeWhile (not . flip elem "[*]\\(|)") $ reverse rMatch
 
@@ -103,7 +109,6 @@ rootParamMatches rootNm seps parms rMatch = do
                           Just (pn,_) -> RootParNm pn ptxt
                           Nothing -> RootText ptxt
                  else RootSep ptxt
-
         in fmap assignPart $ zip rnSplit [0..]
 
   -- want [prefix, sep, MATCHES, [suffix]]

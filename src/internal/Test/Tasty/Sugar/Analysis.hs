@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-deprecations #-}
+
 -- | Main internal entry point for determining the various test
 -- configurations specified by a CUBE input.
 
@@ -31,7 +33,9 @@ checkRoots :: CUBE -> [FilePath]
 checkRoots pat allFilePaths =
   let isRootMatch n = FP.takeFileName n FPGP.~~ (rootName pat)
       rootNames = filter isRootMatch allFilePaths
-  in (length rootNames, fmap (checkRoot pat allFilePaths) rootNames)
+      checked = filter (not . null . fst)
+                ((checkRoot pat allFilePaths) <$> rootNames)
+  in (length checked, checked)
 
 
 -- checkRoot will attempt to split the identified root file into three
@@ -51,6 +55,21 @@ checkRoot pat allNames rootNm =
   let seps = separators pat
       params = validParams pat
       combineExpRes (swts, expl) = bimap (swts :) (expl :)
+
+      inpDirForRoot =
+        let dirmatch d = if FP.takeFileName d == "*"
+                         then FP.takeDirectory d `L.isPrefixOf` rootNm
+                         else d == FP.takeDirectory rootNm
+            dirs = filter (not . null) $ inputDir pat : inputDirs pat
+        in case filter dirmatch dirs of
+             (d:[]) -> Just $ if FP.takeFileName d == "*"
+                              then FP.takeDirectory d
+                              else d
+             [] -> Nothing
+             _ -> error ("Internal error: inpDirForRoot " <> rootNm
+                         <> " not uniquely identifiable in "
+                         <> show dirs
+                        )
 
       mergeSweets swl =
         -- If multiple Sweets have the same rootMatchName this likely means that
@@ -98,9 +117,11 @@ checkRoot pat allNames rootNm =
               in ( swts, e { results = swts } )
         in foldr combineIfRootsMatch [] swl
 
-  in foldr combineExpRes ([], []) $
-     mergeSweets $
-     catMaybes $
-     fmap (findExpectation pat rootNm allNames) $
-     observeAll $
-     rootMatch rootNm seps params (rootName pat)
+  in case inpDirForRoot of
+       Just inDir -> foldr combineExpRes ([], []) $
+                     mergeSweets $
+                     catMaybes $
+                     fmap (findExpectation pat rootNm allNames) $
+                     observeAll $
+                     rootMatch inDir rootNm seps params (rootName pat)
+       Nothing -> ([],[])
