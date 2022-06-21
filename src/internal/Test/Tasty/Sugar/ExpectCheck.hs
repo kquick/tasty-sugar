@@ -33,16 +33,40 @@ findExpectation pat rootN allNames (rootPMatches, matchPrefix, _) =
   let r = mkSweet <$>
           trimExpectations $
           observeAll $
-          expectedSearch d matchPrefix rootPMatches seps params expSuffix o
-          candidates
-      d = inputDir pat : inputDirs pat
+          do guard (not $ null candidates)
+             expectedSearch d matchPrefix rootPMatches seps params expSuffix o
+               candidates
+      d = filter (not . null) $ inputDir pat : inputDirs pat
       o = associatedNames pat
       seps = separators pat
       params = validParams pat
       expSuffix = expectedSuffix pat
+      subdirConflict f =
+        -- A regular inpDir match won't conflict, but any inpDir ending in /*
+        -- might have a subdir component that has a *different* value for a
+        -- rootPMatch and should therefore return False to be excluded
+        let rd = not $ any (`L.isPrefixOf` f) d
+            sd = let chkDir inpD acc =
+                       let iDLen = length (splitPath inpD) - 1
+                           iSubdirs :: [ FilePath ]
+                           iSubdirs = init <$> (init $ drop iDLen $ splitPath f)
+                           wrongParamVal :: String -> NamedParamMatch -> Bool
+                           wrongParamVal sv (pn, pv) =
+                             case join $ lookup pn (validParams pat) of
+                               Nothing -> False
+                               Just vals -> case getParamVal pv of
+                                              Nothing -> False
+                                              Just v -> sv `elem` vals && sv /= v
+                           chkParamVal subdir conflict =
+                             conflict || any (wrongParamVal subdir) rootPMatches
+                       in foldr chkParamVal acc iSubdirs
+                 in foldr chkDir False $ filter ((== "*") . takeFileName) d
+
+        in and [ rd, sd ]
       candidates = filter possible allNames
       possible f = and [ takeFileName matchPrefix `L.isPrefixOf` takeFileName f
                        , rootN /= f
+                       , not $ subdirConflict f
                        ]
       mkSweet e = Just $ Sweets { rootMatchName = takeFileName rootN
                                 , rootBaseName = takeFileName matchPrefix
