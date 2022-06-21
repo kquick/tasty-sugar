@@ -1,5 +1,29 @@
 # Revision history for tasty-sugar
 
+## 1.2.0.0.99 [beta] -- 2022-06-20
+
+ * Add `inputDirs` to `CUBE` to replace single `inputDir`.  Allows test action
+   files to be spread across various directories.  The `inputDir` is still
+   supported for backward-compatibility, but the `inputDirs` is preferred.
+
+ * Any input directory can be specified with a trailing asterisk
+   (e.g. "test/data/*") in which case all subdirectories of that root directory
+   will be scanned.
+
+   - Any file (root, expected, or associated) may come from any directory (the
+     files in a single Sweet Expectation do not all need to occur in
+     the same subdirectory).
+
+   - The parameter matching will also consider subdirectory names (prioritized
+     over filename parameter matches).
+
+ * `SweetExplanation` `results` field is a single entry instead of an array.
+
+ * Added `getParamVal` function to extract the value (if any) from any
+   `ParamMatch`.
+
+ * Fixed some bugs in filename analysis and parameter determination.
+
 ## 1.2.0.0 -- 2022-05-16
 
  * Update for logict 0.8.0.0 breaking change.
