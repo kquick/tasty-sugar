@@ -80,6 +80,7 @@ module Test.Tasty.Sugar
   , NamedParamMatch
   , ParamMatch(..)
   , paramMatchVal
+  , getParamVal
     -- ** Reporting
   , sweetsKVITable
   , sweetsTextTable
