@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-deprecations #-}
+
 -- | Function to find expected results files for a specific root file,
 -- along with any parameter values identified by the root file.
 
@@ -32,7 +34,7 @@ findExpectation pat rootN allNames (rootPMatches, matchPrefix, _) =
           observeAll $
           expectedSearch d matchPrefix rootPMatches seps params expSuffix o
           candidates
-      d = inputDirs pat
+      d = inputDir pat : inputDirs pat
       o = associatedNames pat
       seps = separators pat
       params = validParams pat
