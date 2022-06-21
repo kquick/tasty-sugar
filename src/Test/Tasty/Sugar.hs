@@ -91,6 +91,7 @@ import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Control.Monad.Logic
+import           Data.Bifunctor ( bimap )
 import qualified Data.Foldable as F
 import           Data.Function
 import qualified Data.List as L
@@ -101,8 +102,8 @@ import           Data.Typeable ( Typeable )
 import           Numeric.Natural ( Natural )
 import           Prettyprinter
 import           System.Directory ( doesDirectoryExist, getCurrentDirectory
-                                  , listDirectory )
-import           System.FilePath ( (</>), isRelative )
+                                  , listDirectory, doesDirectoryExist )
+import           System.FilePath ( (</>), isRelative, takeDirectory, takeFileName)
 import           System.IO ( hPutStrLn, stderr )
 import           Test.Tasty.Ingredients
 import           Test.Tasty.Options
@@ -175,9 +176,22 @@ findSugar cube = fst <$> findSugar' cube
 
 findSugar' :: MonadIO m => CUBE -> m ([Sweets], Doc ann)
 findSugar' pat =
-  let dirListWithPaths d = do
+  let collectDirEntries d = let recurse = takeFileName d == "*"
+                            in dirListWithPaths recurse
+                               $ if recurse then takeDirectory d else d
+      dirListWithPaths recurse d =
+        putStrLn ("Reading " <> show d) >>
         doesDirectoryExist d >>= \case
-          True -> fmap (d </>) <$> listDirectory d
+          True ->
+            do dirContents <- fmap (d </>) <$> listDirectory d
+               if recurse
+                 then
+                 do subdirs <- mapM doesDirectoryExist dirContents
+                    let (dirs,files) = bimap (fmap snd) (fmap snd)
+                                       $ L.partition fst
+                                       $ zip subdirs dirContents
+                    (files <>) . concat <$> mapM (dirListWithPaths True) dirs
+                 else return dirContents
           False -> do
             showD <- case isRelative d of
                        True -> do cwd <- getCurrentDirectory
@@ -186,7 +200,7 @@ findSugar' pat =
             hPutStrLn stderr $ "WARNING: " <> showD <> " does not exist"
             return []
   in findSugarIn pat
-     <$> liftIO (concat <$> (mapM dirListWithPaths
+     <$> liftIO (concat <$> (mapM collectDirEntries
                              $ L.filter (not . null)
                              $ L.nub
                              $ inputDir pat : inputDirs pat))
