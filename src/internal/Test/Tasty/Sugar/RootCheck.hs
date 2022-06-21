@@ -158,40 +158,44 @@ rootParamMatches rootNm seps parms rMatch = do
                                , rpStr $ drop (idx + 2) allRP )
                       _ -> mzero
       freeFirst (Just (Left (pfx, pl1, sfx))) =
-        if length pfx < 3
-        then mzero
-        else case freeValueParm of
-               Nothing ->
-                 -- No wildcard param, so just try the observed
-                 -- pattern
-                 return ( rpNPM pl1, rpStr pfx, rpStr sfx )
-               Just p ->
-                 -- There is a wildcard parameter, try it at the end
-                 -- of pfx and before pl1
-                 case reverse pfx of
-                   (_:RootText lpv:_) ->
-                     return ( rpNPM $ RootParNm (fst p) lpv : pl1
-                            , rpStr $ reverse $ drop 3 $ reverse pfx
-                            , rpStr sfx )
-                   _ -> mzero
+        case freeValueParm of
+          Nothing ->
+            -- No wildcard param, so just try the observed
+            -- pattern
+            return ( rpNPM pl1, rpStr $ init pfx, rpStr sfx )
+          Just p ->
+            if length pfx < 3
+            then
+              -- not enough elements of pfx to support a wildcard, so there must
+              -- be no expression of the wildcard and just the observed pattern.
+              -- Also remove any separator from the prefix.
+              return ( rpNPM pl1, rpStr $ take 1 pfx, rpStr sfx )
+            else
+              -- There is a wildcard parameter, try it at the end
+              -- of pfx and before pl1
+              case reverse pfx of
+                (_:RootText lpv:_) ->
+                  return ( rpNPM $ RootParNm (fst p) lpv : pl1
+                         , rpStr $ reverse $ drop 3 $ reverse pfx
+                         , rpStr sfx )
+                _ -> mzero
 
       freeLast Nothing = mzero
       freeLast (Just (Right _)) = mzero
       freeLast (Just (Left (_, [], []))) = mzero -- handled by freeFirst
+      freeLast (Just (Left (_, _, []))) = mzero
       freeLast (Just (Left (pfx, parms1, sfx))) =
-        if null sfx
-        then mzero
-        else case freeValueParm of
-               Nothing -> mzero  -- handled by freeFirst
-               Just p ->
-                 -- There is a wildcard parameter, try it at the end
-                 -- of pfx and before pl1
-                 case sfx of
-                   (RootText fsv:_) ->
-                       return ( rpNPM $ parms1 <> [RootParNm (fst p) fsv]
-                              , rpStr pfx
-                              , rpStr $ tail sfx )
-                   _ -> mzero
+        case freeValueParm of
+          Nothing -> mzero  -- handled by freeFirst
+          Just p ->
+            -- There is a wildcard parameter, try it at the end
+            -- of pfx and before pl1
+            case sfx of
+              (RootText fsv:_) ->
+                return ( rpNPM $ parms1 <> [RootParNm (fst p) fsv]
+                       , rpStr $ init pfx
+                       , rpStr $ tail sfx )
+              _ -> mzero
 
       freeMid Nothing = mzero
       freeMid (Just (Left _)) = mzero
