@@ -378,7 +378,7 @@ data SweetExplanation =
   SweetExpl { rootPath :: FilePath
             , base :: String
             , expectedNames :: [String]  -- ^ candidates
-            , results :: [Sweets] -- ^ actual results
+            , results :: Sweets -- ^ actual results
             }
 
 instance Pretty SweetExplanation where
@@ -395,10 +395,7 @@ instance Pretty SweetExplanation where
       , if null nms
         then Nothing
         else Just $ indent 8 $ vsep $ map pretty nms
-      , if null (results expl)
-        then Nothing
-        else Just $ indent 2 $ hang 2 $ vsep $
-             "Results:" : map pretty (results expl)
+      , Just $ pretty $ results expl
     ]
 
 ------------------------------------------------------------------------

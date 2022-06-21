@@ -74,7 +74,7 @@ findExpectation pat rootN allNames (rootPMatches, matchPrefix, _) =
                                        (if null expSuffix then const True
                                         else (expSuffix `L.isSuffixOf`))
                                      candidates
-                                   , results = [ r' ]
+                                   , results = r'
                                    })
 
 -- Find all Expectations matching this rootMatch
