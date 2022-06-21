@@ -27,6 +27,7 @@ sweetsKVITable sweets =
           (\s ->
               [
                 ( ("base", T.pack $ rootBaseName s)
+                  : ("rootFile", T.pack $ rootFile s)
                   : [ (T.pack pn, T.pack $ show $ PP.pretty pv)
                     | (pn,pv) <- expParamsMatch e ]
                   <> [ (T.pack an, T.pack $ takeFileName af)
@@ -44,6 +45,8 @@ sweetsTextTable _ [] = "No Sweets provided for report"
 sweetsTextTable c s =
   let cfg = defaultRenderConfig
             { rowGroup = "base"
+                         : "rootFile"
                          : (T.pack . fst <$> take 1 (validParams $ head c))
+            , rowRepeat = False
             }
   in render cfg $ sweetsKVITable s
