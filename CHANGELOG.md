@@ -1,6 +1,6 @@
 # Revision history for tasty-sugar
 
-## 1.2.0.0.99 [beta] -- 2022-06-20
+## 1.3.0.0 -- 2022-06-28
 
  * Add `inputDirs` to `CUBE` to replace single `inputDir`.  Allows test action
    files to be spread across various directories.  The `inputDir` is still
