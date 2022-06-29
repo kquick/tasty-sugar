@@ -147,7 +147,7 @@ expectedSearch inpDirs rootPrefix rootPVMatches seps params expSuffix assocNames
                           }
 
 
--- Get all expected files for a particular sequence of param+value.
+-- | Get all expected files for a particular sequence of param+value.
 -- Returns the expected file, the sequence of parameter values that
 -- match that expect file, and a ranking (the number of those paramter
 -- values that actually appear in the expect file.

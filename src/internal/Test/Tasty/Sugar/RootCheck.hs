@@ -59,8 +59,7 @@ rpStr = let s = \case
 rpNPM :: [RootPart] -> [NamedParamMatch]
 rpNPM = let bld (RootParNm n v) = Just [(n, Explicit v)]
             bld (RootSep _) = Nothing
-            bld p = error ("Invalid RootPart for NamedParamMatch: "
-                           <> show p)
+            bld p = error ("Invalid RootPart for NamedParamMatch: " <> show p)
         in concat . catMaybes . fmap bld
 
 
