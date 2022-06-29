@@ -249,7 +249,7 @@ findSugarIn pat allFiles =
                       ] <> ((("--?" <+>) . pretty) <$> (concatMap snd sres))
              ]
   in case cubeIsValid pat of
-       Right _ -> (L.sortBy (compare `on` rootMatchName) inps, expl)
+       Right _ -> (L.sortBy (compare `on` rootFile) inps, expl)
        Left e -> error e  -- this is just testing code, so error is fine
 
   where

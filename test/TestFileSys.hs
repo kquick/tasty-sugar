@@ -369,7 +369,7 @@ fsTests3 = do
   return
     [ TT.testGroup "Cube 3"
       [ testCase "correct # of sweets" $ 12 @=? length sweets
-      , let sweetNum = 1
+      , let sweetNum = 8
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
@@ -440,7 +440,7 @@ fsTests3 = do
            ]
 
 
-      , let sweetNum = 4
+      , let sweetNum = 6
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
@@ -490,7 +490,7 @@ fsTests3 = do
              }
            ]
 
-      , let sweetNum = 5
+      , let sweetNum = 7
             sweet = head $ drop (sweetNum - 1) sweets
             exp n = head $ drop (n-1) $ expected sweet
         in TT.testGroup ("Sweet #" <> show sweetNum) $
@@ -586,7 +586,7 @@ fsTests3 = do
              }
            ]
 
-      , let sweetNum = 2
+      , let sweetNum = 1
             sweet = head $ drop (sweetNum - 1) sweets
             exp n = head $ drop (n-1) $ expected sweet
         in TT.testGroup ("Sweet #" <> show sweetNum) $
@@ -739,14 +739,14 @@ fsTests3 = do
              }
            ]
 
-      , let sweetNum = 3
+      , let sweetNum = 2
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "cow.exe" @=? rootMatchName sweet
            , testCase "root file" $ takeDirectory testInpPath3 </> "O0/llvm9/cow.exe" @=? rootFile sweet
            , testCase "# expectations" $ 4 @=? length (expected sweet)
-           -- n.b. See note for Sweet #2
+           -- n.b. See note for Sweet #1
            , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
              Expectation
              {
@@ -793,7 +793,7 @@ fsTests3 = do
              }
            ]
 
-      , let sweetNum = 6
+      , let sweetNum = 9
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
@@ -822,7 +822,7 @@ fsTests3 = do
              }
            ]
 
-      , let sweetNum = 7
+      , let sweetNum = 10
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
@@ -869,7 +869,7 @@ fsTests3 = do
             }
            ]
 
-      , let sweetNum = 8
+      , let sweetNum = 11
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
@@ -896,7 +896,7 @@ fsTests3 = do
              }
            ]
 
-      , let sweetNum = 9
+      , let sweetNum = 12
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
@@ -923,7 +923,7 @@ fsTests3 = do
              }
            ]
 
-      , let sweetNum = 10
+      , let sweetNum = 5
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
@@ -986,7 +986,7 @@ fsTests3 = do
              }
            ]
 
-      , let sweetNum = 11
+      , let sweetNum = 3
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
@@ -1049,7 +1049,7 @@ fsTests3 = do
              }
            ]
 
-      , let sweetNum = 12
+      , let sweetNum = 4
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
@@ -1125,16 +1125,17 @@ fsTests3 = do
           , "test/data/single/foo.llvm9.exe"] @=?
         rootFile <$> (filter (("foo" `L.isPrefixOf`) . rootMatchName) sweets)
       , testCase "cow sweet roots"
-        $ [ "test/data/second/cow-O2.exe"
-          , "test/builds/O0/cow.exe"
+        $ [ "test/builds/O0/cow.exe"
           , "test/builds/O0/llvm9/cow.exe"
           , "test/builds/llvm13/cow.exe"
-          , "test/builds/llvm13/opts/O3/cow.exe"] @=?
+          , "test/builds/llvm13/opts/O3/cow.exe"
+          , "test/data/second/cow-O2.exe"
+          ] @=?
         rootFile <$> (filter (("cow" `L.isPrefixOf`) . rootMatchName) sweets)
       , testCase "frog sweet roots"
-        $ [ "test/builds/gen/llvm9/frog.exe"
-          , "test/builds/gen/llvm10/frog.exe"
-          , "test/builds/gen/llvm13/frog.exe"] @=?
+        $ [ "test/builds/gen/llvm10/frog.exe"
+          , "test/builds/gen/llvm13/frog.exe"
+          , "test/builds/gen/llvm9/frog.exe"] @=?
         rootFile <$> (filter (("frog" `L.isPrefixOf`) . rootMatchName ) sweets)
       ]
     ]
