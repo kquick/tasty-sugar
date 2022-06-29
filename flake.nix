@@ -28,12 +28,38 @@
   outputs = { self, nixpkgs, levers
             , kvitable
             , prettyprinter-src
-            }: rec
+            }:
+              let shellWith = pkgs: adds: drv: drv.overrideAttrs(old:
+                    { buildInputs = old.buildInputs ++ adds pkgs; });
+                  shellPkgs = pkgs: [
+                    pkgs.cabal-install
+                  ];
+              in
+                rec
       {
         defaultPackage = levers.eachSystem (s:
           self.packages.${s}.tasty-sugar.default);
 
-        devShell = levers.eachSystem (s: defaultPackage.${s}.env);
+        devShell = levers.eachSystem (s:
+          let pkgs = import nixpkgs { system=s; };
+          in shellWith pkgs shellPkgs defaultPackage.${s}.env);
+
+        devShells =
+          let oneshell = s: n:
+                let pkgs = import nixpkgs { system=s; };
+                in levers.variedTargets
+                  { ghcver = levers.validGHCVersions pkgs.haskell.compiler; }
+                  ( { ghcver, ... } @ vargs:
+                    shellWith pkgs shellPkgs
+                      (self.packages.${s}.${n}.${ghcver}.env)
+                  );
+          in
+            levers.eachSystem
+                (s:
+                  let pkgs = import nixpkgs { system=s; };
+                      names = builtins.attrNames (self.packages.${s});
+                  in pkgs.lib.genAttrs names (oneshell s)
+                ) ;
 
         packages = levers.eachSystem (system:
           let mkHaskell = levers.mkHaskellPkg {
