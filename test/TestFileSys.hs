@@ -54,7 +54,7 @@ sugarCube3 = mkCUBE
 
 
 fileSysTests :: IO [TT.TestTree]
-fileSysTests = do tsts <- sequence [ fsTests1, fsTests2 ]
+fileSysTests = do tsts <- sequence [ fsTests1, fsTests2, fsTests3 ]
                   return [ TT.testGroup "FileSys" $ concat tsts ]
 
 
