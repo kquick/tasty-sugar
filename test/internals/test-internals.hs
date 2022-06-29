@@ -148,6 +148,24 @@ main = defaultMain $
                       , expParamsMatch =
                           [ ("foo", Explicit "a")
                           , ("cow", Explicit "moo")
+                            -- Explicit "moo" here against Assumed "moo" plus two
+                            -- more explicits... this gets removed
+                          ]
+                      , associated = []
+                      }
+                    ]
+           test l = pCmpExp (take 1 adding <> init sample)
+                    (removeNonExplicitMatchingExpectations l)
+       in mapM test (L.permutations $ adding <> sample)
+          >> return ()
+
+     , testCase "distinct if different" $
+       let adding = [ Expectation
+                      { expectedFile = "test.file"
+                      , expParamsMatch =
+                          [ ("foo", Explicit "a")
+                          , ("bar", Explicit "bell")
+                          , ("cow", Assumed "moo")
                           ]
                       , associated = []
                       }

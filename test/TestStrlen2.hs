@@ -118,22 +118,30 @@ strlen2SampleTests =
            , associated = [ ("stdio", p "strlen_test2.print")
                           ]
            }
-         , Expectation
-           { expectedFile = p "strlen_test2.loopmerge.good"
-           , expParamsMatch = [ ("loop-merging", Explicit "loopmerge")
-                              , ("solver", Assumed "z3")
-                              ]
-           , associated = [ ("config", p "strlen_test2.loopmerge.config")
-                          , ("stdio", p "strlen_test2.print")
-                          ]
-           }
+         -- Note that there exists strlen_test2.z3.good and
+         -- strlen_test2.loopmerge.good, so this will create Expectations
+         -- against _each_ file with different sets of Assumed and Explicit
+         -- parameters.
+         --
+         -- The removeNonExplicitMatchingExpectations function will then try to
+         -- select which one has the least number of explicit matches, but one is
+         -- always Explicit and one is always Assumed.  The resuilt then comes
+         -- down to a comparison of the values, and "loopmerge" < "z3", so "z3"
+         -- is selected as the _maximum_ (i.e. best) match.
+         --
+         -- Thus, the following Expectation is eliminated.
+         --
+         -- , Expectation
+         --   { expectedFile = p "strlen_test2.loopmerge.good"
+         --   , expParamsMatch = [ ("loop-merging", Explicit "loopmerge")
+         --                      , ("solver", Assumed "z3")
+         --                      ]
+         --   , associated = [ ("config", p "strlen_test2.loopmerge.config")
+         --                  , ("stdio", p "strlen_test2.print")
+         --                  ]
+         --   }
          ]
      ]
-
--- Note that there exists strlen_test2.z3.good and
--- strlen_test2.loopmerge.good, so this will create Expectations
--- against _each_ file with different sets of Assumed and Explicit
--- parameters.
 
 strlen2Samples = fmap (\f -> CandidateFile { candidateDir = "test-data/samples"
                                       , candidateSubdirs = []

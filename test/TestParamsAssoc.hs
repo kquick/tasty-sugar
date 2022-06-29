@@ -73,18 +73,17 @@ paramsAssocTests =
                     Expectation
                     { expectedFile = p "recursive.fast.expct"
                     , expParamsMatch = [ ("optimization", Explicit "fast")
-                                       , ("c-compiler", Assumed "gcc")
+                                       , ("c-compiler", Assumed "clang")
                                        ]
                     , associated = [ ("rust-source", p "recursive.rs") ]
                     }
                   , Expectation
                     { expectedFile = p "recursive.fast.expct"
                     , expParamsMatch = [ ("optimization", Explicit "fast")
-                                       , ("c-compiler", Assumed "clang")
+                                       , ("c-compiler", Assumed "gcc")
                                        ]
                     , associated = [ ("rust-source", p "recursive.rs") ]
                     }
-
                   ]
                 }
 
@@ -145,14 +144,14 @@ paramsAssocTests =
                   [ Expectation
                     { expectedFile = p "simple.expct"
                     , expParamsMatch = [ ("optimization", NotSpecified)
-                                       , ("c-compiler", Assumed "gcc")
+                                       , ("c-compiler", Assumed "clang")
                                        ]
                     , associated = [ ("c-source", p "simple.c")]
                     }
                   , Expectation
                     { expectedFile = p "simple.expct"
                     , expParamsMatch = [ ("optimization", NotSpecified)
-                                       , ("c-compiler", Assumed "clang")
+                                       , ("c-compiler", Assumed "gcc")
                                        ]
                     , associated = [ ("c-source", p "simple.c")]
                     }
@@ -170,14 +169,14 @@ paramsAssocTests =
                   [ Expectation
                     { expectedFile = p "simple.expct"
                     , expParamsMatch = [ ("optimization", NotSpecified)
-                                       , ("c-compiler", Assumed "gcc")
+                                       , ("c-compiler", Assumed "clang")
                                        ]
                     , associated = [ ("c-source", p "simple.c")]
                     }
                   , Expectation
                     { expectedFile = p "simple.expct"
                     , expParamsMatch = [ ("optimization", NotSpecified)
-                                       , ("c-compiler", Assumed "clang")
+                                       , ("c-compiler", Assumed "gcc")
                                        ]
                     , associated = [ ("c-source", p "simple.c")]
                     }

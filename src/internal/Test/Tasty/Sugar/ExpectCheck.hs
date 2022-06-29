@@ -13,7 +13,6 @@ module Test.Tasty.Sugar.ExpectCheck
 
 import           Control.Monad
 import           Control.Monad.Logic
-import           Data.Function ( on )
 import qualified Data.List as L
 
 import           Test.Tasty.Sugar.AssocCheck
@@ -29,14 +28,16 @@ findExpectation :: CUBE
                 -> ([NamedParamMatch], CandidateFile, String) -- param constraints from the root name
                 -> Maybe ( Sweets, SweetExplanation )
 findExpectation pat rootN allNames (rootPMatches, matchPrefix, _) =
-  let r = mkSweet <$>
+  let r = mkSweet $
           trimExpectations $
-          observeAll $
-          do guard (not $ null candidates)
-             expectedSearch
+           observeAll $
+           do guard (not $ null candidates)
+              expectedSearch
                 matchPrefix
                 rootPMatches seps params expSuffix o
                 candidates
+
+
       o = associatedNames pat
       seps = separators pat
       params = validParams pat
@@ -93,15 +94,17 @@ expectedSearch :: CandidateFile
                -> [CandidateFile]
                -> Logic Expectation
 expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allNames =
-  do (expFile, pmatch, assocFiles) <-
-       let bestRanked :: [((a, Int, [b]),c)] -> Logic (a, [b], c)
+  do params' <- singlePVals rootPVMatches params
+     (expFile, pmatch, assocFiles) <-
+       let bestRanked :: (Eq a, Eq b, Eq c)
+                      => [((a, Int, [b]),c)] -> Logic (a, [b], c)
            bestRanked l =
              if null l then mzero
              else let m = maximum $ fmap rankValue l
                       rankValue ((_,r,_),_) = r
                       rankMatching v ((_,r,_),_) = v == r
                       dropRank ((a,_,b),c) = (a,b,c)
-                  in eachFrom $ fmap dropRank $ filter (rankMatching m) l
+                  in eachFrom $ L.nub $ fmap dropRank $ filter (rankMatching m) l
 
        in bestRanked $
           observeAll $
@@ -109,19 +112,17 @@ expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allName
                      ([] :) $
                      filter (not . null) $
                      concatMap L.inits $
-                     L.permutations params
-
+                     L.permutations params'
              pvals <- getPVals pseq
              let compatNames = filter (isCompatible seps params pvals) allNames
              guard (not $ null compatNames)
              e@(_,_,pmatch) <- getExp rootPrefix rootPVMatches seps params pvals
                                expSuffix compatNames
-             a <- getAssoc rootPrefix seps pmatch assocNames compatNames
+             a <- (getAssoc rootPrefix seps pmatch assocNames compatNames)
              return (e,a)
-     -- assocFiles <- getAssoc rootPrefix seps pmatch assocNames allNames
      return $ Expectation { expectedFile = candidateToPath expFile
                           , associated = fmap candidateToPath <$> assocFiles
-                          , expParamsMatch = L.sortBy (compare `on` fst) pmatch
+                          , expParamsMatch = L.sort pmatch
                           }
 
 
@@ -173,6 +174,7 @@ getExp rootPrefix rootPMatches seps params pvals expSuffix allNames =
                        remRootMatches
                        seps remPVals expSuffix validNames
 
+
      -- Corner case: a wildcard parameter could be selected from both a subdir
      -- and the filename... if the values are the same, that's OK, but if the
      -- values are different it should be rejected.
@@ -221,38 +223,28 @@ getExpFileParams rootPrefix rootPMatches seps pvals expSuffix hereNames =
      return (expFile, pmcnt, pm)
 
 
--- | Removes all Expectations that don't have an explicit match
+-- | Determines the best Expectations to use from a list of Expectations that may
+-- have different parameter match status against an expected file.  When two
+-- Expectations differ only in an Explicit v.s. Assumed (or wildcard) the
+-- Explicit is preferred.  Expectations with more parameter matches are preferred
+-- over those with less.
+
 removeNonExplicitMatchingExpectations :: [Expectation] -> [Expectation]
-removeNonExplicitMatchingExpectations l =
-  let removeNonExplicits entry lst =
-        let (explParams, assumedParams) =
-              L.partition (isExplicit . snd) (expParamsMatch entry)
-
-            -- only return False if oneExp should be
-            -- removed: i.e. it is an Expectation that
-            -- matches all non-explicit parameters and
-            -- has non-explicit matches for any of the
-            -- Explicit matches.
-            nonExplMatch oneExp =
-              or [ oneExp == entry
-                 , not $ all nonExplParamCheck $ expParamsMatch oneExp
-                 ]
-
-            -- return True if this parameter check would
-            -- allow removal of this Explicit based on
-            -- _this_ parameter.
-            nonExplParamCheck (pn, pv) =
-              case lookup pn explParams of
-                Just (Explicit ev) ->
-                  case pv of
-                    Assumed av -> ev == av
-                    NotSpecified -> True
-                    Explicit ev' -> ev == ev'
-                _ ->  -- generally nothing; other Just values not possible from explParams
-                  case lookup pn assumedParams of
-                    Nothing -> False
-                    Just av -> av == pv
-
-        in filter nonExplMatch lst
-
-  in foldr removeNonExplicits l l
+removeNonExplicitMatchingExpectations =
+  let removeNonExplicits e l =
+        let (similarExpl, diffExpl) = L.partition (cmpPVals e) l
+            cmpPVals ref ps =
+              -- Compare the two on the intersection subset of parameters
+              if length (expParamsMatch ref) < length (expParamsMatch ps)
+              then expPVals ref ref == expPVals ref ps
+              else expPVals ps ps == expPVals ps ref
+            expPVals ref ps =
+              -- Compare parameters by comparing the values of matching names
+              let ps' = expParamsMatch ps
+                  ref' = expParamsMatch ref
+                  refNames = fst <$> ref'
+              in (\n -> lookup n ps' >>= getParamVal) <$> refNames
+        in if null similarExpl
+           then e : l
+           else (pmatchMax expParamsMatch e <$> similarExpl) <> diffExpl
+  in foldr removeNonExplicits mempty

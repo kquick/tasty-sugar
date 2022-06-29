@@ -6,9 +6,11 @@ module Test.Tasty.Sugar.ParamCheck
   (
     eachFrom
   , getPVals
+  , singlePVals
   , pvalMatch
   , removePVals
   , pmatchCmp
+  , pmatchMax
   , dirMatches
   , inEachNothing
   , isCompatible
@@ -39,6 +41,24 @@ getPVals = mapM getPVal
     getPVal (pn, Nothing) = return (pn, Nothing)
     getPVal (pn, Just pv) = do pv' <- eachFrom pv
                                return (pn, Just pv')
+
+-- | Returns a ParameterPattern admitting only a single value for each parameter,
+-- ensuring that the value is compatible with any existing NamedParamMatch.  This
+-- is useful for callers wishing to handle each combination of parameter values
+-- separately.
+singlePVals :: [NamedParamMatch] -> [ParameterPattern]
+            -> Logic [ParameterPattern]
+singlePVals sel = eachVal . L.sort
+  where eachVal [] = return []
+        eachVal ((pn,Nothing):ps) =
+          let this = (pn, (:[]) <$> (lookup pn sel >>= getParamVal))
+           in (this :) <$> eachVal ps
+        eachVal ((pn,Just pvs):ps) =
+          do pv <- eachFrom $ case lookup pn sel >>= getParamVal of
+                                Nothing -> L.sort pvs
+                                Just v -> [v]
+             ((pn, Just [pv]) :) <$> eachVal ps
+
 
 -- | Generate each possible combination of Explicit or non-Explicit
 -- (Assumed or NotSpecified) parameter value and the corresponding
@@ -133,8 +153,8 @@ pmatchCmp p1 p2 =
         [
           -- the one with more Explicit matches is better
           compare `on` (length . filter (isExplicit . snd))
-          -- the one iwth more parameters (usually the same)
-        , compare `on` (length . fmap fst)
+          -- the one with more parameters (usually the same)
+        , compare `on` length
           -- comparing keys
         , compare `on` (L.sort . fmap fst)
         ]
@@ -147,6 +167,14 @@ cascadeCompare [] _ _ = EQ
 cascadeCompare (o:os) a b = case o a b of
                               EQ -> cascadeCompare os a b
                               x -> x
+
+-- | Returns the maximum of two arguments based on comparing the
+-- [NamedParamMatch] extracted from each argument (via the passed function).
+
+pmatchMax :: (a -> [NamedParamMatch]) -> a -> a -> a
+pmatchMax f a b = case pmatchCmp (f a) (f b) of
+                    LT -> b
+                    _ -> a
 
 
 -- | Given the root directory and a file in that directory, along with the
