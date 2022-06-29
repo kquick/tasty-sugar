@@ -277,7 +277,7 @@ fsTests3 = do
            ]
 
 
-      , let sweetNum = 2
+      , let sweetNum = 4
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
@@ -296,7 +296,7 @@ fsTests3 = do
              }
            ]
 
-      , let sweetNum = 3
+      , let sweetNum = 5
             sweet = head $ drop (sweetNum - 1) sweets
             exp n = head $ drop (n-1) $ expected sweet
         in TT.testGroup ("Sweet #" <> show sweetNum) $
@@ -339,7 +339,7 @@ fsTests3 = do
              }
            ]
 
-      , let sweetNum = 4
+      , let sweetNum = 2
             sweet = head $ drop (sweetNum - 1) sweets
             exp n = head $ drop (n-1) $ expected sweet
         in TT.testGroup ("Sweet #" <> show sweetNum) $
@@ -377,7 +377,7 @@ fsTests3 = do
              }
            ]
 
-      , let sweetNum = 5
+      , let sweetNum = 3
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
