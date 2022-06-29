@@ -9,11 +9,9 @@ module Test.Tasty.Sugar.AssocCheck
   )
   where
 
-import           Control.Monad
 import           Control.Monad.Logic
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes )
-import           System.FilePath ( (</>), takeFileName )
 
 import           Test.Tasty.Sugar.ParamCheck
 import           Test.Tasty.Sugar.Types
@@ -23,19 +21,18 @@ import           Test.Tasty.Sugar.Types
 -- the rootMatch plus the named parameter values (in the same order
 -- but with any combination of separators) and the specified suffix
 -- match.
-getAssoc :: [FilePath]
-         -> FilePath
+getAssoc :: CandidateFile
          -> Separators
          -> [NamedParamMatch]
          -> [ (String, FileSuffix) ]
-         -> [FilePath]
-         -> Logic [(String, FilePath)]
-getAssoc inpDirs rootPrefix seps pmatch assocNames allNames = assocSet
+         -> [CandidateFile]
+         -> Logic [(String, CandidateFile)]
+getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
   where
     assocSet = concat <$> mapM fndBestAssoc assocNames
 
     fndBestAssoc :: (String, FileSuffix)
-                 -> Logic [(String, FilePath)] -- usually just one
+                 -> Logic [(String, CandidateFile)] -- usually just one
     fndBestAssoc assoc =
       do let candidates = L.nub $ catMaybes $
                           observeAll (fndAnAssoc assoc)
@@ -46,38 +43,37 @@ getAssoc inpDirs rootPrefix seps pmatch assocNames allNames = assocSet
            else return (snd <$> c)
 
     fndAnAssoc :: (String, FileSuffix)
-               -> Logic (Maybe (Int, (String, FilePath)))
+               -> Logic (Maybe (Int, (String, CandidateFile)))
     fndAnAssoc assoc = ifte (fndAssoc assoc)
                        (return . Just)
                        (return Nothing)
 
-    fndAssoc :: (String, FileSuffix) -> Logic (Int, (String, FilePath))
+    fndAssoc :: (String, FileSuffix) -> Logic (Int, (String, CandidateFile))
     fndAssoc assoc =
       do pseq <- npseq pmatch
          (rank, assocPfx, assocSfx) <- sepParams seps (fmap snd pseq)
-         inpDir <- eachFrom inpDirs
-         let assocBase = inpDir </> takeFileName rootPrefix
-         if null assocSfx
-           then do let assocNm = if null (snd assoc) &&
-                                    length assocPfx == 1 -- just a separator
-                                 then assocBase
-                                 else assocBase <> assocPfx <> (snd assoc)
-                   guard (assocNm `elem` allNames)
-                   return (rank, (fst assoc, assocNm))
-           else let assocStart = assocBase <> assocPfx
-                    assocEnd = assocSfx <> snd assoc
-                    aSL = length assocStart
-                    aEL = length assocEnd
-                    possible f =
-                      and [ assocStart `L.isPrefixOf` f
-                          , assocEnd `L.isSuffixOf` f
-                          , length f > (aSL + aEL)
-                          , let mid = drop aSL (take (length f - aEL) f)
-                            in and $ fmap (not . flip elem mid) seps
-                          ]
-                    fnd = filter possible allNames
-                in do f <- eachFrom fnd
-                      return (rank, (fst assoc, f))
+         let possible =
+               if null assocSfx
+               then let justSep = null (snd assoc) && length assocPfx == 1
+                        rootNm = candidateFile rootPrefix
+                        assocFName = if justSep
+                                     then rootNm
+                                     else rootNm <> assocPfx <> (snd assoc)
+                    in (assocFName ==)
+               else let assocStart = candidateFile rootPrefix <> assocPfx
+                        assocEnd = assocSfx <> snd assoc
+                        aSL = length assocStart
+                        aEL = length assocEnd
+                        chk f =
+                          and [ assocStart `L.isPrefixOf` f
+                              , assocEnd `L.isSuffixOf` f
+                              , length f > (aSL + aEL)
+                              , let mid = drop aSL (take (length f - aEL) f)
+                                in and $ fmap (not . flip elem mid) seps
+                              ]
+                    in chk
+         f <- eachFrom $ filter (possible . candidateFile) allNames
+         return (rank, (fst assoc, f))
 
     sepParams :: Separators -> [ParamMatch] -> Logic (Int, String, String)
     sepParams sl =

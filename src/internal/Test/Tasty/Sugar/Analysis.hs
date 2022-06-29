@@ -15,7 +15,6 @@ import           Data.Function ( on )
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes )
 import           Data.Ord ( comparing )
-import qualified System.FilePath as FP
 import qualified System.FilePath.GlobPattern as FPGP
 
 import           Test.Tasty.Sugar.ExpectCheck
@@ -24,17 +23,17 @@ import           Test.Tasty.Sugar.ParamCheck ( pmatchCmp )
 import           Test.Tasty.Sugar.Types
 
 
--- | Given a 'CUBE' and a list of filepaths in the target directories,
--- return all 'Sweets' matches along with an explanation of the search
--- process.  This is the core implementation for the
--- 'Test.Tasty.Sugar.findSugar' API interface.
-checkRoots :: CUBE -> [FilePath]
+-- | Given a 'CUBE' and a list of candidate files in the target directories,
+-- return all 'Sweets' matches along with an explanation of the search process.
+-- This is the core implementation for the 'Test.Tasty.Sugar.findSugar' API
+-- interface.
+checkRoots :: CUBE -> [CandidateFile]
            -> (Int, [([Sweets], [SweetExplanation])])
-checkRoots pat allFilePaths =
-  let isRootMatch n = FP.takeFileName n FPGP.~~ (rootName pat)
-      rootNames = filter isRootMatch allFilePaths
+checkRoots pat allFiles =
+  let isRootMatch n = candidateFile n FPGP.~~ (rootName pat)
+      roots = filter isRootMatch allFiles
       checked = filter (not . null . fst)
-                ((checkRoot pat allFilePaths) <$> rootNames)
+                ((checkRoot pat allFiles) <$> roots)
   in (length checked, checked)
 
 
@@ -48,28 +47,13 @@ checkRoots pat allFilePaths =
 -- expSuffix, and any param-values provided.  A 'Sweets' will be
 -- returned for each expected file matching this root configuration
 checkRoot :: CUBE
-          -> [FilePath] --  all possible expect candidates
-          -> FilePath  --  root path
+          -> [CandidateFile] --  all possible expect candidates
+          -> CandidateFile  --  root path
           -> ([Sweets], [SweetExplanation])
-checkRoot pat allNames rootNm =
+checkRoot pat allFiles rootF =
   let seps = separators pat
       params = validParams pat
       combineExpRes (swts, expl) = bimap (swts :) (expl :)
-
-      inpDirForRoot =
-        let dirmatch d = if FP.takeFileName d == "*"
-                         then FP.takeDirectory d `L.isPrefixOf` rootNm
-                         else d == FP.takeDirectory rootNm
-            dirs = filter (not . null) $ inputDir pat : inputDirs pat
-        in case filter dirmatch dirs of
-             (d:[]) -> Just $ if FP.takeFileName d == "*"
-                              then FP.takeDirectory d
-                              else d
-             [] -> Nothing
-             _ -> error ("Internal error: inpDirForRoot " <> rootNm
-                         <> " not uniquely identifiable in "
-                         <> show dirs
-                        )
 
       mergeSweets swl =
         -- If multiple Sweets have the same rootMatchName this likely means that
@@ -117,11 +101,9 @@ checkRoot pat allNames rootNm =
               in ( swts, e { results = swts } )
         in foldr combineIfRootsMatch [] swl
 
-  in case inpDirForRoot of
-       Just inDir -> foldr combineExpRes ([], []) $
-                     mergeSweets $
-                     catMaybes $
-                     fmap (findExpectation pat rootNm allNames) $
-                     observeAll $
-                     rootMatch inDir rootNm seps params (rootName pat)
-       Nothing -> ([],[])
+  in foldr combineExpRes ([], []) $
+     mergeSweets $
+     catMaybes $
+     fmap (findExpectation pat rootF allFiles) $
+     observeAll $
+     rootMatch rootF seps params (rootName pat)

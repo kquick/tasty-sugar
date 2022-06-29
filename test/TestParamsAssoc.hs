@@ -12,8 +12,12 @@ import           TestUtils
 import           Text.RawString.QQ
 
 
-sample :: [String]
-sample = (testInpPath </>) <$> lines [r|
+sample :: [CandidateFile]
+sample = fmap (\f -> CandidateFile { candidateDir = testInpPath
+                                   , candidateSubdirs = []
+                                   , candidateFile = f })
+         $ filter (not . null)
+         $ lines [r|
 recursive.rs
 recursive.fast.exe
 recursive.fast.expct
@@ -55,7 +59,7 @@ sugarCube = mkCUBE { inputDirs = [ testInpPath ]
 paramsAssocTests :: [TT.TestTree]
 paramsAssocTests =
   let (sugar1,_s1desc) = findSugarIn sugarCube sample
-  in [ testCase "valid sample" $ 14 @=? length sample
+  in [ testCase "valid sample" $ 13 @=? length sample
      , sugarTestEq "correct found count" sugarCube sample 6 length
      , testCase "results" $ compareBags "results" sugar1 $
        let p = (testInpPath </>) in

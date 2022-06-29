@@ -10,6 +10,7 @@ module Test.Tasty.Sugar.Types where
 import           Data.Function ( on )
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes )
+import           System.FilePath -- ( (</>) )
 import qualified System.FilePath.GlobPattern as FPGP
 #if MIN_VERSION_prettyprinter(1,7,0)
 import Prettyprinter
@@ -229,6 +230,21 @@ prettyParamPatterns = \case
                               L.intersperse pipe $
                               map pretty vl
             in indent 1 $ vsep $ map pp prms)
+
+-- Internally, this keeps the association between a possible file and the input
+-- directory it came from.  The "file" portion is relative to the input
+-- directory.
+
+data CandidateFile = CandidateFile { candidateDir :: FilePath
+                                   , candidateSubdirs :: [ FilePath ]
+                                   , candidateFile :: FilePath
+                                   }
+                     deriving (Eq, Show)  -- Show is for for debugging/tracing
+
+candidateToPath :: CandidateFile -> FilePath
+candidateToPath c =
+  candidateDir c </> foldr (</>) (candidateFile c) (candidateSubdirs c)
+
 
 -- | Each identified test input set is represented as a 'Sweets'
 -- object.. a Specifications With Existing Expected Testing Samples.

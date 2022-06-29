@@ -22,7 +22,11 @@ import           Text.RawString.QQ
 testInpPath = "some/path/to/test/samples"
 
 
-sample1 = (testInpPath </>) <$> lines [r|
+sample1 = fmap (\f -> CandidateFile { candidateDir = testInpPath
+                               , candidateSubdirs = []
+                               , candidateFile = f })
+          $ filter (not . null)
+          $ lines [r|
 foo
 foo.exp
 foo.ex
@@ -41,7 +45,7 @@ dog.bark-exp
 
 wildcardAssocTests :: [TT.TestTree]
 wildcardAssocTests =
-     [ testCase "valid sample" $ 14 @=? length sample1
+     [ testCase "valid sample" $ 13 @=? length sample1
 
      -- The first CUBE uses the default set of separators, and the expected
      -- suffix does not limit which separators can preceed the suffix.

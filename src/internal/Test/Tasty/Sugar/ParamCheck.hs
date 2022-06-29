@@ -20,7 +20,6 @@ import           Control.Monad.Logic
 import           Data.Function ( on )
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes, fromJust, isNothing, listToMaybe )
-import           System.FilePath ( splitPath, takeDirectory, takeFileName )
 import           Data.Bifunctor ( first )
 import           Data.Maybe ( fromMaybe )
 
@@ -151,12 +150,10 @@ cascadeCompare (o:os) a b = case o a b of
 -- possible parameters and values, return each valid set of parameter matches
 -- from that file, along with the remaining unmatched parameter possibilities.
 
-dirMatches :: FilePath -> FilePath -> [ParameterPattern]
+dirMatches :: CandidateFile -> [ParameterPattern]
            -> Logic ([NamedParamMatch], [ParameterPattern])
-dirMatches rootDir fname params = do
-  let rDLen = let l = length $ splitPath rootDir
-              in if takeFileName rootDir == "*" then l - 1 else l
-      pathPart = init <$> (init $ drop rDLen $ splitPath fname)
+dirMatches fname params = do
+  let pathPart = candidateSubdirs fname
 
   let findVMatch :: FilePath -> (String, Maybe [String]) -> Maybe String
       findVMatch e (pn,pv) =
@@ -197,36 +194,19 @@ inEachNothing mark into = do
 -- file is compatible with the provided parameters and chosen parameter values.
 -- One principle compatibility check is ensuring that there is no *other*
 -- parameter value in the filename that conflicts with a chosen parameter value.
-isCompatible :: [FilePath]
-             -> Separators
+isCompatible :: Separators
              -> [ParameterPattern]
              -> [(String, Maybe String)]
-             -> FilePath
+             -> CandidateFile
              -> Bool
-isCompatible dirs seps params pvals fname =
-  let withSubdirs =
-        let chkDir = \case
-              (d:ds) ->
-                if takeFileName d == "*"
-                then if takeDirectory d `L.isPrefixOf` fname
-                     then let sps = splitPath (drop (length d - 1) fname)
-                              noSeps = init <$> init sps
-                          in noSeps <> [last sps]
-                     else chkDir ds
-                else if d == takeDirectory fname
-                     then [takeFileName fname]
-                     else chkDir ds
-              [] ->
-                -- this should never happen: all fname's available should already
-                -- be constrained to an input dir.
-                error "Could not find directory for file for compatibility check!"
-        in chkDir dirs
-      splitFName n = let (p,r) = break (`elem` seps) n
+isCompatible seps params pvals fname =
+  let splitFName n = let (p,r) = break (`elem` seps) n
                      in p : if null r then [] else splitFName (tail r)
-      parts f = let (n:sds) = reverse withSubdirs
-                    n' = splitFName n
-                in reverse $ n' <> sds
-      noConflict ps (pn,Nothing) = True
+      parts = let n' = splitFName $ candidateFile fname
+              in candidateSubdirs fname <> n'
+      noConflict _ (_,Nothing) = True
       noConflict ps (pn,Just vs) = all (not . isConflict pn vs) ps
-      isConflict pn vs p = p `elem` vs && lookup pn pvals /= Just (Just p)
-  in all (noConflict (parts fname)) params
+      isConflict pn vs p = and [ p `elem` vs
+                               , maybe False (Just p /=) $ lookup pn pvals
+                               ]
+  in all (noConflict parts) params

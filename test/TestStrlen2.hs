@@ -31,7 +31,7 @@ sugarCube = mkCUBE
 strlen2SampleTests :: [TT.TestTree]
 strlen2SampleTests =
   let (sugar,sdesc) = findSugarIn sugarCube strlen2Samples
-  in [ testCase "valid sample" $ 25 @=? length strlen2Samples
+  in [ testCase "valid sample" $ 24 @=? length strlen2Samples
      , sugarTestEq "correct found count" sugarCube strlen2Samples 1 length
 
      , testCaseSteps "sweets info" $ \step -> do
@@ -135,7 +135,11 @@ strlen2SampleTests =
 -- against _each_ file with different sets of Assumed and Explicit
 -- parameters.
 
-strlen2Samples = ("test-data/samples" </>) <$> lines [r|
+strlen2Samples = fmap (\f -> CandidateFile { candidateDir = "test-data/samples"
+                                      , candidateSubdirs = []
+                                      , candidateFile = f })
+                 $ filter (not . null)
+                 $ lines [r|
 strlen_test2.boolector.boolector.out
 strlen_test2.boolector.boolector.print.out
 strlen_test2.boolector.good

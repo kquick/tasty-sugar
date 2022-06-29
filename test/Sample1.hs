@@ -4,11 +4,19 @@ module Sample1 where
 
 import System.FilePath ( (</>) )
 
+import Test.Tasty.Sugar
+
 import Text.RawString.QQ
 
 
-sample1 :: FilePath -> [String]
-sample1 testInpPath = (testInpPath </>) <$> lines [r|
+sample1 :: FilePath -> [CandidateFile]
+sample1 testInpPath =
+  fmap (\f -> CandidateFile { candidateDir = testInpPath
+                       , candidateSubdirs = []
+                       , candidateFile = f })
+
+  $ filter (not . null)
+  $ lines [r|
 global-max-good.c
 global-max-good.ppc.o
 global-max-good.ppc.exe

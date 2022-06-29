@@ -32,7 +32,7 @@ noAssocTests =
        -- This is simply the number of entries in sample1; if this
        -- fails in means that sample1 has been changed and the other
        -- tests here are likely to need updating.
-       testCase "valid sample" $ 58 @=? length (sample1 testInpPath)
+       testCase "valid sample" $ 57 @=? length (sample1 testInpPath)
 
      , sugarTestEq "correct found count" sugarCube (sample1 testInpPath) 6 length
 

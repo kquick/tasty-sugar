@@ -15,8 +15,6 @@ import           Control.Monad
 import           Control.Monad.Logic
 import           Data.Function ( on )
 import qualified Data.List as L
-import           System.FilePath ( (</>), takeDirectory, takeFileName
-                                 , splitPath )
 
 import           Test.Tasty.Sugar.AssocCheck
 import           Test.Tasty.Sugar.ParamCheck
@@ -26,52 +24,30 @@ import           Test.Tasty.Sugar.Types
 -- | Finds the possible expected files matching the selected
 -- source. There will be either one or none.
 findExpectation :: CUBE
-                -> FilePath   --  original name of source
-                -> [FilePath] --  all of the names to choose from
-                -> ([NamedParamMatch], FilePath, FilePath) -- param constraints from the root name
+                -> CandidateFile   --  original name of source
+                -> [CandidateFile] --  all of the names to choose from
+                -> ([NamedParamMatch], CandidateFile, String) -- param constraints from the root name
                 -> Maybe ( Sweets, SweetExplanation )
 findExpectation pat rootN allNames (rootPMatches, matchPrefix, _) =
   let r = mkSweet <$>
           trimExpectations $
           observeAll $
           do guard (not $ null candidates)
-             expectedSearch d matchPrefix rootPMatches seps params expSuffix o
-               candidates
-      d = filter (not . null) $ inputDir pat : inputDirs pat
+             expectedSearch
+                matchPrefix
+                rootPMatches seps params expSuffix o
+                candidates
       o = associatedNames pat
       seps = separators pat
       params = validParams pat
       expSuffix = expectedSuffix pat
-      subdirConflict f =
-        -- A regular inpDir match won't conflict, but any inpDir ending in /*
-        -- might have a subdir component that has a *different* value for a
-        -- rootPMatch and should therefore return False to be excluded
-        let rd = not $ any (`L.isPrefixOf` f) d
-            sd = let chkDir inpD acc =
-                       let iDLen = length (splitPath inpD) - 1
-                           iSubdirs :: [ FilePath ]
-                           iSubdirs = init <$> (init $ drop iDLen $ splitPath f)
-                           wrongParamVal :: String -> NamedParamMatch -> Bool
-                           wrongParamVal sv (pn, pv) =
-                             case join $ lookup pn (validParams pat) of
-                               Nothing -> False
-                               Just vals -> case getParamVal pv of
-                                              Nothing -> False
-                                              Just v -> sv `elem` vals && sv /= v
-                           chkParamVal subdir conflict =
-                             conflict || any (wrongParamVal subdir) rootPMatches
-                       in foldr chkParamVal acc iSubdirs
-                 in foldr chkDir False $ filter ((== "*") . takeFileName) d
-
-        in and [ rd, sd ]
       candidates = filter possible allNames
-      possible f = and [ takeFileName matchPrefix `L.isPrefixOf` takeFileName f
+      possible f = and [ candidateFile matchPrefix `L.isPrefixOf` candidateFile f
                        , rootN /= f
-                       , not $ subdirConflict f
                        ]
-      mkSweet e = Just $ Sweets { rootMatchName = takeFileName rootN
-                                , rootBaseName = takeFileName matchPrefix
-                                , rootFile = rootN
+      mkSweet e = Just $ Sweets { rootMatchName = candidateFile rootN
+                                , rootBaseName = candidateFile matchPrefix
+                                , rootFile = candidateToPath rootN
                                 , cubeParams = validParams pat
                                 , expected = e
                                 }
@@ -96,36 +72,35 @@ findExpectation pat rootN allNames (rootPMatches, matchPrefix, _) =
        Nothing -> Nothing
        Just r' | [] <- expected r' -> Nothing
        Just r' -> Just ( r'
-                       , SweetExpl { rootPath = rootN
-                                   , base = matchPrefix
+                       , SweetExpl { rootPath = candidateToPath rootN
+                                   , base = candidateToPath matchPrefix
                                    , expectedNames =
                                        filter
                                        (if null expSuffix then const True
                                         else (expSuffix `L.isSuffixOf`))
-                                     candidates
+                                     (candidateToPath <$> candidates)
                                    , results = r'
                                    })
 
+
 -- Find all Expectations matching this rootMatch
-expectedSearch :: [FilePath]
-               -> FilePath
+expectedSearch :: CandidateFile
                -> [NamedParamMatch]
                -> Separators
                -> [ParameterPattern]
                -> FileSuffix
                -> [ (String, FileSuffix) ]
-               -> [FilePath]
+               -> [CandidateFile]
                -> Logic Expectation
-expectedSearch inpDirs rootPrefix rootPVMatches seps params expSuffix assocNames allNames =
-  do (expFile, pmatch) <-
-       let bestRanked :: [(FilePath, Int, [NamedParamMatch])]
-                      -> Logic (FilePath, [NamedParamMatch])
+expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allNames =
+  do (expFile, pmatch, assocFiles) <-
+       let bestRanked :: [((a, Int, [b]),c)] -> Logic (a, [b], c)
            bestRanked l =
              if null l then mzero
              else let m = maximum $ fmap rankValue l
-                      rankValue (_,r,_) = r
-                      rankMatching v (_,r,_) = v == r
-                      dropRank (a,_,b) = (a,b)
+                      rankValue ((_,r,_),_) = r
+                      rankMatching v ((_,r,_),_) = v == r
+                      dropRank ((a,_,b),c) = (a,b,c)
                   in eachFrom $ fmap dropRank $ filter (rankMatching m) l
 
        in bestRanked $
@@ -137,12 +112,15 @@ expectedSearch inpDirs rootPrefix rootPVMatches seps params expSuffix assocNames
                      L.permutations params
 
              pvals <- getPVals pseq
-             let compatNames = filter (isCompatible inpDirs seps params pvals) allNames
+             let compatNames = filter (isCompatible seps params pvals) allNames
              guard (not $ null compatNames)
-             getExp inpDirs rootPrefix rootPVMatches seps pvals expSuffix compatNames
-     assocFiles <- getAssoc inpDirs rootPrefix seps pmatch assocNames allNames
-     return $ Expectation { expectedFile = expFile
-                          , associated = assocFiles
+             e@(_,_,pmatch) <- getExp rootPrefix rootPVMatches seps pvals
+                               expSuffix compatNames
+             a <- getAssoc rootPrefix seps pmatch assocNames compatNames
+             return (e,a)
+     -- assocFiles <- getAssoc rootPrefix seps pmatch assocNames allNames
+     return $ Expectation { expectedFile = candidateToPath expFile
+                          , associated = fmap candidateToPath <$> assocFiles
                           , expParamsMatch = L.sortBy (compare `on` fst) pmatch
                           }
 
@@ -151,89 +129,74 @@ expectedSearch inpDirs rootPrefix rootPVMatches seps params expSuffix assocNames
 -- Returns the expected file, the sequence of parameter values that
 -- match that expect file, and a ranking (the number of those paramter
 -- values that actually appear in the expect file.
-getExp :: [FilePath]
-       -> FilePath
+getExp :: CandidateFile
        -> [NamedParamMatch]
        -> Separators
        -> [(String, Maybe String)]
        -> FileSuffix
-       -> [FilePath]
-       -> Logic (FilePath, Int, [NamedParamMatch])
-getExp inpDirs rootPrefix rootPMatches seps pvals expSuffix allNames =
-  do inpDir <- eachFrom inpDirs
-     let idLen = length $ splitPath inpDir
+       -> [CandidateFile]
+       -> Logic (CandidateFile, Int, [NamedParamMatch])
+getExp rootPrefix rootPMatches seps pvals expSuffix allNames =
+  do -- Some of the params may be encoded in the subdirectories instead of in the
+     -- target filename (each param value could appear in either).  If a
+     -- rootPMatches value is in a subdirectory, no other values for that
+     -- parameter can appear, otherwise all possible values could appear.  A
+     -- subset of the rootPMatches may appear in the subdirs, but only the
+     -- maximal subset can be considered.
 
-     if takeFileName inpDir == "*"
-       then
-       do
-         -- Some of the params may be encoded in the subdirectories instead of in
-         -- the target filename (each param value could appear in either).  If a
-         -- rootPMatches value is in a subdirectory, no other values for that
-         -- parameter can appear, otherwise all possible values could appear.  A
-         -- subset of the rootPMatches may appear in the subdirs, but only the
-         -- maximal subset can be considered.
+     let rootMatchesInSubdir :: CandidateFile -> [NamedParamMatch]
+         rootMatchesInSubdir f =
+           let sp = candidateSubdirs f
+               chkRootMatch d r =
+                 let chkRPMatch p r' =
+                       case getExplicit $ snd p of
+                         Just v -> if d == v then p : r' else r'
+                         Nothing -> r'
+                 in foldr chkRPMatch r rootPMatches
+           in foldr chkRootMatch mempty sp
 
-         let dirNames = filter (takeDirectory inpDir `L.isPrefixOf`) allNames
+     let inpDirMatches = fmap rootMatchesInSubdir <$> zip allNames allNames
 
-         let rootMatchesInSubdir :: FilePath -> [NamedParamMatch]
-             rootMatchesInSubdir f =
-               let sp = init <$> (init $ drop (idLen - 1) $ splitPath f)
-                   chkRootMatch d r =
-                     let chkRPMatch p r' =
-                           case getExplicit $ snd p of
-                             Just v -> if d == v then p : r' else r'
-                             Nothing -> r'
-                     in foldr chkRPMatch r rootPMatches
-               in foldr chkRootMatch mempty sp
+     (dirName, inpDirMatch) <- eachFrom inpDirMatches
 
-         let inpDirMatches = fmap rootMatchesInSubdir <$> zip dirNames dirNames
+     let nonRootMatchPVals = removePVals pvals inpDirMatch
 
-         (dirName, inpDirMatch) <- eachFrom inpDirMatches
+     (otherMatchesInSubdir, _) <-
+           dirMatches dirName $ (fmap (fmap (:[])) <$> nonRootMatchPVals)
 
-         let nonRootMatchPVals =
-               removePVals pvals inpDirMatch
+     let remPVals = removePVals nonRootMatchPVals otherMatchesInSubdir
 
-         (otherMatchesInSubdir, _) <-
-           dirMatches inpDir dirName $ (fmap (fmap (:[])) <$> nonRootMatchPVals)
+     let remRootMatches = removePVals rootPMatches inpDirMatch
+     let validNames = [ dirName ]
 
-         let remPVals = removePVals nonRootMatchPVals otherMatchesInSubdir
+     (fp, cnt, npm) <- getExpFileParams rootPrefix
+                       remRootMatches
+                       seps remPVals expSuffix validNames
 
-         let remRootMatches = removePVals rootPMatches inpDirMatch
-         let validNames = [ dirName ]
+     -- Corner case: a wildcard parameter could be selected from both a subdir
+     -- and the filename... if the values are the same, that's OK, but if the
+     -- values are different it should be rejected.
 
-         (fp, cnt, npm) <- getExpFileParams inpDir rootPrefix remRootMatches
-                           seps remPVals expSuffix validNames
+     let dpm = inpDirMatch <> otherMatchesInSubdir
 
-         -- Corner case: a wildcard parameter could be selected from both a
-         -- subdir and the filename... if the values are the same, that's OK, but
-         -- if the values are different it should be rejected.
+     let conflict = let chkNPM (pn,pv) acc =
+                          acc || case lookup pn dpm of
+                                   Nothing -> False
+                                   Just v -> v /= pv
+                    in foldr chkNPM False npm
+     guard (not conflict)
 
-         let dpm = inpDirMatch <> otherMatchesInSubdir
-
-         let conflict =
-               let chkNPM (pn,pv) acc =
-                     acc || case lookup pn dpm of
-                              Nothing -> False
-                              Just v -> v /= pv
-               in foldr chkNPM False npm
-         guard (not conflict)
-
-         return (fp, length dpm + cnt, dpm <> npm)
-
-       else getExpFileParams inpDir rootPrefix rootPMatches seps pvals
-              expSuffix allNames
+     return (fp, length dpm + cnt, dpm <> npm)
 
 
-
-getExpFileParams :: FilePath
-                 -> FilePath
+getExpFileParams :: CandidateFile
                  -> [NamedParamMatch]
                  -> Separators
                  -> [(String, Maybe String)]
                  -> FileSuffix
-                 -> [FilePath]
-                 -> Logic (FilePath, Int, [NamedParamMatch])
-getExpFileParams inpDir rootPrefix rootPMatches seps pvals expSuffix allNames =
+                 -> [CandidateFile]
+                 -> Logic (CandidateFile, Int, [NamedParamMatch])
+getExpFileParams rootPrefix rootPMatches seps pvals expSuffix hereNames =
   do let suffixSpecifiesSep = and [ not (null expSuffix)
                                   , head expSuffix `elem` seps
                                   ]
@@ -251,18 +214,10 @@ getExpFileParams inpDir rootPrefix rootPMatches seps pvals expSuffix allNames =
      let ending = if suffixSpecifiesSep then tail expSuffix else expSuffix
 
      expFile <-
-       if takeFileName inpDir == "*"
-       then do
-         -- Some unknown number of path elements, so try each file in
-         -- allNames that matches the path prefix and filename suffix
-         -- portions
-         eachFrom
-         $ filter ((pmstr <> ending) `L.isSuffixOf`)
-         $ filter (takeDirectory inpDir `L.isPrefixOf`) allNames
-       else
-         return $ inpDir </> takeFileName rootPrefix <> pmstr <> ending
+       eachFrom
+       $ filter (((candidateFile rootPrefix <> pmstr <> ending) ==) . candidateFile)
+       $ hereNames
 
-     guard (expFile `elem` allNames)
      return (expFile, pmcnt, pm)
 
 

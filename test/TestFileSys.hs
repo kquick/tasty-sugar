@@ -258,7 +258,11 @@ fsTests3 = do
              , expParamsMatch = [ ("llvm", Assumed "llvm9")
                                 , ("opt", Explicit "O2")
                                 ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
+               -- n.b. O0/llvm9/cow.lnk matches because opt is a wildcard, so no
+               -- way to know that O0 in cow.lnk is conflicing with O2 in
+               -- cow.O2.exp.
+             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
+                            , ("source", testInpPath </> "cow.c") ]
              }
            , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
              Expectation
@@ -366,7 +370,9 @@ fsTests3 = do
              , expParamsMatch = [ ("llvm", Assumed "llvm9")
                                 , ("opt", Explicit "O0")
                                 ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
+             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
+                            , ("source", testInpPath </> "cow.c")
+                            ]
              }
            , testCase "Exp #3" $ exp 3 @?=
              Expectation
@@ -393,7 +399,8 @@ fsTests3 = do
              , expParamsMatch = [ ("llvm", Explicit "llvm9")
                                 , ("opt", Explicit "O0")
                                 ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]  -- KWQ: O0/llvm9/cow.lnk
+             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
+                            , ("source", testInpPath </> "cow.c") ]
              }
            ]
 

@@ -73,6 +73,7 @@ module Test.Tasty.Sugar
   , Separators
   , ParameterPattern
   , mkCUBE
+  , CandidateFile(..)
     -- ** Output
   , Sweets(..)
   , Expectation(..)
@@ -91,7 +92,6 @@ import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Control.Monad.Logic
-import           Data.Bifunctor ( bimap )
 import qualified Data.Foldable as F
 import           Data.Function
 import qualified Data.List as L
@@ -103,7 +103,8 @@ import           Numeric.Natural ( Natural )
 import           Prettyprinter
 import           System.Directory ( doesDirectoryExist, getCurrentDirectory
                                   , listDirectory, doesDirectoryExist )
-import           System.FilePath ( (</>), isRelative, takeDirectory, takeFileName)
+import           System.FilePath ( (</>), isRelative, makeRelative
+                                 , splitPath, takeDirectory, takeFileName)
 import           System.IO ( hPutStrLn, stderr )
 import           Test.Tasty.Ingredients
 import           Test.Tasty.Options
@@ -176,22 +177,37 @@ findSugar cube = fst <$> findSugar' cube
 
 findSugar' :: MonadIO m => CUBE -> m ([Sweets], Doc ann)
 findSugar' pat =
-  let collectDirEntries d = let recurse = takeFileName d == "*"
-                            in dirListWithPaths recurse
-                               $ if recurse then takeDirectory d else d
-      dirListWithPaths recurse d =
+  let collectDirEntries d =
+        let recurse = takeFileName d == "*"
+            top = if recurse then Just (takeDirectory d) else Nothing
+            start = if recurse then takeDirectory d else d
+        in dirListWithPaths top start
+      dirListWithPaths topDir d =
         -- putStrLn ("Reading " <> show d) >>
         doesDirectoryExist d >>= \case
           True ->
-            do dirContents <- fmap (d </>) <$> listDirectory d
-               if recurse
-                 then
-                 do subdirs <- mapM doesDirectoryExist dirContents
-                    let (dirs,files) = bimap (fmap snd) (fmap snd)
-                                       $ L.partition fst
-                                       $ zip subdirs dirContents
-                    (files <>) . concat <$> mapM (dirListWithPaths True) dirs
-                 else return dirContents
+            do dirContents <- listDirectory d
+               case topDir of
+                 Nothing -> do
+                   let mkC f = CandidateFile { candidateDir = d
+                                             , candidateSubdirs = []
+                                             , candidateFile = f
+                                             }
+                   return (mkC <$> dirContents)
+                 Just topdir -> do
+                   let subs = filter (not . null)
+                              (init
+                               <$> init (splitPath
+                                          $ makeRelative topdir (d </> "x")))
+                   let mkC f = CandidateFile { candidateDir = topdir
+                                             , candidateSubdirs = subs
+                                             , candidateFile = f
+                                             }
+                   subdirs <- filterM (doesDirectoryExist . (d </>)) dirContents
+                   let here = mkC <$> (filter (not . (`elem` subdirs)) dirContents)
+                   subCandidates <- mapM (dirListWithPaths topDir)
+                                    ((d </>) <$> subdirs)
+                   return (here <> (concat subCandidates))
           False -> do
             showD <- case isRelative d of
                        True -> do cwd <- getCurrentDirectory
@@ -214,16 +230,16 @@ findSugar' pat =
 -- This is a low-level function; the findSugar and withSugarGroups are
 -- the recommended interface functions to use for writing tests.
 
-findSugarIn :: CUBE -> [FilePath] -> ([Sweets], Doc ann)
-findSugarIn pat allFilePaths =
-  let (nCandidates, sres) = checkRoots pat allFilePaths
+findSugarIn :: CUBE -> [CandidateFile] -> ([Sweets], Doc ann)
+findSugarIn pat allFiles =
+  let (nCandidates, sres) = checkRoots pat allFiles
       inps = concat $ fst <$> sres
       expl = vsep $
              [ "Checking for test inputs in:" <+>
                pretty (L.nub $ inputDir pat : inputDirs pat)
              , indent 2 $
                vsep $ [ "# files in directories =" <+>
-                        pretty (length allFilePaths)
+                        pretty (length allFiles)
                       , "# root candidates matching" <+>
                         dquotes (pretty (rootName pat)) <+> equals <+>
                         pretty nCandidates
