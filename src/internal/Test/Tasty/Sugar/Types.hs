@@ -131,11 +131,11 @@ data CUBE = CUBE
      -- > foo-clang.x86_64.o
      -- > foo.O0-clang.o
      --
-     -- The sugar matching code will attempt to identify the various
-     -- parameter values appearing in the _expected_ filename and
-     -- provide that information to the test generation process to
-     -- allow the generated test to be customized to the available set
-     -- of parameters.
+     -- The sugar matching code will attempt to identify the various parameter
+     -- values appearing in the _EXPECTED_ filename which correspond to the same
+     -- values in the _ROOT_ filename and provide that information to the test
+     -- generation process to allow the generated test to be customized to the
+     -- available set of parameters.
      --
      -- The 'associatedNames' provided to the test generator will be
      -- constrained to those associated names that match the parameter
@@ -238,7 +238,8 @@ data Sweets = Sweets
     -- ^ The base of the root path for matching to expected.  This has no path
     -- elements, no extensions and no parameters.  It can be useful to use to
     -- compare to other fields in the 'expected' Expectation list of this
-    -- structure.
+    -- structure.  Note that if the root file matched had parameters as part of
+    -- the filename, those are not present in this rootBaseName.
   , rootMatchName :: String
     -- ^ Matched root.  This is the name of the matched file, (no path elements)
     -- that matched the rootName in the input CUBE.  This includes any extension
