@@ -298,7 +298,7 @@
   The ~Tasty.Sugar.CUBE~ confguration for is scenario is updated to:
 
    #+BEGIN_EXAMPLE
-   cube = mkCUBE { inputDir = [ "test/samples" ]
+   cube = mkCUBE { inputDirs = [ "test/samples" ]
                  , rootName = "*"
                  , separators = "-."
                  , expectedSuffix = "expct"
@@ -430,8 +430,7 @@
 
 * Limitations
 
-  * Huge directories
-  * Huge files
+  * Huge numbers of directories or files will cause performance slowdowns
   * Will throw any exception that the listDirectory function can throw.
 
 * Detailed Information
@@ -567,3 +566,6 @@
                  note that the set of all tests must be known *prior*
                  to invoking the tasty main code; they cannot be added
                  dynamically after that point).
+
+              3. Testing should be consistent: relying on user-input during
+                 testing would return different results for different input.
