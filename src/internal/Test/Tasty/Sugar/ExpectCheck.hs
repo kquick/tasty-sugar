@@ -114,7 +114,7 @@ expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allName
              pvals <- getPVals pseq
              let compatNames = filter (isCompatible seps params pvals) allNames
              guard (not $ null compatNames)
-             e@(_,_,pmatch) <- getExp rootPrefix rootPVMatches seps pvals
+             e@(_,_,pmatch) <- getExp rootPrefix rootPVMatches seps params pvals
                                expSuffix compatNames
              a <- getAssoc rootPrefix seps pmatch assocNames compatNames
              return (e,a)
@@ -132,11 +132,12 @@ expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allName
 getExp :: CandidateFile
        -> [NamedParamMatch]
        -> Separators
+       -> [ParameterPattern]
        -> [(String, Maybe String)]
        -> FileSuffix
        -> [CandidateFile]
        -> Logic (CandidateFile, Int, [NamedParamMatch])
-getExp rootPrefix rootPMatches seps pvals expSuffix allNames =
+getExp rootPrefix rootPMatches seps params pvals expSuffix allNames =
   do -- Some of the params may be encoded in the subdirectories instead of in the
      -- target filename (each param value could appear in either).  If a
      -- rootPMatches value is in a subdirectory, no other values for that
@@ -146,14 +147,13 @@ getExp rootPrefix rootPMatches seps pvals expSuffix allNames =
 
      let rootMatchesInSubdir :: CandidateFile -> [NamedParamMatch]
          rootMatchesInSubdir f =
-           let sp = candidateSubdirs f
-               chkRootMatch d r =
+           let chkRootMatch d r =
                  let chkRPMatch p r' =
                        case getExplicit $ snd p of
                          Just v -> if d == v then p : r' else r'
                          Nothing -> r'
                  in foldr chkRPMatch r rootPMatches
-           in foldr chkRootMatch mempty sp
+           in foldr chkRootMatch mempty $ candidateSubdirs f
 
      let inpDirMatches = fmap rootMatchesInSubdir <$> zip allNames allNames
 
@@ -162,7 +162,7 @@ getExp rootPrefix rootPMatches seps pvals expSuffix allNames =
      let nonRootMatchPVals = removePVals pvals inpDirMatch
 
      (otherMatchesInSubdir, _) <-
-           dirMatches dirName $ (fmap (fmap (:[])) <$> nonRootMatchPVals)
+           dirMatches dirName params $ (fmap (fmap (:[])) <$> nonRootMatchPVals)
 
      let remPVals = removePVals nonRootMatchPVals otherMatchesInSubdir
 

@@ -662,7 +662,7 @@ fsTests3 = do
            , testCase "Exp #1" $ head (expected sweet) @?=
              Expectation
              {
-               expectedFile = testInpPath </> "foo.exp"
+               expectedFile = takeDirectory testInpPath3 </> "llvm10" </> "foo.exp"
              , expParamsMatch = [ ("debug", Assumed "yes")
                                 , ("llvm", Explicit "llvm10")
                                 , ("opt", Explicit "O1")
@@ -672,7 +672,7 @@ fsTests3 = do
            , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
              Expectation
              {
-               expectedFile = testInpPath </> "foo.exp"
+               expectedFile = takeDirectory testInpPath3 </> "llvm10" </> "foo.exp"
              , expParamsMatch = [ ("debug", Assumed "no")
                                 , ("llvm", Explicit "llvm10")
                                 , ("opt", Explicit "O1")
@@ -688,10 +688,10 @@ fsTests3 = do
              testCase "root match" $ "foo.llvm10.O2.exe" @=? rootMatchName sweet
            , testCase "root file" $ testInpPath </> "foo.llvm10.O2.exe" @=? rootFile sweet
            , testCase "# expectations" $ 4 @=? length (expected sweet)
-           , testCase "Exp #1" $ head (expected sweet) @?=
+           , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
              Expectation
              {
-               expectedFile = testInpPath </> "foo.exp"
+               expectedFile = takeDirectory testInpPath3 </> "llvm10" </> "foo.exp"
              , expParamsMatch = [ ("debug", Assumed "no")
                                 , ("llvm", Explicit "llvm10")
                                 , ("opt", NotSpecified)
@@ -701,7 +701,7 @@ fsTests3 = do
            , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
              Expectation
              {
-               expectedFile = testInpPath </> "foo.exp"
+               expectedFile = takeDirectory testInpPath3 </> "llvm10" </> "foo.exp"
              , expParamsMatch = [ ("debug", Assumed "yes")
                                 , ("llvm", Explicit "llvm10")
                                 , ("opt", NotSpecified)

@@ -25,7 +25,7 @@ import           Test.Tasty.Sugar.Types
 rootMatch :: CandidateFile -> Separators -> [ParameterPattern] -> String
           -> Logic ([NamedParamMatch], CandidateFile, String)
 rootMatch origRoot seps params rootCmp = do
-  (dmatch, drem) <- dirMatches origRoot params
+  (dmatch, drem) <- dirMatches origRoot params params
   (rpm, p, s) <- ifte
                  (rootParamMatch origRoot seps drem rootCmp)
                  return

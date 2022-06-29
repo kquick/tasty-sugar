@@ -152,10 +152,15 @@ cascadeCompare (o:os) a b = case o a b of
 -- | Given the root directory and a file in that directory, along with the
 -- possible parameters and values, return each valid set of parameter matches
 -- from that file, along with the remaining unmatched parameter possibilities.
+--
+-- The first set of parameters is the total set, and the second set represents
+-- those that could be identified in the path subdirs; this is needed to prevent
+-- a wildcard ParameterPattern in the second set from matching values explicit to
+-- other parameters.
 
-dirMatches :: CandidateFile -> [ParameterPattern]
+dirMatches :: CandidateFile -> [ParameterPattern] -> [ParameterPattern]
            -> Logic ([NamedParamMatch], [ParameterPattern])
-dirMatches fname params = do
+dirMatches fname fullParams params = do
   let pathPart = candidateSubdirs fname
 
   let findVMatch :: FilePath -> (String, Maybe [String]) -> Maybe String
@@ -170,12 +175,16 @@ dirMatches fname params = do
 
   let freeParam = fst <$> L.find (isNothing . snd) params
 
+  let freeParts =
+        let allpvals = concat $ catMaybes (snd <$> fullParams)
+        in (not . (`elem` allpvals)) <$> pathPart
+
   dmatch <- fmap (fmap Explicit)
             . fmap (first fromJust)
             . filter (not . isNothing . fst)
             <$> ((return (zip pmatches pathPart))
                  `mplus`
-                 (inEachNothing freeParam $ zip pmatches pathPart))
+                 (inEachNothing freeParam $ zip3 pmatches freeParts pathPart))
 
   let drem = removePVals params dmatch
 
@@ -183,14 +192,20 @@ dirMatches fname params = do
 
 
 -- | Return each substitution of the first argument for each location in the
--- second list that has a Nothing label; leave non-Nothings in the second list
--- unchanged.
+-- second list that has a Nothing label and a True parameter; leave non-Nothings
+-- in the second list unchanged.
 
-inEachNothing :: Maybe a -> [(Maybe a,b)] -> Logic [(Maybe a,b)]
+inEachNothing :: Maybe a -> [(Maybe a,Bool,b)] -> Logic [(Maybe a,b)]
 inEachNothing mark into = do
-  let spots = filter (\i -> isNothing $ fst (into !! i)) $ [0..(length into) - 1]
+  let canSubst (a,b,_) = b && isNothing a
+  let spots = filter (\i -> canSubst (into !! i)) $ [0..(length into) - 1]
   i <- eachFrom spots
-  return $ (take i into) <> [ (mark, snd (into !! i)) ] <> (drop (i + 1) into)
+  let deBool (a,_,c) = (a,c)
+  let thrd (_,_,c) = c
+  return
+    $ (deBool <$> take i into)
+    <> [ (mark, thrd (into !! i)) ]
+    <> (deBool <$> drop (i + 1) into)
 
 
 -- | isCompatible can be used as a filter predicate to determine if the specified
