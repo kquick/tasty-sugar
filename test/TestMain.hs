@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
@@ -37,7 +38,12 @@ main =
      fsTests <- fileSysTests
      defaultMain $
        testGroup "tasty-sweet tests" $
-       [ testProperty "empty file list" $
+       [
+#if MIN_VERSION_tasty_hedgehog(1,2,0)
+         testPropertyNamed "empty file list" "emptyfile" $
+#else
+         testProperty "empty file list" $
+#endif
          HH.withTests 10000 $ HH.property $ do
            cube <- HH.forAll $ genCube
            HH.assert $ null $ fst $ findSugarIn cube []
