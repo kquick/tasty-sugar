@@ -268,7 +268,7 @@ getExpFileParams inpDir rootPrefix rootPMatches seps pvals expSuffix allNames =
 
 removeNonExplicitMatchingExpectations :: [Expectation] -> [Expectation]
 removeNonExplicitMatchingExpectations l =
-  let removeNonExplicits lst entry =
+  let removeNonExplicits entry lst =
         let (explParams, assumedParams) =
               L.partition (isExplicit . snd) (expParamsMatch entry)
 
@@ -299,4 +299,4 @@ removeNonExplicitMatchingExpectations l =
 
         in filter nonExplMatch lst
 
-  in foldl removeNonExplicits l l
+  in foldr removeNonExplicits l l

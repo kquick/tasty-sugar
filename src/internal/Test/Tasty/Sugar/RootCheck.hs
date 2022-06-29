@@ -53,8 +53,8 @@ rpStr = let s = \case
               RootParNm _ x -> x
               RootText x -> x
               RootSuffix x -> x
-            bld a b = a <> s b
-        in foldl bld ""
+            bld b a = a <> s b
+        in foldr bld ""
 
 rpNPM :: [RootPart] -> [NamedParamMatch]
 rpNPM = let bld (RootParNm n v) = Just [(n, Explicit v)]
