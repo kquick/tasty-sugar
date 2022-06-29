@@ -1,5 +1,6 @@
 module TestFileSys ( fileSysTests ) where
 
+import qualified Data.List as L
 import qualified Data.Text as T
 import           System.FilePath ( (</>), takeDirectory )
 import qualified Test.Tasty as TT
@@ -65,6 +66,7 @@ fsTests1 = do
   return
     [ TT.testGroup "Cube 1"
       [ testCase "correct # of sweets" $ 3 @=? length sweets
+
       , TT.testGroup "Sweet #1" $
         let sweet = head sweets in
           [
@@ -472,5 +474,13 @@ fsTests3 = do
              , associated = [ ("source", testInpPath </> "foo.c") ]
              }
            ]
+      , testCase "correct # of foo sweets" $ 4 @=?
+        length (filter (("foo" `L.isPrefixOf`) . rootMatchName) sweets)
+      , testCase "correct # of cow sweets" $ 5 @=?
+        length (filter (("cow" `L.isPrefixOf`) . rootMatchName) sweets)
+      , testCase "foo sweet roots" $ ["foo.O1-llvm10.exe", "foo.llvm10.O2.exe", "foo.llvm13.exe", "foo.llvm9.exe"] @=?
+        (filter ("foo" `L.isPrefixOf`) (rootMatchName <$> sweets))
+      , testCase "cow sweet roots" $ ["cow-O2.exe", "cow.exe", "cow.exe", "cow.exe", "cow.exe"] @=?
+        (filter ("cow" `L.isPrefixOf`) (rootMatchName <$> sweets))
       ]
     ]
