@@ -11,6 +11,7 @@ module Test.Tasty.Sugar.ParamCheck
   , pmatchCmp
   , dirMatches
   , inEachNothing
+  , isCompatible
   )
   where
 
@@ -19,7 +20,7 @@ import           Control.Monad.Logic
 import           Data.Function ( on )
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes, fromJust, isNothing, listToMaybe )
-import           System.FilePath ( splitPath, takeFileName )
+import           System.FilePath ( splitPath, takeDirectory, takeFileName )
 import           Data.Bifunctor ( first )
 import           Data.Maybe ( fromMaybe )
 
@@ -190,3 +191,42 @@ inEachNothing mark into = do
   let spots = filter (\i -> isNothing $ fst (into !! i)) $ [0..(length into) - 1]
   i <- eachFrom spots
   return $ (take i into) <> [ (mark, snd (into !! i)) ] <> (drop (i + 1) into)
+
+
+-- | isCompatible can be used as a filter predicate to determine if the specified
+-- file is compatible with the provided parameters and chosen parameter values.
+-- One principle compatibility check is ensuring that there is no *other*
+-- parameter value in the filename that conflicts with a chosen parameter value.
+isCompatible :: [FilePath]
+             -> Separators
+             -> [ParameterPattern]
+             -> [(String, Maybe String)]
+             -> FilePath
+             -> Bool
+isCompatible dirs seps params pvals fname =
+  let withSubdirs =
+        let chkDir = \case
+              (d:ds) ->
+                if takeFileName d == "*"
+                then if takeDirectory d `L.isPrefixOf` fname
+                     then let sps = splitPath (drop (length d - 1) fname)
+                              noSeps = init <$> init sps
+                          in noSeps <> [last sps]
+                     else chkDir ds
+                else if d == takeDirectory fname
+                     then [takeFileName fname]
+                     else chkDir ds
+              [] ->
+                -- this should never happen: all fname's available should already
+                -- be constrained to an input dir.
+                error "Could not find directory for file for compatibility check!"
+        in chkDir dirs
+      splitFName n = let (p,r) = break (`elem` seps) n
+                     in p : if null r then [] else splitFName (tail r)
+      parts f = let (n:sds) = reverse withSubdirs
+                    n' = splitFName n
+                in reverse $ n' <> sds
+      noConflict ps (pn,Nothing) = True
+      noConflict ps (pn,Just vs) = all (not . isConflict pn vs) ps
+      isConflict pn vs p = p `elem` vs && lookup pn pvals /= Just (Just p)
+  in all (noConflict (parts fname)) params

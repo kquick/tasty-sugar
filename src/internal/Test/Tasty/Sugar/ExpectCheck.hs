@@ -146,40 +146,6 @@ expectedSearch inpDirs rootPrefix rootPVMatches seps params expSuffix assocNames
                           , expParamsMatch = L.sortBy (compare `on` fst) pmatch
                           }
 
-isCompatible :: [FilePath]
-             -> Separators
-             -> [ParameterPattern]
-             -> [(String, Maybe String)]
-             -> FilePath
-             -> Bool
-isCompatible dirs seps params pvals fname =
-  let withSubdirs =
-        let chkDir = \case
-              (d:ds) ->
-                if takeFileName d == "*"
-                then if takeDirectory d `L.isPrefixOf` fname
-                     then let sps = splitPath (drop (length d - 1) fname)
-                              noSeps = init <$> init sps
-                          in noSeps <> [last sps]
-                     else chkDir ds
-                else if d == takeDirectory fname
-                     then [takeFileName fname]
-                     else chkDir ds
-              [] ->
-                -- this should never happen: all fname's available should already
-                -- be constrained to an input dir.
-                error "Could not find directory for file for compatibility check!"
-        in chkDir dirs
-      splitFName n = let (p,r) = break (`elem` seps) n
-                     in p : if null r then [] else splitFName (tail r)
-      parts f = let (n:sds) = reverse withSubdirs
-                    n' = splitFName n
-                in reverse $ n' <> sds
-      noConflict ps (pn,Nothing) = True
-      noConflict ps (pn,Just vs) = all (not . isConflict pn vs) ps
-      isConflict pn vs p = p `elem` vs && lookup pn pvals /= Just (Just p)
-  in all (noConflict (parts fname)) params
-
 
 -- Get all expected files for a particular sequence of param+value.
 -- Returns the expected file, the sequence of parameter values that
