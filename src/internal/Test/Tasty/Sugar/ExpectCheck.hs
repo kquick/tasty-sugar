@@ -221,6 +221,7 @@ getExpFileParams rootPrefix rootPMatches seps pvals expSuffix hereNames =
      return (expFile, pmcnt, pm)
 
 
+-- | Removes all Expectations that don't have an explicit match
 removeNonExplicitMatchingExpectations :: [Expectation] -> [Expectation]
 removeNonExplicitMatchingExpectations l =
   let removeNonExplicits entry lst =

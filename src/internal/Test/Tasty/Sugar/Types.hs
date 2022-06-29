@@ -231,7 +231,7 @@ prettyParamPatterns = \case
                               map pretty vl
             in indent 1 $ vsep $ map pp prms)
 
--- Internally, this keeps the association between a possible file and the input
+-- | Internally, this keeps the association between a possible file and the input
 -- directory it came from.  The "file" portion is relative to the input
 -- directory.
 
@@ -241,6 +241,7 @@ data CandidateFile = CandidateFile { candidateDir :: FilePath
                                    }
                      deriving (Eq, Show)  -- Show is for for debugging/tracing
 
+-- | This converts a CandidatFile into a regular FilePath for access
 candidateToPath :: CandidateFile -> FilePath
 candidateToPath c =
   candidateDir c </> foldr (</>) (candidateFile c) (candidateSubdirs c)
@@ -393,6 +394,9 @@ getExplicit :: ParamMatch -> Maybe String
 getExplicit (Explicit v) = Just v
 getExplicit _            = Nothing
 
+-- | If there is a value associated with this parameter, return the value,
+-- regardless of whether it is Explicit or Assumed.  A wildcard is a Nothing
+-- return.
 getParamVal :: ParamMatch -> Maybe String
 getParamVal (Explicit v) = Just v
 getParamVal (Assumed v) = Just v

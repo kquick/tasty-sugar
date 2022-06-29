@@ -124,6 +124,9 @@ removePVals :: [(String, a)] -> [(String, b)] -> [(String, a)]
 removePVals main rmv = filter (not . (`elem` (fst <$> rmv)) . fst) main
 
 
+-- | This provides an Ordering result of comparing two sets of NamedParamMatch.
+-- This can be used for sorting or other prioritization of named matches.
+
 pmatchCmp :: [ NamedParamMatch ] -> [ NamedParamMatch ] -> Ordering
 pmatchCmp p1 p2 =
   let comparisons =
