@@ -50,6 +50,35 @@ extra-source-files:  CHANGELOG.md
                      examples/params/samples/simple.noopt.clang.exe
                      examples/params/samples/simple.noopt.gcc.exe
                      examples/params/samples/simple.opt-clang.exe
+                     test/builds/O0/cow-llvm13.exp
+                     test/builds/O0/cow.exe
+                     test/builds/O0/cow.exp
+                     test/builds/O0/llvm9/cow.exe
+                     test/builds/O0/llvm9/cow.lnk
+                     test/builds/cow.exp
+                     test/builds/gen/llvm10/frog.exe
+                     test/builds/gen/llvm13/frog.exe
+                     test/builds/gen/llvm9/frog.exe
+                     test/builds/llvm10/foo.exp
+                     test/builds/llvm13/cow.exe
+                     test/builds/llvm13/opts/O3/cow.exe
+                     test/builds/want/frog-llvm9-no.exp
+                     test/builds/want/frog-no.exp
+                     test/builds/want/frog-yes.exp
+                     test/data/second/cow-O2.exe
+                     test/data/second/foo-llvm13.exp
+                     test/data/second/foo.O1-llvm10.exe
+                     test/data/single/bar.exe
+                     test/data/single/cow.O2.exp
+                     test/data/single/cow.c
+                     test/data/single/foo.c
+                     test/data/single/foo.exp
+                     test/data/single/foo.llvm10-O2-exp
+                     test/data/single/foo.llvm10.O2.exe
+                     test/data/single/foo.llvm13.exe
+                     test/data/single/foo.llvm199.exp
+                     test/data/single/foo.llvm9.exe
+                     test/data/single/foo.llvm9.exp
 
 source-repository head
   type: git
