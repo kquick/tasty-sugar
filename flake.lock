@@ -3,11 +3,11 @@
     "html-parse-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1589862524,
-        "narHash": "sha256-EmFSDENFggdpK/84cjRK4broz4khn+vxP2VTzdl84ds=",
+        "lastModified": 1661791516,
+        "narHash": "sha256-XJ1Y2Dx52cnu2jPiIjo/hZvH9wGvR/bLHkWVdErtAgs=",
         "owner": "bgamari",
         "repo": "html-parse",
-        "rev": "555ddc7ba9a029c94b66e89b3569fa5a59e6d856",
+        "rev": "d340bc6bee6c9be8b564493fd72b14dbd446a36a",
         "type": "github"
       },
       "original": {
@@ -24,19 +24,20 @@
         ],
         "nixpkgs": [
           "nixpkgs"
-        ],
-        "prettyprinter-src": [
-          "prettyprinter-src"
         ]
       },
       "locked": {
-        "narHash": "sha256-NSOWj/VfGK4vSR0ZBCuj67cNJEd1rzUf0L1tPrRvzMc=",
-        "path": "/home/kquick/Projects/kvitable/kvitable",
-        "type": "path"
+        "lastModified": 1662491109,
+        "narHash": "sha256-d97+kelSpeWBo2yiz1u/P4VM00ZqvmZupyfQDbweImI=",
+        "owner": "kquick",
+        "repo": "kvitable",
+        "rev": "a73f06b8ab5fec37488a819977d17acfe15a9bd1",
+        "type": "github"
       },
       "original": {
-        "path": "/home/kquick/Projects/kvitable/kvitable",
-        "type": "path"
+        "owner": "kquick",
+        "repo": "kvitable",
+        "type": "github"
       }
     },
     "levers": {
@@ -46,11 +47,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1618328346,
-        "narHash": "sha256-xksyNOkO/WgOruzpcVDc3wsHtjkciDlvME5YL7JKqP4=",
+        "lastModified": 1625250560,
+        "narHash": "sha256-7s7H9RXpYfgCD5t4aPQzs2EailWPh2d2NZi0x1B/EIM=",
         "owner": "kquick",
         "repo": "nix-levers",
-        "rev": "a1b2505117606db1ffea4a2871c0f2d6c09697a5",
+        "rev": "488f37051df88df7af73798484a8244eb0850edf",
         "type": "github"
       },
       "original": {
@@ -61,35 +62,17 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1618628710,
-        "narHash": "sha256-9xIoU+BrCpjs5nfWcd/GlU7XCVdnNKJPffoNTxgGfhs=",
+        "lastModified": 1653936696,
+        "narHash": "sha256-M6bJShji9AIDZ7Kh7CPwPBPb/T7RiVev2PAcOi4fxDQ=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "7919518f0235106d050c77837df5e338fb94de5d",
+        "rev": "ce6aa13369b667ac2542593170993504932eb836",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "nixpkgs-unstable",
+        "ref": "22.05",
         "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "prettyprinter-src": {
-      "flake": false,
-      "locked": {
-        "dir": "prettyprinter",
-        "lastModified": 1612788978,
-        "narHash": "sha256-uktcuwhxmeBDiyFOPPUG/7HzNjdOXbeMKsdfObMF0uk=",
-        "owner": "quchen",
-        "repo": "prettyprinter",
-        "rev": "11e8bf12aed2f698e619c3a8c07eca3af4da1aed",
-        "type": "github"
-      },
-      "original": {
-        "dir": "prettyprinter",
-        "owner": "quchen",
-        "repo": "prettyprinter",
         "type": "github"
       }
     },
@@ -97,8 +80,7 @@
       "inputs": {
         "kvitable": "kvitable",
         "levers": "levers",
-        "nixpkgs": "nixpkgs",
-        "prettyprinter-src": "prettyprinter-src"
+        "nixpkgs": "nixpkgs"
       }
     }
   },

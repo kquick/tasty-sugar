@@ -9,7 +9,8 @@
   nixConfig.bash-prompt-suffix = "tasty-sugar} ";
 
   inputs = {
-    nixpkgs.url = github:nixos/nixpkgs/nixpkgs-unstable;
+    # nixpkgs.url = github:nixos/nixpkgs/nixpkgs-unstable;
+    nixpkgs.url = "github:nixos/nixpkgs/22.05";
     levers = {
       type = "github";
       owner = "kquick";
@@ -17,7 +18,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     kvitable = {
-      url = "/home/kquick/Projects/kvitable/kvitable";
+      url = "github:kquick/kvitable";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.levers.follows = "levers";
     };
@@ -26,13 +27,12 @@
   outputs = { self, nixpkgs, levers
             , kvitable
             }:
-              let shellWith = pkgs: adds: drv: drv.overrideAttrs(old:
-                    { buildInputs = old.buildInputs ++ adds pkgs; });
-                  shellPkgs = pkgs: [
-                    pkgs.cabal-install
-                  ];
-              in
-                rec
+     let shellWith = pkgs: adds: drv: drv.overrideAttrs(old:
+           { buildInputs = old.buildInputs ++ adds pkgs; });
+         shellPkgs = pkgs: [ pkgs.cabal-install
+                           ];
+     in
+     rec
       {
         defaultPackage = levers.eachSystem (s:
           self.packages.${s}.tasty-sugar.default);
@@ -65,7 +65,7 @@
               pkgs = import nixpkgs { inherit system; };
           in rec {
             tasty-sugar = mkHaskell "tasty-sugar" self {
-              inherit kvitable prettyprinter;
+              inherit kvitable;
             };
 
           });
