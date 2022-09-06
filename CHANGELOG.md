@@ -1,5 +1,10 @@
 # Revision history for tasty-sugar
 
+## 1.3.0.2 -- 2022-09-06
+
+ * Add test files to cabal's `extra-sources` so they are included in the package
+   (thanks to Felix Yan).
+
 ## 1.3.0.1 -- 2022-06-29
 
  * Bump optparse-applicative upper bound to allow 0.17 series.
