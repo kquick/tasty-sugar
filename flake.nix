@@ -20,14 +20,11 @@
       url = "/home/kquick/Projects/kvitable/kvitable";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.levers.follows = "levers";
-      inputs.prettyprinter-src.follows = "prettyprinter-src";
     };
-    prettyprinter-src = { flake = false; url = github:quchen/prettyprinter?dir=prettyprinter; };
   };
 
   outputs = { self, nixpkgs, levers
             , kvitable
-            , prettyprinter-src
             }:
               let shellWith = pkgs: adds: drv: drv.overrideAttrs(old:
                     { buildInputs = old.buildInputs ++ adds pkgs; });
@@ -71,35 +68,6 @@
               inherit kvitable prettyprinter;
             };
 
-            prettyprinter = mkHaskell "prettyprinter"
-              "${prettyprinter-src}/prettyprinter" {
-                adjustDrv = args: drv:
-                  pkgs.haskell.lib.overrideCabal
-                    (pkgs.haskell.lib.dontCheck
-                      (pkgs.haskell.lib.appendConfigureFlags drv
-                        [ "--extra-include-dirs=${prettyprinter-macros}" ]))
-                    (old: {
-                      # The LICENSE.md in prettyprinter is a symlink
-                      # to the directory above it, but the src
-                      # specification will lose it, so create an
-                      # explicit copy instead.
-                      preConfigure = ''
-                              rm /build/prettyprinter/LICENSE.md
-                              cp ${prettyprinter-src}/LICENSE.md /build/prettyprinter/LICENSE.md
-                            '';
-                          });
-                };
-            prettyprinter-macros = pkgs.stdenv.mkDerivation {
-              pname = "prettyprinter-macros";
-              version = "1.7.0";
-              phases = [ "installPhase" ];
-              src = "${prettyprinter-src}/aux";
-              installPhase = ''
-                mkdir $out
-                cp ${prettyprinter-src}/aux/version-compatibility-macros.h $out/
-              '';
-
-            };
           });
       };
 }
