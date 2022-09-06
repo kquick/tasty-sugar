@@ -1,5 +1,9 @@
 # Revision history for tasty-sugar
 
+## 1.3.0.1 -- 2022-06-29
+
+ * Bump optparse-applicative upper bound to allow 0.17 series.
+
 ## 1.3.0.0 -- 2022-06-28
 
  * Add `inputDirs` to `CUBE` to replace single `inputDir`.  Allows test action
