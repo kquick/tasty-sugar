@@ -31,7 +31,10 @@ checkRoots :: CUBE -> [CandidateFile]
            -> (Int, [([Sweets], [SweetExplanation])])
 checkRoots pat allFiles =
   let isRootMatch n = candidateFile n FPGP.~~ (rootName pat)
-      roots = filter isRootMatch allFiles
+      -- roots is all *possible* roots, but some of these are not roots at all,
+      -- and some of these may be the other files associated with a root, so
+      -- "root" files cannot be eliminated from the search space yet.
+      roots = L.filter isRootMatch allFiles
       checked = filter (not . null . fst)
                 ((checkRoot pat allFiles) <$> roots)
   in (length checked, checked)
