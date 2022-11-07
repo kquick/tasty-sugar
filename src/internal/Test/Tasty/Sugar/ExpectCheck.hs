@@ -43,6 +43,7 @@ findExpectation pat params rootN allNames (rootPMatches, matchPrefix, _) =
       o = associatedNames pat
       seps = separators pat
       expSuffix = expectedSuffix pat
+      sfxMatch = if null expSuffix then const True else (expSuffix `L.isSuffixOf`)
       candidates = filter possible allNames
       possible f = and [ candidateFile matchPrefix `L.isPrefixOf` candidateFile f
                        , rootN /= f
@@ -78,10 +79,7 @@ findExpectation pat params rootN allNames (rootPMatches, matchPrefix, _) =
                 , SweetExpl { rootPath = candidateToPath rootN
                             , base = candidateToPath matchPrefix
                             , expectedNames =
-                                filter
-                                (if null expSuffix then const True
-                                  else (expSuffix `L.isSuffixOf`))
-                                (candidateToPath <$> candidates)
+                                filter sfxMatch (candidateToPath <$> candidates)
                             , results = r'
                             })
          , stats )
@@ -104,11 +102,10 @@ expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allName
                    pvals <- getPVals pseq
                    let compatNames = filter (isCompatible seps params pvals) allNames
                    guard (not $ null compatNames)
-                   e@(_,_,pmatch) <- getExp rootPrefix rootPVMatches seps params pvals
-                                     expSuffix compatNames
-                   a <- (getAssoc rootPrefix seps pmatch assocNames compatNames)
-                   return (e,a)
-     (expFile, pmatch, assocFiles) <-
+                   e <- getExp rootPrefix rootPVMatches seps params pvals
+                        expSuffix compatNames
+                   return (e,compatNames)
+     (expFile, pmatch, compatNames) <-
        let bestRanked :: (Eq a, Eq b, Eq c)
                       => [((a, Int, [b]),c)] -> LogicI (a, [b], c)
            bestRanked l =
@@ -120,6 +117,7 @@ expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allName
                   in eachFrom "ranked exp match"
                      $ L.nub $ fmap dropRank $ filter (rankMatching m) l
        in bestRanked matches
+     assocFiles <- (getAssoc rootPrefix seps pmatch assocNames compatNames)
      return $ Expectation { expectedFile = candidateToPath expFile
                           , associated = fmap candidateToPath <$> assocFiles
                           , expParamsMatch = L.sort pmatch
