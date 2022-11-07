@@ -42,16 +42,14 @@ getPVals = mapM getPVal
 -- separately.
 singlePVals :: [NamedParamMatch] -> [ParameterPattern]
             -> Logic [ParameterPattern]
-singlePVals sel = eachVal . L.sort
-  where eachVal [] = return []
-        eachVal ((pn,Nothing):ps) =
-          let this = (pn, (:[]) <$> (lookup pn sel >>= getParamVal))
-           in (this :) <$> eachVal ps
-        eachVal ((pn,Just pvs):ps) =
+singlePVals sel = mapM eachVal
+  where eachVal (pn,Nothing) =
+          return (pn, (:[]) <$> (lookup pn sel >>= getParamVal))
+        eachVal (pn,Just pvs) =
           do pv <- eachFrom $ case lookup pn sel >>= getParamVal of
                                 Nothing -> L.sort pvs
                                 Just v -> [v]
-             ((pn, Just [pv]) :) <$> eachVal ps
+             return (pn, Just [pv])
 
 
 -- | Generate each possible combination of Explicit or non-Explicit

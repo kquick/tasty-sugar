@@ -56,7 +56,8 @@ checkRoot :: CUBE
           -> CandidateFile  --  root path
           -> ([Sweets], [SweetExplanation])
 checkRoot pat allFiles rootF =
-  let combineExpRes (swts, expl) = bimap (swts :) (expl :)
+  let params = L.sort $ validParams pat
+      combineExpRes (swts, expl) = bimap (swts :) (expl :)
 
       mergeSweets swl =
         -- If multiple Sweets have the same rootMatchName this likely means that
@@ -107,6 +108,6 @@ checkRoot pat allFiles rootF =
   in foldr combineExpRes ([], []) $
      mergeSweets $
      catMaybes $
-     fmap (findExpectation pat rootF allFiles) $
+     fmap (findExpectation pat params rootF allFiles) $
      observeAll $
-     rootMatch rootF (separators pat) (validParams pat) (rootName pat)
+     rootMatch rootF (separators pat) params (rootName pat)

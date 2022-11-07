@@ -24,24 +24,24 @@ import           Test.Tasty.Sugar.Types
 -- | Finds the possible expected files matching the selected
 -- source. There will be either one or none.
 findExpectation :: CUBE
+                -> [ParameterPattern]
                 -> CandidateFile   --  original name of source
                 -> [CandidateFile] --  all of the names to choose from
                 -> ([NamedParamMatch], CandidateFile, String) -- param constraints from the root name
                 -> Maybe ( Sweets, SweetExplanation )
-findExpectation pat rootN allNames (rootPMatches, matchPrefix, _) =
-  let r = mkSweet $
-          trimExpectations $
-           observeAll $
-           do guard (not $ null candidates)
-              expectedSearch
-                matchPrefix
-                rootPMatches seps params expSuffix o
-                candidates
+findExpectation pat params rootN allNames (rootPMatches, matchPrefix, _) =
+  let r = mkSweet
+          $ trimExpectations
+          $ observeAll
+          $ do guard (not $ null candidates)
+               expectedSearch
+                 matchPrefix
+                 rootPMatches seps params expSuffix o
+                 candidates
 
 
       o = associatedNames pat
       seps = separators pat
-      params = validParams pat
       expSuffix = expectedSuffix pat
       candidates = filter possible allNames
       possible f = and [ candidateFile matchPrefix `L.isPrefixOf` candidateFile f
