@@ -7,6 +7,8 @@ module Test.Tasty.Sugar.Candidates
     candidateToPath
   , findCandidates
   , makeCandidate
+  , candidateMatchPrefix
+  , candidateMatchSuffix
   )
 where
 
@@ -149,3 +151,39 @@ holes chkRange present =
 candidateToPath :: CandidateFile -> FilePath
 candidateToPath c =
   candidateDir c </> foldr (</>) (candidateFile c) (candidateSubdirs c)
+
+
+-- | Determines if the second CandidateFile argument matches the prefix of the
+-- first CandidateFile, up to any separator (if applicable).  This can be used to
+-- match possible expected files against the current root file, or possible
+-- associated files against the current expected file.
+candidateMatchPrefix :: Separators -> CandidateFile -> CandidateFile -> Bool
+candidateMatchPrefix seps mf cf =
+  let mStart = candidateFile mf
+      mStartLen = length mStart
+      f = candidateFile cf
+      pfxlen = let cl = candidateMatchIdx cf
+               in if fromEnum cl == length f
+                  then if null seps then toEnum mStartLen else cl
+                  else cl - 1
+  in mStart == DL.take (fromEnum pfxlen) f
+
+candidateMatchSuffix :: Separators -> FileSuffix -> CandidateFile
+                     -> CandidateFile -> Bool
+candidateMatchSuffix seps sfx rootf cf =
+  let f = candidateFile cf
+  in if null sfx
+     then f == DL.takeWhile (not . (`elem` seps)) f
+     else and [ length f >= (length (candidateFile rootf) + length sfx)
+              , sfx `DL.isSuffixOf` f
+                -- is char before sfx a separator (and fEnd didn't start
+                -- with a separator)?
+              , if null seps || (head sfx `elem` seps)
+                   -- note: use of head is safe because null sfx is checked
+                   -- above and uses a different path.
+                then True
+                else maybe False ((`elem` seps) . fst)
+                     $ DL.uncons
+                     $ DL.drop (length sfx)
+                     $ reverse f
+              ]
