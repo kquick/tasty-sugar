@@ -58,6 +58,15 @@ paramsAssocTests :: [TT.TestTree]
 paramsAssocTests =
   let (sugar1,_s1desc) = findSugarIn sugarCube (sample sugarCube)
       chkCandidate = checkCandidate sugarCube sample testInpPath [] 0
+      mkE' a p f c o = Expectation
+                     { expectedFile = p f
+                     , expParamsMatch = [ ("c-compiler", c)
+                                        , ("optimization", o)
+                                        ]
+                     , associated = a
+                     }
+      mkEr p = mkE' [ ("rust-source", p "recursive.rs") ] p
+      mkEc p f c = mkE' [ ("c-source", p "simple.c") ] p f (Explicit c)
   in [ testCase "valid sample" $ 13 @=? length (sample sugarCube)
 
      , TT.testGroup "candidates"
@@ -91,14 +100,7 @@ paramsAssocTests =
          , rootFile = p "recursive.fast.exe"
          , cubeParams = validParams sugarCube
          , expected =
-             let mkE f c o =
-                   Expectation
-                   { expectedFile = p f
-                   , expParamsMatch = [ ("c-compiler", c)
-                                      , ("optimization", o)
-                                      ]
-                   , associated = [ ("rust-source", p "recursive.rs") ]
-                   }
+             let mkE = mkEr p
              in [ mkE "recursive.fast.expct" (Assumed "clang") (Explicit "fast")
                 , mkE "recursive.fast.expct" (Assumed "gcc")   (Explicit "fast")
                 ]
@@ -110,20 +112,13 @@ paramsAssocTests =
            , rootFile = p "simple.noopt.clang.exe"
            , cubeParams = validParams sugarCube
            , expected =
-               let mkE f c o =
-                     Expectation
-                     { expectedFile = p f
-                     , expParamsMatch = [ ("c-compiler", c)
-                                        , ("optimization", o)
-                                        ]
-                     , associated = [ ("c-source", p "simple.c") ]
-                     }
+               let mkE = mkEc p
                in
                  -- Note that opt is an unconstrained parameter, so it can
                  -- match "noopt" or it can match something else.
-                 [ mkE "simple-opt.expct" (Explicit "clang") (Explicit "opt")
-                 , mkE "simple.expct"     (Explicit "clang") (Explicit "noopt")
-                 , mkE "simple.expct"     (Explicit "clang") NotSpecified
+                 [ mkE "simple-opt.expct" "clang" (Explicit "opt")
+                 , mkE "simple.expct"     "clang" (Explicit "noopt")
+                 , mkE "simple.expct"     "clang" NotSpecified
                  ]
            }
 
@@ -133,20 +128,13 @@ paramsAssocTests =
          , rootFile = p "simple.noopt.gcc.exe"
          , cubeParams = validParams sugarCube
          , expected =
-             let mkE f c o =
-                   Expectation
-                   { expectedFile = p f
-                   , expParamsMatch = [ ("c-compiler", c)
-                                      , ("optimization", o)
-                                      ]
-                   , associated = [ ("c-source", p "simple.c") ]
-                   }
+             let mkE = mkEc p
              in
                -- Note that opt is an unconstrained parameter, so it can
                -- match "noopt" or it can match something else.
-               [ mkE "simple-opt.expct"       (Explicit "gcc") (Explicit "opt")
-               , mkE "simple.noopt-gcc.expct" (Explicit "gcc") (Explicit "noopt")
-               , mkE "simple.noopt-gcc.expct" (Explicit "gcc") NotSpecified
+               [ mkE "simple-opt.expct"       "gcc" (Explicit "opt")
+               , mkE "simple.noopt-gcc.expct" "gcc" (Explicit "noopt")
+               , mkE "simple.noopt-gcc.expct" "gcc" NotSpecified
                ]
          }
 
@@ -155,19 +143,12 @@ paramsAssocTests =
                 , rootFile = p "simple.opt-clang.exe"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  let mkE f c o =
-                        Expectation
-                        { expectedFile = p f
-                        , expParamsMatch = [ ("c-compiler", c)
-                                           , ("optimization", o)
-                                           ]
-                        , associated = [ ("c-source", p "simple.c") ]
-                        }
+                  let mkE = mkEc p
                   in
                     -- Note that opt is an unconstrained parameter, so it can
                     -- match "noopt" or it can match something else.
-                    [ mkE "simple-opt.expct" (Explicit "clang") (Explicit "opt")
-                    , mkE "simple.expct"     (Explicit "clang") NotSpecified
+                    [ mkE "simple-opt.expct" "clang" (Explicit "opt")
+                    , mkE "simple.expct"     "clang" NotSpecified
                     ]
                 }
 
@@ -180,20 +161,13 @@ paramsAssocTests =
          , rootFile = p "simple.clang-noopt-clang.exe"
          , cubeParams = validParams sugarCube
          , expected =
-             let mkE f c o =
-                   Expectation
-                   { expectedFile = p f
-                   , expParamsMatch = [ ("c-compiler", c)
-                                      , ("optimization", o)
-                                      ]
-                   , associated = [ ("c-source", p "simple.c") ]
-                   }
+             let mkE = mkEc p
              in
                -- Note that opt is an unconstrained parameter, so it can
                -- match "noopt" or it can match something else.
-               [ mkE "simple-opt.expct" (Explicit "clang") (Explicit "opt")
-               , mkE "simple.expct"     (Explicit "clang") (Explicit "noopt")
-               , mkE "simple.expct"     (Explicit "clang") NotSpecified
+               [ mkE "simple-opt.expct" "clang" (Explicit "opt")
+               , mkE "simple.expct"     "clang" (Explicit "noopt")
+               , mkE "simple.expct"     "clang" NotSpecified
                ]
          }
 
@@ -207,14 +181,7 @@ paramsAssocTests =
                 , rootFile = p "simple.clang-gcc.exe"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  let mkE f c o =
-                        Expectation
-                        { expectedFile = p f
-                        , expParamsMatch = [ ("c-compiler", Explicit c)
-                                           , ("optimization", o)
-                                           ]
-                        , associated = [ ("c-source", p "simple.c")]
-                        }
+                  let mkE = mkEc p
                   in [ mkE "simple-opt.expct"       "clang" (Explicit "opt")
                      , mkE "simple-opt.expct"       "gcc"   (Explicit "opt")
                      , mkE "simple.expct"           "clang" NotSpecified
