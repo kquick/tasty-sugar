@@ -12,10 +12,12 @@ module Test.Tasty.Sugar.ExpectCheck
   )
   where
 
+import           Control.Applicative ( (<|>) )
 import           Control.Monad
 import           Data.Bifunctor ( first )
 import           Data.Function ( on )
 import qualified Data.List as L
+import           Data.Maybe ( isNothing )
 
 import           Test.Tasty.Sugar.AssocCheck
 import           Test.Tasty.Sugar.Candidates
@@ -30,15 +32,16 @@ findExpectation :: CUBE
                 -> [ParameterPattern]
                 -> CandidateFile   --  original name of source
                 -> [CandidateFile] --  all of the names to choose from
-                -> ([NamedParamMatch], CandidateFile, String) -- param constraints from the root name
+                -> ([NamedParamMatch], CandidateFile) -- param constraints from the root name
                 -> (Maybe ( Sweets, SweetExplanation ), IterStat)
-findExpectation pat params rootN allNames (rootPMatches, matchPrefix, _) =
+findExpectation pat params rootN allNames (rootPMatches, matchPrefix) =
   let r = first (mkSweet . trimExpectations)
           $ observeIAll
           $ do guard (not $ null candidates)
                expectedSearch
                  matchPrefix
-                 rootPMatches seps params expSuffix o
+                 rootPMatches
+                 seps params expSuffix o
                  candidates
 
 
@@ -88,7 +91,11 @@ findExpectation pat params rootN allNames (rootPMatches, matchPrefix, _) =
          , stats )
 
 
--- Find all Expectations matching this rootMatch
+-- Find all Expectations matching this rootMatch.
+--
+-- Note that rootPVMatches may contain multiple entries for the same parameter
+-- value: the root file name may contain these duplications.  The code here
+-- should be careful to check against each value instead of assuming just one.
 expectedSearch :: CandidateFile
                -> [NamedParamMatch]
                -> Separators
@@ -98,130 +105,57 @@ expectedSearch :: CandidateFile
                -> [CandidateFile]
                -> LogicI Expectation
 expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allNames =
-  do params' <- singlePVals rootPVMatches params
-     matches <- addSubLogicStats $ observeIAll $
-                do pseq <- eachFrom "exp params permutations" $
-                           combosLongToShort params'
-                   pvals <- getPVals pseq
-                   let compatNames = filter (isCompatible pvals) allNames
-                   guard (not $ null compatNames)
-                   e <- getExp rootPrefix rootPVMatches seps params pvals
-                        expSuffix compatNames
-                   return (e,compatNames)
-     (expFile, pmatch, compatNames) <-
-       let bestRanked :: (Eq a, Eq b, Eq c)
-                      => [((a, Int, [b]),c)] -> LogicI (a, [b], c)
-           bestRanked l =
-             if null l then mzero
-             else let m = maximum $ fmap rankValue l
-                      rankValue ((_,r,_),_) = r
-                      rankMatching v ((_,r,_),_) = v == r
-                      dropRank ((a,_,b),c) = (a,b,c)
-                  in eachFrom "ranked exp match"
-                     $ L.nub $ fmap dropRank $ filter (rankMatching m) l
-       in bestRanked matches
-     assocFiles <- (getAssoc rootPrefix seps pmatch assocNames compatNames)
-     return $ Expectation { expectedFile = candidateToPath expFile
+  do let expMatch cf = and [ candidateMatchPrefix seps rootPrefix cf
+                           , candidateMatchSuffix seps expSuffix rootPrefix cf
+                           ]
+
+     let unconstrained = fst <$> L.filter (isNothing . snd) params
+
+     (rmatch, pvals) <- getSinglePVals rootPVMatches params
+                        -- If some of rootPVMatches were related to values that
+                        -- might have been useable for an unconstrained
+                        -- parameter, then we also need to consider roots that
+                        -- don't match those unconstrained values (because those
+                        -- might not be a match for that parameter):
+                        <|>
+                        (if null unconstrained
+                          then mzero
+                          else let unConstr = (`elem` unconstrained) . fst
+                                   rm = L.filter (not . unConstr) rootPVMatches
+                               in if null rm
+                                  then mzero
+                                  else getSinglePVals rm params
+                        )
+
+
+     efile <- eachFrom "exp candidate"
+              $ L.reverse
+              $ L.sortBy (compare `on` matchStrength . fmap snd . candidatePMatch)
+              $ filter expMatch allNames
+     guard $ isCompatible pvals efile
+
+     let onlyOneOfEach (p,v) r = case lookup p r of
+                                   Nothing -> (p,v) : r
+                                   Just _ -> r
+     rAndeMatches <- return (foldr onlyOneOfEach rmatch (candidatePMatch efile))
+                     <|> (if null unconstrained
+                           then mzero
+                          else let unConstr = (`elem` unconstrained) . fst
+                                   rm = filter (not . unConstr) (candidatePMatch efile)
+                               in if null rm
+                                  then mzero
+                                  else return (foldr onlyOneOfEach rmatch rm)
+                         )
+
+     let pmatch = namedPMatches rAndeMatches pvals
+     assocFiles <- getAssoc rootPrefix seps
+                   pmatch
+                   assocNames allNames
+     return $ Expectation { expectedFile = candidateToPath efile
                           , associated = fmap candidateToPath <$> assocFiles
                           , expParamsMatch = L.sort pmatch
                           }
 
-
--- | Get all expected files for a particular sequence of param+value.
--- Returns the expected file, the sequence of parameter values that
--- match that expect file, and a ranking (the number of those paramter
--- values that actually appear in the expect file.
-getExp :: CandidateFile
-       -> [NamedParamMatch]
-       -> Separators
-       -> [ParameterPattern]
-       -> [(String, Maybe String)]
-       -> FileSuffix
-       -> [CandidateFile]
-       -> LogicI (CandidateFile, Int, [NamedParamMatch])
-getExp rootPrefix rootPMatches seps params pvals expSuffix allNames =
-  do -- Some of the params may be encoded in the subdirectories instead of in the
-     -- target filename (each param value could appear in either).  If a
-     -- rootPMatches value is in a subdirectory, no other values for that
-     -- parameter can appear, otherwise all possible values could appear.  A
-     -- subset of the rootPMatches may appear in the subdirs, but only the
-     -- maximal subset can be considered.
-
-     let rootMatchesInSubdir :: CandidateFile -> [NamedParamMatch]
-         rootMatchesInSubdir f =
-           let chkRootMatch d r =
-                 let chkRPMatch p r' =
-                       case getExplicit $ snd p of
-                         Just v -> if d == v then p : r' else r'
-                         Nothing -> r'
-                 in foldr chkRPMatch r rootPMatches
-           in foldr chkRootMatch mempty $ candidateSubdirs f
-
-     let inpDirMatches = fmap rootMatchesInSubdir <$> zip allNames allNames
-
-     (dirName, inpDirMatch) <- eachFrom "input dir" inpDirMatches
-
-     let nonRootMatchPVals = removePVals pvals inpDirMatch
-
-     (otherMatchesInSubdir, _) <-
-           dirMatches dirName params $ (fmap (fmap (:[])) <$> nonRootMatchPVals)
-
-     let remPVals = removePVals nonRootMatchPVals otherMatchesInSubdir
-
-     let remRootMatches = removePVals rootPMatches inpDirMatch
-     let validNames = [ dirName ]
-
-     (fp, cnt, npm) <- getExpFileParams rootPrefix
-                       remRootMatches
-                       seps remPVals expSuffix validNames
-
-
-     -- Corner case: a wildcard parameter could be selected from both a subdir
-     -- and the filename... if the values are the same, that's OK, but if the
-     -- values are different it should be rejected.
-
-     let dpm = inpDirMatch <> otherMatchesInSubdir
-
-     let conflict = let chkNPM (pn,pv) acc =
-                          acc || case lookup pn dpm of
-                                   Nothing -> False
-                                   Just v -> v /= pv
-                    in foldr chkNPM False npm
-     guard (not conflict)
-
-     return (fp, length dpm + cnt, dpm <> npm)
-
-
-getExpFileParams :: CandidateFile
-                 -> [NamedParamMatch]
-                 -> Separators
-                 -> [(String, Maybe String)]
-                 -> FileSuffix
-                 -> [CandidateFile]
-                 -> LogicI (CandidateFile, Int, [NamedParamMatch])
-getExpFileParams rootPrefix rootPMatches seps pvals expSuffix hereNames =
-  do let suffixSpecifiesSep = and [ not (null expSuffix)
-                                  , head expSuffix `elem` seps
-                                  ]
-     (pm, pmcnt, pmstr) <- pvalMatch seps rootPMatches pvals
-
-     -- If the expSuffix starts with a separator then *only that*
-     -- separator is allowed for the suffix (other seps are still
-     -- allowed for parameter value separation).
-     let suffixSepMatch = not suffixSpecifiesSep
-                          || and [ not (null pmstr)
-                                 , last pmstr == head expSuffix
-                                 ]
-     guard suffixSepMatch
-
-     let ending = if suffixSpecifiesSep then tail expSuffix else expSuffix
-
-     expFile <-
-       eachFrom "exp file candidate"
-       $ filter (((candidateFile rootPrefix <> pmstr <> ending) ==) . candidateFile)
-       $ hereNames
-
-     return (expFile, pmcnt, pm)
 
 
 -- | Determines the best Expectations to use from a list of Expectations that may

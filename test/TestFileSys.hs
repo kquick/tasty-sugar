@@ -102,37 +102,43 @@ fsTests1 = do
 
       , TT.testGroup "Sweet #1" $
         let sweet = head sweets in
+        let tE n e d o = testExp sweet n e d "llvm10" o in
           [
             testCase "root match" $ "foo.llvm10.O2.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath </> "foo.llvm10.O2.exe" @=? rootFile sweet
-          , testCase "# expectations" $ 4 @=? length (expected sweet)
-
-          -- the direct match for foo.llvm10.O2.exe is foo.llvm10-O2-exp, with a
-          -- fallback to foo.exp, but since llvm199 is not a valid value for the
-          -- llvm parameter, and opt is an unconstrained value, the
-          -- foo.llvm199.exp file can be matched as well.
-          , testExp sweet 0 "foo.exp"           "no"  "llvm10" NotSpecified
-          , testExp sweet 1 "foo.exp"           "yes" "llvm10" NotSpecified
-          , testExp sweet 2 "foo.llvm10-O2-exp" "no"  "llvm10" (Explicit "O2")
-          , testExp sweet 3 "foo.llvm10-O2-exp" "yes" "llvm10" (Explicit "O2")
+          , testCase "# expectations" $ 6 @=? length (expected sweet)
+          , tE 0 "foo.llvm10-O2-exp" "no"  (Explicit "O2")
+          , tE 1 "foo.llvm10-O2-exp" "yes" (Explicit "O2")
+          , tE 2 "foo.llvm10-O2-exp" "no"  NotSpecified
+          , tE 3 "foo.llvm10-O2-exp" "yes" NotSpecified
+          , tE 4 "foo.llvm199.exp"   "no"  (Explicit "llvm199")
+          , tE 5 "foo.llvm199.exp"   "yes" (Explicit "llvm199")
         ]
       , TT.testGroup "Sweet #2" $
         let sweet = head $ drop 1 sweets in
           [
             testCase "root match" $ "foo.llvm13.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath </> "foo.llvm13.exe" @=? rootFile sweet
-          , testCase "# expectations" $ 2 @=? length (expected sweet)
-          , testExp sweet 0 "foo.exp" "no"  "llvm13" NotSpecified
-          , testExp sweet 1 "foo.exp" "yes" "llvm13" NotSpecified
+          , testCase "# expectations" $ 4 @=? length (expected sweet)
+          , testExp sweet 0 "foo.exp"         "no"  "llvm13" NotSpecified
+          , testExp sweet 1 "foo.exp"         "yes" "llvm13" NotSpecified
+          -- llvm199 is not a registered value for the "llvm" parameter, so it
+          -- can match the "opt" parameter as an alternate expectation match.
+          , testExp sweet 2 "foo.llvm199.exp" "no"  "llvm13" (Explicit "llvm199")
+          , testExp sweet 3 "foo.llvm199.exp" "yes" "llvm13" (Explicit "llvm199")
           ]
       , TT.testGroup "Sweet #3" $
         let sweet = head $ drop 2 sweets in
           [
             testCase "root match" $ "foo.llvm9.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath </> "foo.llvm9.exe" @=? rootFile sweet
-          , testCase "# expectations" $ 2 @=? length (expected sweet)
-          , testExp sweet 0 "foo.llvm9.exp" "no"  "llvm9" NotSpecified
-          , testExp sweet 1 "foo.llvm9.exp" "yes" "llvm9" NotSpecified
+          , testCase "# expectations" $ 4 @=? length (expected sweet)
+          -- llvm199 is not a registered value for the "llvm" parameter, so it
+          -- can match the "opt" parameter as an alternate expectation match.
+          , testExp sweet 0 "foo.llvm199.exp" "no"  "llvm9" (Explicit "llvm199")
+          , testExp sweet 1 "foo.llvm199.exp" "yes" "llvm9" (Explicit "llvm199")
+          , testExp sweet 2 "foo.llvm9.exp"   "no"  "llvm9" NotSpecified
+          , testExp sweet 3 "foo.llvm9.exp"   "yes" "llvm9" NotSpecified
           ]
       ]
     ]
@@ -210,15 +216,20 @@ fsTests2 = do
         ]
       , TT.testGroup "Sweet #2" $
         let sweet = head $ drop 1 sweets in
-        let testExp' n d = testExp sweet "foo.c" n "foo.exp" d
-                           (Explicit "llvm10") (Explicit "O1")
-          in
+        let testExp' n e d o = testExp sweet "foo.c" n e d (Explicit "llvm10") o
+        in
           [
             testCase "root match" $ "foo.O1-llvm10.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath2 </> "foo.O1-llvm10.exe" @=? rootFile sweet
-          , testCase "# expectations" $ 2 @=? length (expected sweet)
-          , testExp' 0 "no"
-          , testExp' 1 "yes"
+          , testCase "# expectations" $ 8 @=? length (expected sweet)
+          , testExp' 0 "foo.exp"           "no"  (Explicit "O1")
+          , testExp' 1 "foo.exp"           "yes" (Explicit "O1")
+          , testExp' 2 "foo.llvm10-O2-exp" "no"  (Explicit "O2")
+          , testExp' 3 "foo.llvm10-O2-exp" "no"  NotSpecified
+          , testExp' 4 "foo.llvm10-O2-exp" "yes" (Explicit "O2")
+          , testExp' 5 "foo.llvm10-O2-exp" "yes" NotSpecified
+          , testExp' 6 "foo.llvm199.exp"   "no"  (Explicit "llvm199")
+          , testExp' 7 "foo.llvm199.exp"   "yes" (Explicit "llvm199")
         ]
       , TT.testGroup "Sweet #3" $
         let sweet = head $ drop 2 sweets in
@@ -227,39 +238,47 @@ fsTests2 = do
           [
             testCase "root match" $ "foo.llvm10.O2.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath </> "foo.llvm10.O2.exe" @=? rootFile sweet
-          , testCase "# expectations" $ 4 @=? length (expected sweet)
-          , testExp' 0 "foo.exp"           "no"  NotSpecified
-          , testExp' 1 "foo.exp"           "yes" NotSpecified
-          , testExp' 2 "foo.llvm10-O2-exp" "no"  (Explicit "O2")
-          , testExp' 3 "foo.llvm10-O2-exp" "yes" (Explicit "O2")
+          , testCase "# expectations" $ 6 @=? length (expected sweet)
+          , testExp' 0 "foo.llvm10-O2-exp" "no"  (Explicit "O2")
+          , testExp' 1 "foo.llvm10-O2-exp" "yes" (Explicit "O2")
+          , testExp' 2 "foo.llvm10-O2-exp" "no"  NotSpecified
+          , testExp' 3 "foo.llvm10-O2-exp" "yes" NotSpecified
+          , testExp' 4 "foo.llvm199.exp"   "no"  (Explicit "llvm199")
+          , testExp' 5 "foo.llvm199.exp"   "yes" (Explicit "llvm199")
         ]
       , TT.testGroup "Sweet #4" $
         let sweet = head $ drop 3 sweets in
-        let testExp' n e d =
+        let testExp' s n e d o =
               testCase ("Exp #" <> show n)
               $ safeElem n (expected sweet)
-              @?= Just (exp testInpPath2 "foo.c" e d (Explicit "llvm13") NotSpecified)
+              @?= Just (exp s "foo.c" e d (Explicit "llvm13") o)
+            testExp1 = testExp' testInpPath2
+            testExp2 = testExp' testInpPath
           in
           [
             testCase "root match" $ "foo.llvm13.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath </> "foo.llvm13.exe" @=? rootFile sweet
-          , testCase "# expectations" $ 2 @=? length (expected sweet)
-          , testExp' 0 "foo-llvm13.exp" "no"
-          , testExp' 1 "foo-llvm13.exp" "yes"
+          , testCase "# expectations" $ 4 @=? length (expected sweet)
+          , testExp1 0 "foo-llvm13.exp"  "no"  NotSpecified
+          , testExp1 1 "foo-llvm13.exp"  "yes" NotSpecified
+          , testExp2 2 "foo.llvm199.exp" "no"  (Explicit "llvm199")
+          , testExp2 3 "foo.llvm199.exp" "yes" (Explicit "llvm199")
           ]
       , TT.testGroup "Sweet #5" $
         let sweet = head $ drop 4 sweets in
-        let testExp' n e d =
+        let testExp' n e d o =
               testCase ("Exp #" <> show n)
               $ safeElem n (expected sweet)
-              @?= Just (exp testInpPath "foo.c" e d (Explicit "llvm9")  NotSpecified)
+              @?= Just (exp testInpPath "foo.c" e d (Explicit "llvm9") o)
         in
           [
             testCase "root match" $ "foo.llvm9.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath </> "foo.llvm9.exe" @=? rootFile sweet
-          , testCase "# expectations" $ 2 @=? length (expected sweet)
-          , testExp' 0 "foo.llvm9.exp" "no"
-          , testExp' 1 "foo.llvm9.exp" "yes"
+          , testCase "# expectations" $ 4 @=? length (expected sweet)
+          , testExp' 0 "foo.llvm199.exp" "no"  (Explicit "llvm199")
+          , testExp' 1 "foo.llvm199.exp" "yes" (Explicit "llvm199")
+          , testExp' 2 "foo.llvm9.exp"   "no"  NotSpecified
+          , testExp' 3 "foo.llvm9.exp"   "yes" NotSpecified
           ]
       ]
     ]
@@ -376,47 +395,52 @@ fsTests3 = do
 
       , let sweetNum = 6
             sweet = head $ drop (sweetNum - 1) sweets
-            testExp' n e d l o =
+            testExp' s n e d o =
               testCase ("Exp #" <> show n)
               $ safeElem n (expected sweet)
-              @?= Just (exp (takeDirectory testInpPath3) "cow.c" e d (Explicit l) o)
+              @?= Just (exp s "cow.c" e d (Explicit "llvm13") o)
+            testExp1 = testExp' testInpPath
+            testExp3 = testExp' (takeDirectory testInpPath3)
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "cow.exe" @=? rootMatchName sweet
            , testCase "root file"
              $ takeDirectory testInpPath3 </> "llvm13/cow.exe" @=? rootFile sweet
-           , testCase "# expectations" $ 4 @=? length (expected sweet)
-           , testExp' 0 "O0/cow-llvm13.exp" "no"  "llvm13" NotSpecified
-           , testExp' 1 "O0/cow-llvm13.exp" "no"  "llvm13" (Explicit "O0")
-           , testExp' 2 "O0/cow-llvm13.exp" "yes" "llvm13" NotSpecified
-           , testExp' 3 "O0/cow-llvm13.exp" "yes" "llvm13" (Explicit "O0")
+           , testCase "# expectations" $ 6 @=? length (expected sweet)
+           , testExp3 0 "O0/cow-llvm13.exp" "no"  (Explicit "O0")
+           , testExp3 1 "O0/cow-llvm13.exp" "no"  NotSpecified
+           , testExp3 2 "O0/cow-llvm13.exp" "yes" (Explicit "O0")
+           , testExp3 3 "O0/cow-llvm13.exp" "yes" NotSpecified
+           , testExp1 4 "cow.O2.exp"        "no"  (Explicit "O2")
+           , testExp1 5 "cow.O2.exp"        "yes" (Explicit "O2")
            ]
 
       , let sweetNum = 7
             sweet = head $ drop (sweetNum - 1) sweets
-            testExp' n e d l o =
+            testExp' s n e d l o =
               testCase ("Exp #" <> show n)
               $ safeElem n (expected sweet)
-              @?= Just (exp (takeDirectory testInpPath3) "cow.c" e d (Explicit l) o)
+              @?= Just (exp s "cow.c" e d (Explicit l) o)
+            tE1 = testExp' testInpPath
+            tE3 = testExp' (takeDirectory testInpPath3)
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "cow.exe" @=? rootMatchName sweet
            , testCase "root file"
              $ takeDirectory testInpPath3 </> "llvm13/opts/O3/cow.exe" @=? rootFile sweet
-           , testCase "# expectations" $ 8 @=? length (expected sweet)
-           , testExp' 0 "O0/cow-llvm13.exp" "no"  "llvm13" NotSpecified
-           , testExp' 1 "O0/cow-llvm13.exp" "yes" "llvm13" NotSpecified
-           -- Note: the expectations match an exp with O0 in the name, which
-           -- would seem to conflict with O3, but since "opt" is a wildcard
-           -- parameter there's no way for tasty-sweet to know that O3 and O0
-           -- conflict, and the match on the llvm13 value makes that .exp more
-           -- attractive than the generic one.
-           , testExp' 2 "O0/cow-llvm13.exp" "no"  "llvm13" (Explicit "O0")
-           , testExp' 3 "O0/cow-llvm13.exp" "no"  "llvm13" (Explicit "O3")
-           , testExp' 4 "O0/cow-llvm13.exp" "no"  "llvm13" (Explicit "opts")
-           , testExp' 5 "O0/cow-llvm13.exp" "yes" "llvm13" (Explicit "O0")
-           , testExp' 6 "O0/cow-llvm13.exp" "yes" "llvm13" (Explicit "O3")
-           , testExp' 7 "O0/cow-llvm13.exp" "yes" "llvm13" (Explicit "opts")
+           , testCase "# expectations" $ 10 @=? length (expected sweet)
+           , tE3 0 "O0/cow-llvm13.exp" "no"  "llvm13" (Explicit "O0")
+           , tE3 2 "O0/cow-llvm13.exp" "yes" "llvm13" (Explicit "O0")
+           , tE3 4 "cow.exp"           "no"  "llvm13" (Explicit "O3")
+           , tE3 5 "cow.exp"           "no"  "llvm13" (Explicit "opts")
+           , tE3 6 "cow.exp"           "yes" "llvm13" (Explicit "O3")
+           , tE3 7 "cow.exp"           "yes" "llvm13" (Explicit "opts")
+           , tE1 8 "cow.O2.exp"        "no"  "llvm13" (Explicit "O2")
+           , tE1 9 "cow.O2.exp"        "yes" "llvm13" (Explicit "O2")
+           -- n.b. O0/cow-llvm13.exp is longer than cow.exp, so it is the
+           -- preferred expected file for the following two entries:
+           , tE3 1 "O0/cow-llvm13.exp" "no"  "llvm13" NotSpecified
+           , tE3 3 "O0/cow-llvm13.exp" "yes" "llvm13" NotSpecified
            ]
 
       , let sweetNum = 1
@@ -447,55 +471,63 @@ fsTests3 = do
              testCase "root match" $ "cow.exe" @=? rootMatchName sweet
            , testCase "root file"
              $ takeDirectory testInpPath3 </> "O0/cow.exe" @=? rootFile sweet
-           , testCase "# expectations" $ 12 @=? length (expected sweet)
-           , tE1 0 "cow.exp"            "no"  (Assumed "llvm10")  NotSpecified
-           , tE2 1 "cow.exp"            "no"  (Assumed "llvm9")   NotSpecified
-           , tE1 2 "cow.exp"            "yes" (Assumed "llvm10")  NotSpecified
-           , tE2 3 "cow.exp"            "yes" (Assumed "llvm9")   NotSpecified
-           , tE1 4 "O0/cow-llvm13.exp"  "no"  (Explicit "llvm13") NotSpecified
-           , tE1 5 "O0/cow.exp"         "no"  (Assumed "llvm10")  (Explicit "O0")
-           , tE2 6 "O0/cow.exp"         "no"  (Assumed "llvm9")   (Explicit "O0")
-           , tE1 7 "O0/cow-llvm13.exp"  "yes" (Explicit "llvm13") NotSpecified
-           , tE1 8 "O0/cow.exp"         "yes" (Assumed "llvm10")  (Explicit "O0")
-           , tE2 9 "O0/cow.exp"         "yes" (Assumed "llvm9")   (Explicit "O0")
-           , tE1 10 "O0/cow-llvm13.exp" "no"  (Explicit "llvm13") (Explicit "O0")
-           , tE1 11 "O0/cow-llvm13.exp" "yes" (Explicit "llvm13") (Explicit "O0")
+           , testCase "# expectations" $ 6 @=? length (expected sweet)
+           , tE1 0 "O0/cow-llvm13.exp"  "no"  (Explicit "llvm13") (Explicit "O0")
+           , tE1 1 "O0/cow-llvm13.exp"  "yes" (Explicit "llvm13") (Explicit "O0")
+           , tE1 2 "O0/cow.exp"         "no"  (Assumed "llvm10")  (Explicit "O0")
+           , tE2 3 "O0/cow.exp"         "no"  (Assumed "llvm9")   (Explicit "O0")
+           , tE1 4 "O0/cow.exp"         "yes" (Assumed "llvm10")  (Explicit "O0")
+           , tE2 5 "O0/cow.exp"         "yes" (Assumed "llvm9")   (Explicit "O0")
            ]
 
       , let sweetNum = 2
             sweet = head $ drop (sweetNum - 1) sweets
-            tExp n e d l o =
-              let lda = ("ld-config"
-                        , takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
-                  ex = exp (takeDirectory testInpPath3) "cow.c" e d (Explicit l) o
+            tExp' s lda n e d l o =
+              let ex = exp s "cow.c" e d (Explicit l) o
               in testCase ("Exp #" <> show n)
                  $ safeElem n (expected sweet)
-                 @?= Just (ex { associated = lda : associated ex })
+                 @?= Just (ex { associated = lda <> associated ex })
+            tExp1 = tExp' testInpPath []
+            tExp3 = tExp' (takeDirectory testInpPath3)
+                    [ ("ld-config"
+                      , takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
+                    ]
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "cow.exe" @=? rootMatchName sweet
            , testCase "root file" $ takeDirectory testInpPath3 </> "O0/llvm9/cow.exe" @=? rootFile sweet
-           , testCase "# expectations" $ 4 @=? length (expected sweet)
-           -- n.b. See note for Sweet #1
-           , tExp 0 "cow.exp"    "no"  "llvm9" NotSpecified
-           , tExp 1 "cow.exp"    "yes" "llvm9" NotSpecified
-           , tExp 2 "O0/cow.exp" "no"  "llvm9" (Explicit "O0")
-           , tExp 3 "O0/cow.exp" "yes" "llvm9" (Explicit "O0")
+           , testCase "# expectations" $ 6 @=? length (expected sweet)
+           , tExp3 0 "O0/cow.exp" "no"  "llvm9" (Explicit "O0")
+           , tExp3 1 "O0/cow.exp" "yes" "llvm9" (Explicit "O0")
+           , tExp3 2 "cow.exp"    "no"  "llvm9" NotSpecified
+           , tExp3 3 "cow.exp"    "yes" "llvm9" NotSpecified
+           , tExp1 4 "cow.O2.exp" "no"  "llvm9" (Explicit "O2")
+           , tExp1 5 "cow.O2.exp" "yes" "llvm9" (Explicit "O2")
            ]
 
       , let sweetNum = 9
             sweet = head $ drop (sweetNum - 1) sweets
-            tE1 n e d l o =
+            tE' s n e d l o =
               testCase ("Exp #" <> show n)
               $ safeElem n (expected sweet)
-              @?= Just (exp (takeDirectory testInpPath3) "foo.c" e d (Explicit l) o)
+              @?= Just (exp s "foo.c" e d (Explicit l) o)
+            tE1 = tE' testInpPath
+            tE3 = tE' (takeDirectory testInpPath3)
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "foo.O1-llvm10.exe" @=? rootMatchName sweet
            , testCase "root file" $ testInpPath2 </> "foo.O1-llvm10.exe" @=? rootFile sweet
-           , testCase "# expectations" $ 2 @=? length (expected sweet)
-           , tE1 0 "llvm10/foo.exp" "no"  "llvm10" (Explicit "O1")
-           , tE1 1 "llvm10/foo.exp" "yes" "llvm10" (Explicit "O1")
+           , testCase "# expectations" $ 8 @=? length (expected sweet)
+           , tE3 0 "llvm10/foo.exp"    "no"  "llvm10" (Explicit "O1")
+           , tE3 1 "llvm10/foo.exp"    "yes" "llvm10" (Explicit "O1")
+           , tE1 2 "foo.llvm10-O2-exp" "no"  "llvm10" (Explicit "O2")
+           , tE1 4 "foo.llvm10-O2-exp" "yes" "llvm10" (Explicit "O2")
+           -- n.b. foo.llvm10-O2-exp is longer than llvm10/foo.exp, so it is the
+           -- preferred expected file for the following two expected entries
+           , tE1 3 "foo.llvm10-O2-exp" "no"  "llvm10" NotSpecified
+           , tE1 5 "foo.llvm10-O2-exp" "yes" "llvm10" NotSpecified
+           , tE1 6 "foo.llvm199.exp"   "no"  "llvm10" (Explicit "llvm199")
+           , tE1 7 "foo.llvm199.exp"   "yes" "llvm10" (Explicit "llvm199")
            ]
 
       , let sweetNum = 10
@@ -512,41 +544,51 @@ fsTests3 = do
            [
              testCase "root match" $ "foo.llvm10.O2.exe" @=? rootMatchName sweet
            , testCase "root file" $ testInpPath </> "foo.llvm10.O2.exe" @=? rootFile sweet
-           , testCase "# expectations" $ 4 @=? length (expected sweet)
-           , tE3 0 "llvm10/foo.exp"    "no"  "llvm10" NotSpecified
-           , tE3 1 "llvm10/foo.exp"    "yes" "llvm10" NotSpecified
-           , tE1 2 "foo.llvm10-O2-exp" "no"  "llvm10" (Explicit "O2")
-           , tE1 3 "foo.llvm10-O2-exp" "yes" "llvm10" (Explicit "O2")
+           , testCase "# expectations" $ 6 @=? length (expected sweet)
+           , tE1 0 "foo.llvm10-O2-exp" "no"  "llvm10" (Explicit "O2")
+           , tE1 1 "foo.llvm10-O2-exp" "yes" "llvm10" (Explicit "O2")
+           , tE1 4 "foo.llvm199.exp"   "no"  "llvm10" (Explicit "llvm199")
+           , tE1 5 "foo.llvm199.exp"   "yes" "llvm10" (Explicit "llvm199")
+           -- n.b. foo.llvm10-O2-exp is longer than llvm10/foo.exp so it is the
+           -- preferred expected file for the following two entries:
+           , tE1 2 "foo.llvm10-O2-exp"    "no"  "llvm10" NotSpecified
+           , tE1 3 "foo.llvm10-O2-exp"    "yes" "llvm10" NotSpecified
            ]
 
       , let sweetNum = 11
             sweet = head $ drop (sweetNum - 1) sweets
-            tE1 n e d =
+            tE' s n e d o =
               testCase ("Exp #" <> show n)
               $ safeElem n (expected sweet)
-              @?= Just (exp testInpPath2 "foo.c" e d (Explicit "llvm13") NotSpecified)
+              @?= Just (exp s "foo.c" e d (Explicit "llvm13") o)
+            tE1 = tE' testInpPath
+            tE2 = tE' testInpPath2
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "foo.llvm13.exe" @=? rootMatchName sweet
            , testCase "root file" $ testInpPath </> "foo.llvm13.exe" @=? rootFile sweet
-           , testCase "# expectations" $ 2 @=? length (expected sweet)
-           , tE1 0 "foo-llvm13.exp" "no"
-           , tE1 1 "foo-llvm13.exp" "yes"
+           , testCase "# expectations" $ 4 @=? length (expected sweet)
+           , tE2 0 "foo-llvm13.exp" "no" NotSpecified
+           , tE2 1 "foo-llvm13.exp" "yes" NotSpecified
+           , tE1 2 "foo.llvm199.exp" "no" (Explicit "llvm199")
+           , tE1 3 "foo.llvm199.exp" "yes" (Explicit "llvm199")
            ]
 
       , let sweetNum = 12
             sweet = head $ drop (sweetNum - 1) sweets
-            tE1 n e d =
+            tE1 n e d o =
               testCase ("Exp #" <> show n)
               $ safeElem n (expected sweet)
-              @?= Just (exp testInpPath "foo.c" e d (Explicit "llvm9") NotSpecified)
+              @?= Just (exp testInpPath "foo.c" e d (Explicit "llvm9") o)
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "foo.llvm9.exe" @=? rootMatchName sweet
            , testCase "root file" $ testInpPath </> "foo.llvm9.exe" @=? rootFile sweet
-           , testCase "# expectations" $ 2 @=? length (expected sweet)
-           , tE1 0 "foo.llvm9.exp" "no"
-           , tE1 1 "foo.llvm9.exp" "yes"
+           , testCase "# expectations" $ 4 @=? length (expected sweet)
+           , tE1 0 "foo.llvm199.exp" "no" (Explicit "llvm199")
+           , tE1 1 "foo.llvm199.exp" "yes" (Explicit "llvm199")
+           , tE1 2 "foo.llvm9.exp" "no" NotSpecified
+           , tE1 3 "foo.llvm9.exp" "yes" NotSpecified
            ]
 
       , let sweetNum = 5
@@ -559,14 +601,17 @@ fsTests3 = do
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "frog.exe" @=? rootMatchName sweet
-           , testCase "root file" $ takeDirectory testInpPath3 </> "gen/llvm9/frog.exe" @=? rootFile sweet
-           , testCase "# expectations" $ 6 @=? length (expected sweet)
-           , tE1 0 "want/frog-llvm9-no.exp"  (Explicit "no")  NotSpecified
-           , tE1 1 "want/frog-yes.exp"       (Explicit "yes") NotSpecified
-           , tE1 2 "want/frog-llvm9-no.exp"  (Explicit "no")  (Explicit "gen")
-           , tE1 3 "want/frog-llvm9-no.exp"  (Explicit "no")  (Explicit "want")
-           , tE1 4 "want/frog-yes.exp"       (Explicit "yes")  (Explicit "gen")
-           , tE1 5 "want/frog-yes.exp"       (Explicit "yes")  (Explicit "want")
+           , testCase "root file"
+             $ takeDirectory testInpPath3 </> "gen/llvm9/frog.exe"
+             @=? rootFile sweet
+           , testCase "# expectations" $ 4 @=? length (expected sweet)
+           , tE1 0 "want/frog-llvm9-no.exp"  (Explicit "no")  (Explicit "want")
+           , tE1 1 "want/frog-llvm9-no.exp"  (Explicit "no")  NotSpecified
+           , tE1 2 "want/frog-yes.exp"       (Explicit "yes")  (Explicit "want")
+           , tE1 3 "want/frog-yes.exp"       (Explicit "yes") NotSpecified
+           -- TODO not using dir elements from root for unconstrained params
+           -- , tE1 2 "want/frog-llvm9-no.exp"  (Explicit "no")  (Explicit "gen")
+           -- , tE1 4 "want/frog-yes.exp"       (Explicit "yes")  (Explicit "gen")
            ]
 
       , let sweetNum = 3
@@ -579,14 +624,17 @@ fsTests3 = do
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "frog.exe" @=? rootMatchName sweet
-           , testCase "root file" $ takeDirectory testInpPath3 </> "gen/llvm10/frog.exe" @=? rootFile sweet
-           , testCase "# expectations" $ 6 @=? length (expected sweet)
-           , tE1 0 "want/frog-no.exp"  (Explicit "no")  NotSpecified
-           , tE1 1 "want/frog-yes.exp" (Explicit "yes") NotSpecified
-           , tE1 2 "want/frog-no.exp"  (Explicit "no")  (Explicit "gen")
-           , tE1 3 "want/frog-no.exp"  (Explicit "no")  (Explicit "want")
-           , tE1 4 "want/frog-yes.exp" (Explicit "yes") (Explicit "gen")
-           , tE1 5 "want/frog-yes.exp" (Explicit "yes") (Explicit "want")
+           , testCase "root file"
+             $ takeDirectory testInpPath3 </> "gen/llvm10/frog.exe"
+             @=? rootFile sweet
+           , testCase "# expectations" $ 4 @=? length (expected sweet)
+           , tE1 0 "want/frog-no.exp"  (Explicit "no")  (Explicit "want")
+           , tE1 1 "want/frog-no.exp"  (Explicit "no")  NotSpecified
+           , tE1 2 "want/frog-yes.exp" (Explicit "yes") (Explicit "want")
+           , tE1 3 "want/frog-yes.exp" (Explicit "yes") NotSpecified
+           -- TODO not using dir elements from root for unconstrained params
+           -- , tE1 4 "want/frog-yes.exp" (Explicit "yes") (Explicit "gen")
+           -- , tE1 2 "want/frog-no.exp"  (Explicit "no")  (Explicit "gen")
            ]
 
       , let sweetNum = 4
@@ -599,14 +647,17 @@ fsTests3 = do
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "frog.exe" @=? rootMatchName sweet
-           , testCase "root file" $ takeDirectory testInpPath3 </> "gen/llvm13/frog.exe" @=? rootFile sweet
-           , testCase "# expectations" $ 6 @=? length (expected sweet)
-           , tE1 0 "want/frog-no.exp"  (Explicit "no")  NotSpecified
-           , tE1 1 "want/frog-yes.exp" (Explicit "yes") NotSpecified
-           , tE1 2 "want/frog-no.exp"  (Explicit "no")  (Explicit "gen")
-           , tE1 3 "want/frog-no.exp"  (Explicit "no")  (Explicit "want")
-           , tE1 4 "want/frog-yes.exp" (Explicit "yes") (Explicit "gen")
-           , tE1 5 "want/frog-yes.exp" (Explicit "yes") (Explicit "want")
+           , testCase "root file"
+             $ takeDirectory testInpPath3 </> "gen/llvm13/frog.exe"
+             @=? rootFile sweet
+           , testCase "# expectations" $ 4 @=? length (expected sweet)
+           , tE1 0 "want/frog-no.exp"  (Explicit "no")  (Explicit "want")
+           , tE1 1 "want/frog-no.exp"  (Explicit "no")  NotSpecified
+           , tE1 2 "want/frog-yes.exp" (Explicit "yes") (Explicit "want")
+           , tE1 3 "want/frog-yes.exp" (Explicit "yes") NotSpecified
+           -- TODO not using dir elements from root for unconstrained params
+           -- , tE1 2 "want/frog-no.exp"  (Explicit "no")  (Explicit "gen")
+           -- , tE1 4 "want/frog-yes.exp" (Explicit "yes") (Explicit "gen")
            ]
 
       , testCase "correct # of foo sweets" $ 4 @=?

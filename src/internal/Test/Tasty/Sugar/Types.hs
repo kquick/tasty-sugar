@@ -249,7 +249,9 @@ data CandidateFile = CandidateFile { candidateDir :: FilePath
                                      -- | If there are candidatePMatch, this is
                                      -- the index of the first match.  This
                                      -- therefore is also the end of the "root"
-                                     -- file match portion.
+                                     -- file match portion.  If no
+                                     -- candidatePMatch, this is the length of
+                                     -- the candidateFile.
                                    , candidateMatchIdx :: Natural
                                    }
                      deriving (Eq, Show)  -- Show is for for debugging/tracing

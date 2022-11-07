@@ -8,6 +8,8 @@ module Test.Tasty.Sugar.ParamCheck
   (
     getPVals
   , singlePVals
+  , getSinglePVals
+  , namedPMatches
   , pvalMatch
   , removePVals
   , pmatchCmp
@@ -21,7 +23,7 @@ module Test.Tasty.Sugar.ParamCheck
 import           Control.Monad
 import           Data.Function ( on )
 import qualified Data.List as L
-import           Data.Maybe ( catMaybes, fromJust, isNothing, listToMaybe )
+import           Data.Maybe ( catMaybes, fromJust, isJust, isNothing, listToMaybe )
 import           Data.Bifunctor ( first )
 import           Data.Maybe ( fromMaybe )
 
@@ -56,6 +58,42 @@ singlePVals sel = mapM eachVal
                        [] -> L.sort pvs
                        pvsets -> catMaybes (getParamVal . snd <$> pvsets)
              return (pn, Just [pv])
+
+
+-- Return a value to use for each parameter in the pattern, retricting those
+-- values to the name parameter matches already established.  This is a little
+-- more complicated because there could be parameter name duplicates in the
+-- already established matches (e.g. a matched file contains multiple values for
+-- a parameter), so the actual subset of the named parameter matches associated
+-- with this pattern selection is also returned.
+getSinglePVals :: [NamedParamMatch] -> [ParameterPattern]
+               -> LogicI ([NamedParamMatch], [(String, Maybe String)])
+getSinglePVals sel = foldM eachVal (mempty, mempty)
+  where eachVal (an,av) (pn, Nothing) =
+          case filter ((pn ==) . fst) sel of
+            [] -> return (an, (pn, Nothing) : av)
+            pvsets -> do npv <- snd <$> eachFrom "assigned param value" pvsets
+                         return ((pn, npv) : an, (pn, getParamVal npv) : av)
+        eachVal (an,av) (pn, Just pvs) =
+          case filter ((pn ==) . fst) sel of
+            [] -> do pv <- eachFrom "assumed (non-root) param value" $ L.sort pvs
+                     return (an, (pn, Just pv) : av)
+            pvsets -> do npv <- eachFrom "matched param value" (snd <$> pvsets)
+                         return ((pn, npv) : an, (pn, getParamVal npv) : av)
+
+-- | namedPMatches supplements the core set of named matches with the extended
+-- set of parameter values, marking all parameters not in the core set as Assumed
+-- or NotSpecified.
+namedPMatches :: [NamedParamMatch] -> [(String, Maybe String)]
+              -> [NamedParamMatch]
+namedPMatches pmatch =
+  let inCore = (`elem` (fst <$> pmatch))
+      go = \case
+        [] -> pmatch
+        ((p, Just  v):r) | not (inCore p) -> (p, Assumed v) : go r
+        ((p, Nothing):r) | not (inCore p) -> (p, NotSpecified) : go r
+        (_:r) -> go r
+    in go
 
 
 -- | Generate each possible combination of Explicit or non-Explicit

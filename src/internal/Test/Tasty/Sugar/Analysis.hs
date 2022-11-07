@@ -20,7 +20,6 @@ import qualified System.FilePath.GlobPattern as FPGP
 import           Test.Tasty.Sugar.ExpectCheck
 import           Test.Tasty.Sugar.Iterations
 import           Test.Tasty.Sugar.ParamCheck ( pmatchCmp )
-import           Test.Tasty.Sugar.RootCheck
 import           Test.Tasty.Sugar.Types
 
 import           Prelude hiding ( exp )
@@ -61,7 +60,31 @@ checkRoot pat allFiles rootF =
   let params = L.sort $ validParams pat
       combineExpRes (swts, expl) = bimap (swts :) (expl :)
 
-      mergeSweets swl =
+      roots = [( candidatePMatch rootF
+              , rootF { candidateFile =
+                        -- truncate the candidateFile to the first separator
+                        -- point preceeding parameter matches.
+                        let i = fromEnum $ candidateMatchIdx rootF
+                            l = length $ candidateFile rootF
+                            e = l > 0 && last (candidateFile rootF) `elem` (separators pat)
+                            t = if i == l && not e then i else i - 1
+                        in take t (candidateFile rootF) }
+              )
+              , (candidatePMatch rootF, rootF)
+              ]
+
+      expAndStats = parMap rpar (findExpectation pat params rootF allFiles) roots
+
+      sumStats = foldr joinStats emptyStats (snd <$> expAndStats)
+      exps = foldr combineExpRes (mempty, mempty) $ mergeSweets
+             $ catMaybes (fst <$> expAndStats)
+
+  in (exps, sumStats)
+
+
+mergeSweets :: Foldable t
+            => t (Sweets, SweetExplanation) -> [(Sweets, SweetExplanation)]
+mergeSweets swl =
         -- If multiple Sweets have the same rootMatchName this likely means that
         -- there were multiple expected files that could have matched.  Merge the
         -- Expectations: for each of the second Sweet's expectations:
@@ -106,14 +129,3 @@ checkRoot pat allFiles rootF =
                     $ oneExp : expcts
               in ( swts, e { results = swts } )
         in foldr combineIfRootsMatch [] swl
-
-      (roots, stats) = observeIAll
-                       $ rootMatch rootF (separators pat) params (rootName pat)
-
-      expAndStats = parMap rpar (findExpectation pat params rootF allFiles) roots
-
-      sumStats = foldr joinStats stats (snd <$> expAndStats)
-      exps = foldr combineExpRes (mempty, mempty) $ mergeSweets
-             $ catMaybes (fst <$> expAndStats)
-
-  in (exps, sumStats)

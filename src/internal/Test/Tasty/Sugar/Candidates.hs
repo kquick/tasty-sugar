@@ -168,22 +168,24 @@ candidateMatchPrefix seps mf cf =
                   else cl - 1
   in mStart == DL.take (fromEnum pfxlen) f
 
+
 candidateMatchSuffix :: Separators -> FileSuffix -> CandidateFile
                      -> CandidateFile -> Bool
 candidateMatchSuffix seps sfx rootf cf =
   let f = candidateFile cf
+      sfxsep = not (null sfx) && head sfx `elem` seps
   in if null sfx
      then f == DL.takeWhile (not . (`elem` seps)) f
      else and [ length f >= (length (candidateFile rootf) + length sfx)
               , sfx `DL.isSuffixOf` f
                 -- is char before sfx a separator (and fEnd didn't start
                 -- with a separator)?
-              , if null seps || (head sfx `elem` seps)
-                   -- note: use of head is safe because null sfx is checked
-                   -- above and uses a different path.
-                then True
-                else maybe False ((`elem` seps) . fst)
-                     $ DL.uncons
-                     $ DL.drop (length sfx)
-                     $ reverse f
+              , if null seps
+                then length f == length (candidateFile rootf) + length sfx
+                else if sfxsep
+                     then True
+                     else maybe False ((`elem` seps) . fst)
+                          $ DL.uncons
+                          $ DL.drop (length sfx)
+                          $ reverse f
               ]

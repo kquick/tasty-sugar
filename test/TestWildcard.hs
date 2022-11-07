@@ -28,6 +28,7 @@ sample1 cube = fmap (makeCandidate cube testInpPath [])
 foo
 foo.exp
 foo.ex
+foo.right.exp
 bar.exp
 bar.
 bar-ex
@@ -50,7 +51,7 @@ wildcardAssocTests =
                        , associatedNames = [ ("extern", "ex") ]
                        }
            p = (testInpPath </>)
-       in testCase "valid sample" $ 13 @=? length (sample1 sugarCube)
+       in testCase "valid sample" $ 14 @=? length (sample1 sugarCube)
 
      -- The first CUBE uses the default set of separators, and the expected
      -- suffix does not limit which separators can preceed the suffix.
@@ -194,6 +195,76 @@ wildcardAssocTests =
               , sw "foo.ex" "foo" "foo.ex" [ exp "foo.exp" ]
               , sw "bar."   "bar" "bar."   [ expE "bar.exp" "bar-ex" ]
               , sw "bar-ex" "bar" "bar-ex" [ exp "bar.exp" ]
+              ]
+           ]
+
+     -- The fourth CUBE specifies one of the separators as part of the suffix, so
+     -- only that separator is matched, and further specifies a non-wildcard
+     -- suffix for the match (which occludes the associated name).
+     , TT.testGroup "seps with suffix sep and root suffix" $
+       let sugarCube = mkCUBE
+                       { rootName = "*.ex"
+                       , expectedSuffix = ".exp"
+                       , inputDirs = [ testInpPath ]
+                       , associatedNames = [ ("extern", "ex") ]
+                       }
+           p = (testInpPath </>)
+           exp e = Expectation { expectedFile = p e
+                               , associated = []
+                               , expParamsMatch = []
+                               }
+           sw m b f e = Sweets { rootBaseName = b
+                               , rootMatchName = m
+                               , rootFile = p f
+                               , cubeParams = []
+                               , expected = e
+                               }
+       in  [ sugarTestEq "correct found count" sugarCube sample1 1 length
+           , sugarTestEq "foo.ex is a case" sugarCube sample1 1 $
+             \sugar -> length [ x | x <- sugar, rootMatchName x == "foo.ex" ]
+          , testCase "full results" $
+            compareBags "default result"
+            (fst $ findSugarIn sugarCube (sample1 sugarCube)) $
+            let p = (testInpPath </>) in
+              [ sw "foo.ex" "foo" "foo.ex" [ exp "foo.exp" ]
+              ]
+           ]
+
+     -- The fifth CUBE is like the fourth CUBE but it additionally matches
+     -- parameters.  The fifth CUBE (like the fourth) specifies one of the
+     -- separators as part of the suffix, so only that separator is matched, and
+     -- further specifies a non-wildcard suffix for the match (which occludes the
+     -- associated name).
+     , TT.testGroup "seps with suffix sep and root suffix and params" $
+       let sugarCube = mkCUBE
+                       { rootName = "*.ex"
+                       , expectedSuffix = ".exp"
+                       , inputDirs = [ testInpPath ]
+                       , validParams = [ ("dir", Just [ "right", "left" ]) ]
+                       , associatedNames = [ ("extern", "ex") ]
+                       }
+           p = (testInpPath </>)
+           exp e d = Expectation { expectedFile = p e
+                                 , associated = []
+                                 , expParamsMatch = [ ("dir", d) ]
+                                 }
+           sw m b f e = Sweets { rootBaseName = b
+                               , rootMatchName = m
+                               , rootFile = p f
+                               , cubeParams = [("dir", Just ["right", "left"])]
+                               , expected = e
+                               }
+       in  [ sugarTestEq "correct found count" sugarCube sample1 1 length
+           , sugarTestEq "foo.ex is a case" sugarCube sample1 1 $
+             \sugar -> length [ x | x <- sugar, rootMatchName x == "foo.ex" ]
+          , testCase "full results" $
+            compareBags "default result"
+            (fst $ findSugarIn sugarCube (sample1 sugarCube)) $
+            let p = (testInpPath </>) in
+              [ sw "foo.ex" "foo" "foo.ex"
+                [ exp "foo.exp"       (Assumed "left")
+                , exp "foo.right.exp" (Explicit "right")
+                ]
               ]
            ]
 

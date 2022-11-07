@@ -115,7 +115,6 @@ library tasty-sugar-internal
                    , Test.Tasty.Sugar.Iterations
                    , Test.Tasty.Sugar.ParamCheck
                    , Test.Tasty.Sugar.Report
-                   , Test.Tasty.Sugar.RootCheck
                    , Test.Tasty.Sugar.Types
   build-depends:     base >= 4.10
                    , containers >= 0.6 && < 0.7
