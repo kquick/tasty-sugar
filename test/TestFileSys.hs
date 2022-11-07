@@ -1,6 +1,8 @@
 module TestFileSys ( fileSysTests ) where
 
+import           Data.Either ( lefts, rights )
 import qualified Data.List as L
+import           Data.Maybe ( isJust )
 import qualified Data.Text as T
 import           System.FilePath ( (</>), takeDirectory )
 import qualified Test.Tasty as TT
@@ -63,10 +65,39 @@ fileSysTests = do tsts <- sequence [ fsTests1, fsTests2, fsTests3 ]
 fsTests1 :: IO [TT.TestTree]
 fsTests1 = do
   sweets <- findSugar sugarCube1
+  cands <- findCandidates sugarCube1 testInpPath
   -- putStrLn $ ppShow sweets
+  let chkCandidate nm pm =
+        testCase (nm <> " candidate")
+        $ L.find ((nm ==) . candidateFile) (rights cands)
+        @?= Just (CandidateFile { candidateDir = testInpPath
+                                , candidateSubdirs = []
+                                , candidateFile = nm
+                                , candidatePMatch = pm
+                                })
+
   return
     [ TT.testGroup "Cube 1"
       [ testCase "correct # of sweets" $ 3 @=? length sweets
+
+      , testCase "correct # of candidate warnings" $ 0 @=? length (lefts cands)
+      , testCase "correct # of candidate files" $ 11 @=? length (rights cands)
+      , TT.testGroup "Candidates"
+        [
+          chkCandidate "bar.exe" []
+        , chkCandidate "cow.O2.exp" [("opt", Explicit "O2")]
+        , chkCandidate "cow.c" []
+        , chkCandidate "foo.c" []
+        , chkCandidate "foo.exp" []
+        , chkCandidate "foo.llvm10-O2-exp" [("llvm", Explicit "llvm10")
+                                           ,("opt", Explicit "O2")]
+        , chkCandidate "foo.llvm10.O2.exe" [("llvm", Explicit "llvm10")
+                                           ,("opt", Explicit "O2")]
+        , chkCandidate "foo.llvm13.exe" [("llvm", Explicit "llvm13")]
+        , chkCandidate "foo.llvm199.exp" [("opt", Explicit "llvm199")]
+        , chkCandidate "foo.llvm9.exe" [("llvm", Explicit "llvm9")]
+        , chkCandidate "foo.llvm9.exp" [("llvm", Explicit "llvm9")]
+        ]
 
       , TT.testGroup "Sweet #1" $
         let sweet = head sweets in
@@ -171,9 +202,51 @@ fsTests2 :: IO [TT.TestTree]
 fsTests2 = do
   sweets <- findSugar sugarCube2
   -- putStrLn $ ppShow sweets
+  cands <- concat <$> mapM (findCandidates sugarCube2) (inputDirs sugarCube2)
+  let warns = lefts cands
+  -- putStrLn $ ppShow sweets
+  let chkCand d nm pm =
+        testCase (nm <> " candidate")
+        $ L.find ((nm ==) . candidateFile) (rights cands)
+        @?= Just (CandidateFile { candidateDir = d
+                                , candidateSubdirs = []
+                                , candidateFile = nm
+                                , candidatePMatch = pm
+                                })
+  let chkCandidate1 = chkCand testInpPath
+  let chkCandidate2 = chkCand testInpPath2
   return
     [ TT.testGroup "Cube 2"
       [ testCase "correct # of sweets" $ 5 @=? length sweets
+
+      , testCase "correct # of candidate warnings" $ 2 @=? length warns
+      , testCase "Warn about foo/baz"
+        $ isJust (L.find ("]foo/baz does not exist" `L.isSuffixOf`) warns)
+        @? ("foo/baz warning missing in " <> show warns)
+      , testCase "Warn about /foo/bar"
+        $ "/foo/bar does not exist" `elem` warns
+        @? ("/foo/bar warning missing in " <> show warns)
+      , testCase "correct # of candidate files" $ 14 @=? length (rights cands)
+      , TT.testGroup "Candidates"
+        [
+          chkCandidate1 "bar.exe" []
+        , chkCandidate1 "cow.O2.exp" [("opt", Explicit "O2")]
+        , chkCandidate1 "cow.c" []
+        , chkCandidate1 "foo.c" []
+        , chkCandidate1 "foo.exp" []
+        , chkCandidate1 "foo.llvm10-O2-exp" [("llvm", Explicit "llvm10")
+                                            ,("opt", Explicit "O2")]
+        , chkCandidate1 "foo.llvm10.O2.exe" [("llvm", Explicit "llvm10")
+                                            ,("opt", Explicit "O2")]
+        , chkCandidate1 "foo.llvm13.exe" [("llvm", Explicit "llvm13")]
+        , chkCandidate1 "foo.llvm199.exp" [("opt", Explicit "llvm199")]
+        , chkCandidate1 "foo.llvm9.exe" [("llvm", Explicit "llvm9")]
+        , chkCandidate1 "foo.llvm9.exp" [("llvm", Explicit "llvm9")]
+        , chkCandidate2 "cow-O2.exe" [("opt", Explicit "O2")]
+        , chkCandidate2 "foo-llvm13.exp" [("llvm", Explicit "llvm13")]
+        , chkCandidate2 "foo.O1-llvm10.exe" [("llvm", Explicit "llvm10")]
+        ]
+
       , TT.testGroup "Sweet #1" $
         let sweet = head sweets in
           [
@@ -366,9 +439,67 @@ fsTests3 :: IO [TT.TestTree]
 fsTests3 = do
   sweets <- findSugar sugarCube3
   -- putStrLn $ ppShow sweets
+  cands <- concat <$> mapM (findCandidates sugarCube3) (inputDirs sugarCube3)
+  let warns = lefts cands
+  -- putStrLn $ ppShow sweets
+  let chkCand d sds nm pm =
+        testCase (nm <> " candidate")
+        $ L.find (\c -> and [ nm == candidateFile c
+                            , sds == candidateSubdirs c
+                            ]) (rights cands)
+        @?= Just (CandidateFile { candidateDir = d
+                                , candidateSubdirs = sds
+                                , candidateFile = nm
+                                , candidatePMatch = pm
+                                })
+  let chkCandidate1 = chkCand testInpPath []
+  let chkCandidate2 = chkCand testInpPath2 []
+  let tbDir = "test/builds"
   return
     [ TT.testGroup "Cube 3"
       [ testCase "correct # of sweets" $ 12 @=? length sweets
+
+      , testCase "correct # of candidate warnings" $ 1 @=? length warns
+      , testCase "Warn about foo/baz"
+        $ isJust (L.find ("]foo/baz does not exist" `L.isSuffixOf`) warns)
+        @? ("foo/baz warning missing in " <> show warns)
+      , testCase "correct # of candidate files" $ 29 @=? length (rights cands)
+      , TT.testGroup "Candidates"
+        [
+          chkCandidate1 "bar.exe" []
+        , chkCandidate1 "cow.O2.exp" [("opt", Explicit "O2")]
+        , chkCandidate1 "cow.c" []
+        , chkCandidate1 "foo.c" []
+        , chkCandidate1 "foo.exp" []
+        , chkCandidate1 "foo.llvm10-O2-exp" [("llvm", Explicit "llvm10")
+                                            ,("opt", Explicit "O2")]
+        , chkCandidate1 "foo.llvm10.O2.exe" [("llvm", Explicit "llvm10")
+                                            ,("opt", Explicit "O2")]
+        , chkCandidate1 "foo.llvm13.exe" [("llvm", Explicit "llvm13")]
+        , chkCandidate1 "foo.llvm199.exp"  [("opt", Explicit "llvm199")]
+        , chkCandidate1 "foo.llvm9.exe" [("llvm", Explicit "llvm9")]
+        , chkCandidate1 "foo.llvm9.exp" [("llvm", Explicit "llvm9")]
+        , chkCandidate2 "cow-O2.exe" [("opt", Explicit "O2")]
+        , chkCandidate2 "foo-llvm13.exp" [("llvm", Explicit "llvm13")]
+        , chkCandidate2 "foo.O1-llvm10.exe" [("llvm", Explicit "llvm10")]
+        , chkCand tbDir ["O0"] "cow-llvm13.exp" [("llvm", Explicit "llvm13")]
+        , chkCand tbDir ["O0"] "cow.exe" []
+        , chkCand tbDir ["O0"] "cow.exp" []
+        , chkCand tbDir ["O0", "llvm9"] "cow.exe" [("llvm", Explicit "llvm9")]
+        , chkCand tbDir ["O0", "llvm9"] "cow.lnk" [("llvm", Explicit "llvm9")]
+        , chkCand tbDir [] "cow.exp" []
+        , chkCand tbDir ["gen", "llvm10"] "frog.exe" [("llvm", Explicit "llvm10")]
+        , chkCand tbDir ["gen", "llvm13"] "frog.exe" [("llvm", Explicit "llvm13")]
+        , chkCand tbDir ["gen", "llvm9"] "frog.exe" [("llvm", Explicit "llvm9")]
+        , chkCand tbDir ["llvm10"] "foo.exp" [("llvm", Explicit "llvm10")]
+        , chkCand tbDir ["llvm13"] "cow.exe" [("llvm", Explicit "llvm13")]
+        , chkCand tbDir ["llvm13", "opts", "O3"] "cow.exe" [("llvm", Explicit "llvm13")]
+        , chkCand tbDir ["want"] "frog-llvm9-no.exp" [("debug", Explicit "no")
+                                                     ,("llvm", Explicit "llvm9")]
+        , chkCand tbDir ["want"] "frog-no.exp" [("debug", Explicit "no")]
+        , chkCand tbDir ["want"] "frog-yes.exp" [("debug", Explicit "yes")]
+        ]
+
       , let sweetNum = 8
             sweet = head $ drop (sweetNum - 1) sweets
         in TT.testGroup ("Sweet #" <> show sweetNum) $

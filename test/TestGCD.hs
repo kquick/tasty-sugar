@@ -31,8 +31,8 @@ sugarCube = mkCUBE
 
 gcdSampleTests :: [TT.TestTree]
 gcdSampleTests =
-  let (sugar,sdesc) = findSugarIn sugarCube gcdSamples
-  in [ testCase "valid sample" $ 19 @=? length gcdSamples
+  let (sugar,sdesc) = findSugarIn sugarCube (gcdSamples sugarCube)
+  in [ testCase "valid sample" $ 19 @=? length (gcdSamples sugarCube)
      , sugarTestEq "correct found count" sugarCube gcdSamples 1 length
 
      , testCase "sweets rendering" $
@@ -132,11 +132,9 @@ gcdSampleTests =
          ]
      ]
 
-gcdSamples = fmap (\f -> CandidateFile { candidateDir = testInpPath
-                                       , candidateSubdirs = []
-                                       , candidateFile = f })
-             $ filter (not . null)
-             $ lines [r|
+gcdSamples cube = fmap (makeCandidate cube testInpPath [])
+                  $ filter (not . null)
+                  $ lines [r|
 gcd-test.boolector.boolector.out
 gcd-test.boolector.boolector.print.out
 gcd-test.boolector.good

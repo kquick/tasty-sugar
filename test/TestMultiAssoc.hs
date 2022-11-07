@@ -35,12 +35,12 @@ sugarCube = mkCUBE
 
 multiAssocTests :: [TT.TestTree]
 multiAssocTests =
-  let (sugar1,_s1desc) = findSugarIn sugarCube (sample1 testInpPath)
+  let (sugar1,_s1desc) = findSugarIn sugarCube (sample1 sugarCube testInpPath)
   in [
        -- This is simply the number of entries in sample1; if this
        -- fails in means that sample1 has been changed and the other
        -- tests here are likely to need updating.
-       testCase "valid sample" $ 57 @=? length (sample1 testInpPath)
+       testCase "valid sample" $ 57 @=? length (sample1 sugarCube testInpPath)
 
      -- KWQ: disabled 28 June 2022: encounters a pathological case in kvitable
      -- rendering that causes this test to run ... forever (?)
@@ -51,7 +51,8 @@ multiAssocTests =
      --         putStrLn $ T.unpack actual
      --         T.length actual > 0 @? "change this to see the table"
 
-     , sugarTestEq "correct found count" sugarCube (sample1 testInpPath) 6 length
+     , sugarTestEq "correct found count" sugarCube
+       (flip sample1 testInpPath) 6 length
 
      , testCase "results" $ compareBags "results" sugar1 $
        let p = (testInpPath </>) in

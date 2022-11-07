@@ -116,5 +116,5 @@ sugarTest name cube sample test =
 
 
 sugarTestEq name cube sample expVal test =
-  let (r,d) = findSugarIn cube sample
+  let (r,d) = findSugarIn cube (sample cube)
   in testCase name $ eqTestWithFailInfo d expVal $ test r

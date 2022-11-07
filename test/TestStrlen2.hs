@@ -30,9 +30,69 @@ sugarCube = mkCUBE
 
 strlen2SampleTests :: [TT.TestTree]
 strlen2SampleTests =
-  let (sugar,sdesc) = findSugarIn sugarCube strlen2Samples
-  in [ testCase "valid sample" $ 24 @=? length strlen2Samples
+  let (sugar,sdesc) = findSugarIn sugarCube (strlen2Samples sugarCube)
+      chkCandidate nm pm =
+        testCase (nm <> " candidate")
+        $ find ((nm ==) . candidateFile) (strlen2Samples sugarCube)
+        @?= Just (CandidateFile { candidateDir = testInpPath
+                                , candidateSubdirs = []
+                                , candidateFile = nm
+                                , candidatePMatch = pm
+                                })
+  in [ testCase "valid sample" $ 24 @=? length (strlen2Samples sugarCube)
      , sugarTestEq "correct found count" sugarCube strlen2Samples 1 length
+
+     , TT.testGroup "candidates"
+       [
+         chkCandidate "strlen_test2.boolector.boolector.out"
+         [ ("solver", Explicit "boolector") ]
+       , chkCandidate "strlen_test2.boolector.boolector.print.out"
+         [ ("solver", Explicit "boolector") ]
+       , chkCandidate "strlen_test2.boolector.good"
+         [ ("solver", Explicit "boolector") ]
+       , chkCandidate "strlen_test2.boolector.loopmerge.good"
+         [ ("loop-merging", Explicit "loopmerge")
+         , ("solver", Explicit "boolector")
+         ]
+       , chkCandidate "strlen_test2.c" []
+       , chkCandidate "strlen_test2.cvc4.cvc4.out"
+         [ ("solver", Explicit "cvc4") ]
+       , chkCandidate "strlen_test2.cvc4.loop.good"
+         [ ("loop-merging", Explicit "loop")
+         , ("solver", Explicit "cvc4")
+         ]
+       , chkCandidate "strlen_test2.loopmerge.cvc4.good"
+         [ ("loop-merging", Explicit "loopmerge")
+         , ("solver", Explicit "cvc4")
+         ]
+       , chkCandidate "strlen_test2.good" []
+       , chkCandidate "strlen_test2.loopmerge.config"
+         [ ("loop-merging", Explicit "loopmerge") ]
+       , chkCandidate "strlen_test2.loopmerge.stp.out"
+         [ ("loop-merging", Explicit "loopmerge")
+         ]
+       , chkCandidate "strlen_test2.loopmerge.yices.out"
+         [ ("loop-merging", Explicit "loopmerge")
+         , ("solver", Explicit "yices")
+         ]
+       , chkCandidate "strlen_test2.loopmerge.yices.print.out"
+         [ ("loop-merging", Explicit "loopmerge")
+         , ("solver", Explicit "yices")
+         ]
+       , chkCandidate "strlen_test2.print" []
+       , chkCandidate "strlen_test2.stp.out" []
+       , chkCandidate "strlen_test2.stp.print.out" []
+       , chkCandidate "strlen_test2.yices.out"
+         [ ("solver", Explicit "yices") ]
+       , chkCandidate "strlen_test2.yices.print.out"
+         [ ("solver", Explicit "yices") ]
+       , chkCandidate "strlen_test2.z3.good"
+         [ ("solver", Explicit "z3") ]
+       , chkCandidate "strlen_test2.z3.z3.out"
+         [ ("solver", Explicit "z3") ]
+       , chkCandidate "strlen_test2.z3.z3.print.out"
+         [ ("solver", Explicit "z3") ]
+       ]
 
      , testCaseSteps "sweets info" $ \step -> do
          step "rootMatchName"
@@ -143,11 +203,9 @@ strlen2SampleTests =
          ]
      ]
 
-strlen2Samples = fmap (\f -> CandidateFile { candidateDir = "test-data/samples"
-                                      , candidateSubdirs = []
-                                      , candidateFile = f })
-                 $ filter (not . null)
-                 $ lines [r|
+strlen2Samples cube = fmap (makeCandidate cube "test-data/samples" [])
+                      $ filter (not . null)
+                      $ lines [r|
 strlen_test2.boolector.boolector.out
 strlen_test2.boolector.boolector.print.out
 strlen_test2.boolector.good

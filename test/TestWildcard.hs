@@ -22,9 +22,7 @@ import           Text.RawString.QQ
 testInpPath = "some/path/to/test/samples"
 
 
-sample1 = fmap (\f -> CandidateFile { candidateDir = testInpPath
-                               , candidateSubdirs = []
-                               , candidateFile = f })
+sample1 cube = fmap (makeCandidate cube testInpPath [])
           $ filter (not . null)
           $ lines [r|
 foo
@@ -45,7 +43,14 @@ dog.bark-exp
 
 wildcardAssocTests :: [TT.TestTree]
 wildcardAssocTests =
-     [ testCase "valid sample" $ 13 @=? length sample1
+     [ let sugarCube = mkCUBE
+                       { rootName = "*"
+                       , expectedSuffix = "exp"
+                       , inputDirs = [ testInpPath ]
+                       , associatedNames = [ ("extern", "ex") ]
+                       }
+           p = (testInpPath </>)
+       in testCase "valid sample" $ 13 @=? length (sample1 sugarCube)
 
      -- The first CUBE uses the default set of separators, and the expected
      -- suffix does not limit which separators can preceed the suffix.
@@ -80,7 +85,7 @@ wildcardAssocTests =
           -- n.b. cow.moo is not matched because there is no separator in cow.mooexp
           , testCase "full results" $
             compareBags "default result"
-            (fst $ findSugarIn sugarCube sample1) $
+            (fst $ findSugarIn sugarCube (sample1 sugarCube)) $
             let p = (testInpPath </>) in
               [
                 Sweets { rootMatchName = "foo"
@@ -167,7 +172,7 @@ wildcardAssocTests =
             -- expectedSuffix that is not a known separator
           , testCase "full results" $
             compareBags "default result"
-            (fst $ findSugarIn sugarCube sample1) $
+            (fst $ findSugarIn sugarCube (sample1 sugarCube)) $
             let p = (testInpPath </>) in
               [
                 Sweets { rootMatchName = "bar."
@@ -229,7 +234,7 @@ wildcardAssocTests =
            -- n.b. cow.moo is not matched because there is no separator in cow.mooexp
           , testCase "full results" $
             compareBags "default result"
-            (fst $ findSugarIn sugarCube sample1) $
+            (fst $ findSugarIn sugarCube (sample1 sugarCube)) $
             let p = (testInpPath </>) in
               [
                 Sweets { rootMatchName = "foo"

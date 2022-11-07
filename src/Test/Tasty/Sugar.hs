@@ -74,6 +74,8 @@ module Test.Tasty.Sugar
   , ParameterPattern
   , mkCUBE
   , CandidateFile(..)
+  , makeCandidate
+  , findCandidates
     -- ** Output
   , Sweets(..)
   , Expectation(..)

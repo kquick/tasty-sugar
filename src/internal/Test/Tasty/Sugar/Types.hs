@@ -239,6 +239,7 @@ prettyParamPatterns = \case
 data CandidateFile = CandidateFile { candidateDir :: FilePath
                                    , candidateSubdirs :: [ FilePath ]
                                    , candidateFile :: FilePath
+                                   , candidatePMatch :: [NamedParamMatch]
                                    }
                      deriving (Eq, Show)  -- Show is for for debugging/tracing
 

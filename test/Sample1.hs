@@ -9,12 +9,9 @@ import Test.Tasty.Sugar
 import Text.RawString.QQ
 
 
-sample1 :: FilePath -> [CandidateFile]
-sample1 testInpPath =
-  fmap (\f -> CandidateFile { candidateDir = testInpPath
-                       , candidateSubdirs = []
-                       , candidateFile = f })
-
+sample1 :: CUBE -> FilePath -> [CandidateFile]
+sample1 cube testInpPath =
+  fmap (makeCandidate cube testInpPath [])
   $ filter (not . null)
   $ lines [r|
 global-max-good.c
