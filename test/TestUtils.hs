@@ -48,6 +48,10 @@ testArray name elemTests lst =
       testEach = map testElem $ zip3 [0..] lst elemTests
   in testCase (name <> " count") (assertEqual "length" (length elemTests) (length lst)) : testEach
 
+safeElem :: Int -> [a] -> Maybe a
+safeElem idx lst = case drop idx lst of
+                     [] -> Nothing
+                     (e:_) -> Just e
 
 compareBags name gotBag expBag =
   if gotBag `elem` L.permutations expBag
