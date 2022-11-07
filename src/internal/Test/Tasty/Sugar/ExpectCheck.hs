@@ -14,6 +14,7 @@ module Test.Tasty.Sugar.ExpectCheck
 
 import           Control.Monad
 import           Data.Bifunctor ( first )
+import           Data.Function ( on )
 import qualified Data.List as L
 
 import           Test.Tasty.Sugar.AssocCheck
@@ -49,12 +50,13 @@ findExpectation pat params rootN allNames (rootPMatches, matchPrefix, _) =
       possible f = and [ candidateFile matchPrefix `L.isPrefixOf` candidateFile f
                        , rootN /= f
                        ]
-      mkSweet e = Just $ Sweets { rootMatchName = candidateFile rootN
-                                , rootBaseName = candidateFile matchPrefix
-                                , rootFile = candidateToPath rootN
-                                , cubeParams = validParams pat
-                                , expected = e
-                                }
+      mkSweet e = Just
+                  $ Sweets { rootMatchName = candidateFile rootN
+                           , rootBaseName = candidateFile matchPrefix
+                           , rootFile = candidateToPath rootN
+                           , cubeParams = validParams pat
+                           , expected = L.sortBy (compare `on` expectedFile) e
+                           }
 
       -- The expectedSearch tries various combinations and ordering of
       -- parameter values, separators, and such to find all valid

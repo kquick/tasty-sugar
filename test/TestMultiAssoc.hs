@@ -180,20 +180,6 @@ multiAssocTests =
                 , cubeParams = validParams sugarCube
                 , expected =
                   [ Expectation
-                    { expectedFile = p "looping-around.ppc.expected"
-                    , expParamsMatch = [ ("arch" , Explicit "ppc")
-                                       , ("form" , Assumed "base") ]
-                    , associated = [ ("exe", p "looping-around.ppc.exe")
-                                   ]
-                    }
-                  , Expectation
-                    { expectedFile = p "looping-around.ppc.expected"
-                    , expParamsMatch = [ ("arch" , Explicit "ppc")
-                                       , ("form" , Assumed "refined") ]
-                    , associated = [ ("exe", p "looping-around.ppc.exe")
-                                   ]
-                    }
-                  , Expectation
                     { expectedFile = p "looping-around.expected"
                     , expParamsMatch = [ ("arch", Assumed "x86")
                                        , ("form", Assumed "base") ]
@@ -205,6 +191,20 @@ multiAssocTests =
                     , expParamsMatch = [ ("arch", Assumed "x86")
                                        , ("form", Assumed "refined")]
                     , associated = [ ("exe", p "looping-around.x86.exe")
+                                   ]
+                    }
+                  , Expectation
+                    { expectedFile = p "looping-around.ppc.expected"
+                    , expParamsMatch = [ ("arch" , Explicit "ppc")
+                                       , ("form" , Assumed "base") ]
+                    , associated = [ ("exe", p "looping-around.ppc.exe")
+                                   ]
+                    }
+                  , Expectation
+                    { expectedFile = p "looping-around.ppc.expected"
+                    , expParamsMatch = [ ("arch" , Explicit "ppc")
+                                       , ("form" , Assumed "refined") ]
+                    , associated = [ ("exe", p "looping-around.ppc.exe")
                                    ]
                     }
                   ]
