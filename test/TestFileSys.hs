@@ -69,6 +69,14 @@ fsTests1 = do
   -- putStrLn $ ppShow sweets
   let chkCandidate = checkCandidate sugarCube1 (const $ rights cands)
                      testInpPath [] 0
+  let exp0 f d l o = Expectation
+                    { expectedFile = testInpPath </> f
+                    , expParamsMatch = [ ("debug", d) , ("llvm", l) , ("opt", o)]
+                    , associated = [ ("source", testInpPath </> "foo.c") ]
+                    }
+  let exp f d l o = exp0 f (Assumed d) (Explicit l) o
+      testExp s i f d l o = testCase ("Exp #" <> show i)
+                            $ safeElem i (expected s) @?= Just (exp f d l o)
   return
     [ TT.testGroup "Cube 1"
       [ testCase "correct # of sweets" $ 3 @=? length sweets
@@ -98,44 +106,15 @@ fsTests1 = do
             testCase "root match" $ "foo.llvm10.O2.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath </> "foo.llvm10.O2.exe" @=? rootFile sweet
           , testCase "# expectations" $ 4 @=? length (expected sweet)
-          , testCase "Exp #1" $ head (expected sweet) @?=
-            Expectation
-            {
-              expectedFile = testInpPath </> "foo.exp"
-            , expParamsMatch = [ ("debug", Assumed "no")
-                               , ("llvm", Explicit "llvm10")
-                               , ("opt", NotSpecified)
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
-          , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-            Expectation
-            {
-              expectedFile = testInpPath </> "foo.exp"
-            , expParamsMatch = [ ("debug", Assumed "yes")
-                               , ("llvm", Explicit "llvm10")
-                               , ("opt", NotSpecified)
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
-          , testCase "Exp #3" $ head (drop 2 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "foo.llvm10-O2-exp"
-            , expParamsMatch = [ ("debug", Assumed "no")
-                               , ("llvm", Explicit "llvm10")
-                               , ("opt", Explicit "O2")
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
-          , testCase "Exp #4" $ head (drop 3 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "foo.llvm10-O2-exp"
-            , expParamsMatch = [ ("debug", Assumed "yes")
-                               , ("llvm", Explicit "llvm10")
-                               , ("opt", Explicit "O2")
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
+
+          -- the direct match for foo.llvm10.O2.exe is foo.llvm10-O2-exp, with a
+          -- fallback to foo.exp, but since llvm199 is not a valid value for the
+          -- llvm parameter, and opt is an unconstrained value, the
+          -- foo.llvm199.exp file can be matched as well.
+          , testExp sweet 0 "foo.exp"           "no"  "llvm10" NotSpecified
+          , testExp sweet 1 "foo.exp"           "yes" "llvm10" NotSpecified
+          , testExp sweet 2 "foo.llvm10-O2-exp" "no"  "llvm10" (Explicit "O2")
+          , testExp sweet 3 "foo.llvm10-O2-exp" "yes" "llvm10" (Explicit "O2")
         ]
       , TT.testGroup "Sweet #2" $
         let sweet = head $ drop 1 sweets in
@@ -143,24 +122,8 @@ fsTests1 = do
             testCase "root match" $ "foo.llvm13.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath </> "foo.llvm13.exe" @=? rootFile sweet
           , testCase "# expectations" $ 2 @=? length (expected sweet)
-          , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "foo.exp"
-            , expParamsMatch = [ ("debug", Assumed "no")
-                               , ("llvm", Explicit "llvm13")
-                               , ("opt", NotSpecified)
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
-          , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "foo.exp"
-            , expParamsMatch = [ ("debug", Assumed "yes")
-                               , ("llvm", Explicit "llvm13")
-                               , ("opt", NotSpecified)
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
+          , testExp sweet 0 "foo.exp" "no"  "llvm13" NotSpecified
+          , testExp sweet 1 "foo.exp" "yes" "llvm13" NotSpecified
           ]
       , TT.testGroup "Sweet #3" $
         let sweet = head $ drop 2 sweets in
@@ -168,24 +131,8 @@ fsTests1 = do
             testCase "root match" $ "foo.llvm9.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath </> "foo.llvm9.exe" @=? rootFile sweet
           , testCase "# expectations" $ 2 @=? length (expected sweet)
-          , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "foo.llvm9.exp"
-            , expParamsMatch = [ ("debug", Assumed "no")
-                               , ("llvm", Explicit "llvm9")
-                               , ("opt", NotSpecified)
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
-          , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "foo.llvm9.exp"
-            , expParamsMatch = [ ("debug", Assumed "yes")
-                               , ("llvm", Explicit "llvm9")
-                               , ("opt", NotSpecified)
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
+          , testExp sweet 0 "foo.llvm9.exp" "no"  "llvm9" NotSpecified
+          , testExp sweet 1 "foo.llvm9.exp" "yes" "llvm9" NotSpecified
           ]
       ]
     ]
@@ -201,6 +148,17 @@ fsTests2 = do
   let chkCand d = checkCandidate sugarCube2 (const $ rights cands) d [] 0
   let chkCandidate1 = chkCand testInpPath
   let chkCandidate2 = chkCand testInpPath2
+  let exp p sf f d l o = Expectation
+                         { expectedFile = p </> f
+                         , expParamsMatch = [ ("debug", Assumed d)
+                                            , ("llvm", l)
+                                            , ("opt", o)
+                                            ]
+                         , associated = [ ("source", testInpPath </> sf) ]
+                       }
+      testExp s sf i f d l o =
+        testCase ("Exp #" <> show i)
+        $ safeElem i (expected s) @?= Just (exp testInpPath sf f d l o)
   return
     [ TT.testGroup "Cube 2"
       [ testCase "correct # of sweets" $ 5 @=? length sweets
@@ -236,188 +194,72 @@ fsTests2 = do
 
       , TT.testGroup "Sweet #1" $
         let sweet = head sweets in
+        let testExp' n d l = testExp sweet "cow.c" n "cow.O2.exp" d
+                               (Assumed l) (Explicit "O2")
+          in
           [
             testCase "root match" $ "cow-O2.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath2 </> "cow-O2.exe" @=? rootFile sweet
           , testCase "# expectations" $ 6 @=? length (expected sweet)
-          , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "cow.O2.exp"
-            , expParamsMatch = [ ("debug", Assumed "no")
-                               , ("llvm", Assumed "llvm10")
-                               , ("opt", Explicit "O2")
-                               ]
-            , associated = [ ("source", testInpPath </> "cow.c") ]
-            }
-          , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "cow.O2.exp"
-            , expParamsMatch = [ ("debug", Assumed "no")
-                               , ("llvm", Assumed "llvm13")
-                               , ("opt", Explicit "O2")
-                               ]
-            , associated = [ ("source", testInpPath </> "cow.c") ]
-            }
-          , testCase "Exp #3" $ head (drop 2 $ expected sweet) @?=
-            Expectation
-            {
-              expectedFile = testInpPath </> "cow.O2.exp"
-            , expParamsMatch = [ ("debug", Assumed "no")
-                               , ("llvm", Assumed "llvm9")
-                               , ("opt", Explicit "O2")
-                               ]
-            , associated = [ ("source", testInpPath </> "cow.c") ]
-            }
-          , testCase "Exp #4" $ head (drop 3 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "cow.O2.exp"
-            , expParamsMatch = [ ("debug", Assumed "yes")
-                               , ("llvm", Assumed "llvm10")
-                               , ("opt", Explicit "O2")
-                               ]
-            , associated = [ ("source", testInpPath </> "cow.c") ]
-            }
-          , testCase "Exp #5" $ head (drop 4 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "cow.O2.exp"
-            , expParamsMatch = [ ("debug", Assumed "yes")
-                               , ("llvm", Assumed "llvm13")
-                               , ("opt", Explicit "O2")
-                               ]
-            , associated = [ ("source", testInpPath </> "cow.c") ]
-            }
-          , testCase "Exp #6" $ head (drop 5 $ expected sweet) @?=
-            Expectation
-            {
-              expectedFile = testInpPath </> "cow.O2.exp"
-            , expParamsMatch = [ ("debug", Assumed "yes")
-                               , ("llvm", Assumed "llvm9")
-                               , ("opt", Explicit "O2")
-                               ]
-            , associated = [ ("source", testInpPath </> "cow.c") ]
-            }
+          , testExp' 0 "no"  "llvm10"
+          , testExp' 1 "no"  "llvm13"
+          , testExp' 2 "no"  "llvm9"
+          , testExp' 3 "yes" "llvm10"
+          , testExp' 4 "yes" "llvm13"
+          , testExp' 5 "yes" "llvm9"
         ]
       , TT.testGroup "Sweet #2" $
         let sweet = head $ drop 1 sweets in
+        let testExp' n d = testExp sweet "foo.c" n "foo.exp" d
+                           (Explicit "llvm10") (Explicit "O1")
+          in
           [
             testCase "root match" $ "foo.O1-llvm10.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath2 </> "foo.O1-llvm10.exe" @=? rootFile sweet
           , testCase "# expectations" $ 2 @=? length (expected sweet)
-          , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-            Expectation
-            {
-              expectedFile = testInpPath </> "foo.exp"
-            , expParamsMatch = [ ("debug", Assumed "no")
-                               , ("llvm", Explicit "llvm10")
-                               , ("opt", Explicit "O1")
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
-          , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-            Expectation
-            {
-              expectedFile = testInpPath </> "foo.exp"
-            , expParamsMatch = [ ("debug", Assumed "yes")
-                               , ("llvm", Explicit "llvm10")
-                               , ("opt", Explicit "O1")
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
+          , testExp' 0 "no"
+          , testExp' 1 "yes"
         ]
       , TT.testGroup "Sweet #3" $
         let sweet = head $ drop 2 sweets in
+        let testExp' n e d o = testExp sweet "foo.c" n e d (Explicit "llvm10") o
+          in
           [
             testCase "root match" $ "foo.llvm10.O2.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath </> "foo.llvm10.O2.exe" @=? rootFile sweet
           , testCase "# expectations" $ 4 @=? length (expected sweet)
-          , testCase "Exp #1" $ head (expected sweet) @?=
-            Expectation
-            {
-              expectedFile = testInpPath </> "foo.exp"
-            , expParamsMatch = [ ("debug", Assumed "no")
-                               , ("llvm", Explicit "llvm10")
-                               , ("opt", NotSpecified)
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
-          , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-            Expectation
-            {
-              expectedFile = testInpPath </> "foo.exp"
-            , expParamsMatch = [ ("debug", Assumed "yes")
-                               , ("llvm", Explicit "llvm10")
-                               , ("opt", NotSpecified)
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
-          , testCase "Exp #3" $ head (drop 2 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "foo.llvm10-O2-exp"
-            , expParamsMatch = [ ("debug", Assumed "no")
-                               , ("llvm", Explicit "llvm10")
-                               , ("opt", Explicit "O2")
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
-          , testCase "Exp #4" $ head (drop 3 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "foo.llvm10-O2-exp"
-            , expParamsMatch = [ ("debug", Assumed "yes")
-                               , ("llvm", Explicit "llvm10")
-                               , ("opt", Explicit "O2")
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
+          , testExp' 0 "foo.exp"           "no"  NotSpecified
+          , testExp' 1 "foo.exp"           "yes" NotSpecified
+          , testExp' 2 "foo.llvm10-O2-exp" "no"  (Explicit "O2")
+          , testExp' 3 "foo.llvm10-O2-exp" "yes" (Explicit "O2")
         ]
       , TT.testGroup "Sweet #4" $
         let sweet = head $ drop 3 sweets in
+        let testExp' n e d =
+              testCase ("Exp #" <> show n)
+              $ safeElem n (expected sweet)
+              @?= Just (exp testInpPath2 "foo.c" e d (Explicit "llvm13") NotSpecified)
+          in
           [
             testCase "root match" $ "foo.llvm13.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath </> "foo.llvm13.exe" @=? rootFile sweet
           , testCase "# expectations" $ 2 @=? length (expected sweet)
-          , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath2 </> "foo-llvm13.exp"
-            , expParamsMatch = [ ("debug", Assumed "no")
-                               , ("llvm", Explicit "llvm13")
-                               , ("opt", NotSpecified)
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
-          , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath2 </> "foo-llvm13.exp"
-            , expParamsMatch = [ ("debug", Assumed "yes")
-                               , ("llvm", Explicit "llvm13")
-                               , ("opt", NotSpecified)
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
+          , testExp' 0 "foo-llvm13.exp" "no"
+          , testExp' 1 "foo-llvm13.exp" "yes"
           ]
       , TT.testGroup "Sweet #5" $
         let sweet = head $ drop 4 sweets in
+        let testExp' n e d =
+              testCase ("Exp #" <> show n)
+              $ safeElem n (expected sweet)
+              @?= Just (exp testInpPath "foo.c" e d (Explicit "llvm9")  NotSpecified)
+        in
           [
             testCase "root match" $ "foo.llvm9.exe" @=? rootMatchName sweet
           , testCase "root file" $ testInpPath </> "foo.llvm9.exe" @=? rootFile sweet
           , testCase "# expectations" $ 2 @=? length (expected sweet)
-          , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "foo.llvm9.exp"
-            , expParamsMatch = [ ("debug", Assumed "no")
-                               , ("llvm", Explicit "llvm9")
-                               , ("opt", NotSpecified)
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
-          , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-            Expectation
-            { expectedFile = testInpPath </> "foo.llvm9.exp"
-            , expParamsMatch = [ ("debug", Assumed "yes")
-                               , ("llvm", Explicit "llvm9")
-                               , ("opt", NotSpecified)
-                               ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
+          , testExp' 0 "foo.llvm9.exp" "no"
+          , testExp' 1 "foo.llvm9.exp" "yes"
           ]
       ]
     ]
@@ -432,6 +274,15 @@ fsTests3 = do
   let chkCandidate1 = chkCand testInpPath []
   let chkCandidate2 = chkCand testInpPath2 []
   let tbDir = "test/builds"
+  let exp0 p sf f d l o = Expectation
+                    { expectedFile = p </> f
+                    , expParamsMatch = [ ("debug", d) , ("llvm", l) , ("opt", o)]
+                    , associated = [ ("source", testInpPath </> sf) ]
+                    }
+  let exp p sf f d l o = exp0 p sf f (Assumed d) l o
+      testExp s sf i f d l o =
+        testCase ("Exp #" <> show i)
+        $ safeElem i (expected s) @?= Just (exp testInpPath sf f d l o)
   return
     [ TT.testGroup "Cube 3"
       [ testCase "correct # of sweets" $ 12 @=? length sweets
@@ -505,219 +356,83 @@ fsTests3 = do
 
       , let sweetNum = 8
             sweet = head $ drop (sweetNum - 1) sweets
+            testExp' n e d l o =
+              testCase ("Exp #" <> show n)
+              $ safeElem n (expected sweet)
+              @?= Just (exp testInpPath "cow.c" e d (Assumed l) o)
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "cow-O2.exe" @=? rootMatchName sweet
            , testCase "root file" $ testInpPath2 </> "cow-O2.exe" @=? rootFile sweet
            , testCase "# expectations" $ 6 @=? length (expected sweet)
-           , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-             Expectation
-             { expectedFile = testInpPath </> "cow.O2.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Assumed "llvm10")
-                                , ("opt", Explicit "O2")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-             Expectation
-             { expectedFile = testInpPath </> "cow.O2.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Assumed "llvm13")
-                                , ("opt", Explicit "O2")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #3" $ head (drop 2 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = testInpPath </> "cow.O2.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Assumed "llvm9")
-                                , ("opt", Explicit "O2")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #4" $ head (drop 3 $ expected sweet) @?=
-             Expectation
-             { expectedFile = testInpPath </> "cow.O2.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Assumed "llvm10")
-                                , ("opt", Explicit "O2")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #5" $ head (drop 4 $ expected sweet) @?=
-             Expectation
-             { expectedFile = testInpPath </> "cow.O2.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Assumed "llvm13")
-                                , ("opt", Explicit "O2")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #6" $ head (drop 5 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = testInpPath </> "cow.O2.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Assumed "llvm9")
-                                , ("opt", Explicit "O2")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
+           , testExp' 0 "cow.O2.exp" "no"  "llvm10" (Explicit "O2")
+           , testExp' 1 "cow.O2.exp" "no"  "llvm13" (Explicit "O2")
+           , testExp' 2 "cow.O2.exp" "no"  "llvm9"  (Explicit "O2")
+           , testExp' 3 "cow.O2.exp" "yes" "llvm10" (Explicit "O2")
+           , testExp' 4 "cow.O2.exp" "yes" "llvm13" (Explicit "O2")
+           , testExp' 5 "cow.O2.exp" "yes" "llvm9"  (Explicit "O2")
            ]
 
 
       , let sweetNum = 6
             sweet = head $ drop (sweetNum - 1) sweets
+            testExp' n e d l o =
+              testCase ("Exp #" <> show n)
+              $ safeElem n (expected sweet)
+              @?= Just (exp (takeDirectory testInpPath3) "cow.c" e d (Explicit l) o)
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "cow.exe" @=? rootMatchName sweet
            , testCase "root file"
              $ takeDirectory testInpPath3 </> "llvm13/cow.exe" @=? rootFile sweet
            , testCase "# expectations" $ 4 @=? length (expected sweet)
-           , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "O0")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #3" $ head (drop 2 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #4" $ head (drop 3 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "O0")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
+           , testExp' 0 "O0/cow-llvm13.exp" "no"  "llvm13" NotSpecified
+           , testExp' 1 "O0/cow-llvm13.exp" "no"  "llvm13" (Explicit "O0")
+           , testExp' 2 "O0/cow-llvm13.exp" "yes" "llvm13" NotSpecified
+           , testExp' 3 "O0/cow-llvm13.exp" "yes" "llvm13" (Explicit "O0")
            ]
 
       , let sweetNum = 7
             sweet = head $ drop (sweetNum - 1) sweets
-            exp n = head $ drop (n-1) $ expected sweet
+            testExp' n e d l o =
+              testCase ("Exp #" <> show n)
+              $ safeElem n (expected sweet)
+              @?= Just (exp (takeDirectory testInpPath3) "cow.c" e d (Explicit l) o)
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "cow.exe" @=? rootMatchName sweet
            , testCase "root file"
              $ takeDirectory testInpPath3 </> "llvm13/opts/O3/cow.exe" @=? rootFile sweet
            , testCase "# expectations" $ 8 @=? length (expected sweet)
-           , testCase "Exp #1" $ exp 1 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #2" $ exp 2 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
+           , testExp' 0 "O0/cow-llvm13.exp" "no"  "llvm13" NotSpecified
+           , testExp' 1 "O0/cow-llvm13.exp" "yes" "llvm13" NotSpecified
            -- Note: the expectations match an exp with O0 in the name, which
            -- would seem to conflict with O3, but since "opt" is a wildcard
            -- parameter there's no way for tasty-sweet to know that O3 and O0
            -- conflict, and the match on the llvm13 value makes that .exp more
            -- attractive than the generic one.
-           , testCase "Exp #3" $ exp 3 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "O0")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #4" $ exp 4 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "O3")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #5" $ exp 5 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "opts")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #6" $ exp 6 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "O0")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #7" $ exp 7 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "O3")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #8" $ exp 8 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "opts")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
+           , testExp' 2 "O0/cow-llvm13.exp" "no"  "llvm13" (Explicit "O0")
+           , testExp' 3 "O0/cow-llvm13.exp" "no"  "llvm13" (Explicit "O3")
+           , testExp' 4 "O0/cow-llvm13.exp" "no"  "llvm13" (Explicit "opts")
+           , testExp' 5 "O0/cow-llvm13.exp" "yes" "llvm13" (Explicit "O0")
+           , testExp' 6 "O0/cow-llvm13.exp" "yes" "llvm13" (Explicit "O3")
+           , testExp' 7 "O0/cow-llvm13.exp" "yes" "llvm13" (Explicit "opts")
            ]
 
       , let sweetNum = 1
             sweet = head $ drop (sweetNum - 1) sweets
-            exp n = head $ drop (n-1) $ expected sweet
+            exp' n = head $ drop (n-1) $ expected sweet
+            tE1 n e d l o =
+              testCase ("Exp #" <> show n)
+              $ safeElem n (expected sweet)
+              @?= Just (exp (takeDirectory testInpPath3) "cow.c" e d l o)
+            tE2 n e d l o =
+              let lda = ("ld-config"
+                        , takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
+                  ex = exp (takeDirectory testInpPath3) "cow.c" e d l o
+              in testCase ("Exp #" <> show n)
+                 $ safeElem n (expected sweet)
+                 @?= Just (ex { associated = lda : associated ex })
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            -- n.b. Although O0 appears in the root file and in the O0/cow.exp
            -- expected files in Exp 3 and Exp 4 below, O0 is a wildcard, so it's
@@ -733,512 +448,165 @@ fsTests3 = do
            , testCase "root file"
              $ takeDirectory testInpPath3 </> "O0/cow.exe" @=? rootFile sweet
            , testCase "# expectations" $ 12 @=? length (expected sweet)
-           , testCase "Exp #1" $ exp 1 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "cow.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Assumed "llvm10")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c")
-                            ]
-             }
-           , testCase "Exp #2" $ exp 2 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "cow.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Assumed "llvm9")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
-                            , ("source", testInpPath </> "cow.c")
-                            ]
-             }
-           , testCase "Exp #3" $ exp 3 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "cow.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Assumed "llvm10")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c")
-                            ]
-             }
-           , testCase "Exp #4" $ exp 4 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "cow.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Assumed "llvm9")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
-                            , ("source", testInpPath </> "cow.c")
-                            ]
-             }
-           , testCase "Exp #5" $ exp 5 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c")
-                            ]
-             }
-
-
-           , testCase "Exp #6" $ exp 6 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Assumed "llvm10")
-                                , ("opt", Explicit "O0")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #7" $ exp 7 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Assumed "llvm9")
-                                , ("opt", Explicit "O0")
-                                ]
-             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
-                            , ("source", testInpPath </> "cow.c")
-                            ]
-             }
-           , testCase "Exp #8" $ exp 8 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #9" $ exp 9 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Assumed "llvm10")
-                                , ("opt", Explicit "O0")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #10" $ exp 10 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Assumed "llvm9")
-                                , ("opt", Explicit "O0")
-                                ]
-             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
-                            , ("source", testInpPath </> "cow.c")
-                            ]
-             }
-           , testCase "Exp #11" $ exp 11 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "O0")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #12" $ exp 12 @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "O0")
-                                ]
-             , associated = [ ("source", testInpPath </> "cow.c") ]
-             }
+           , tE1 0 "cow.exp"            "no"  (Assumed "llvm10")  NotSpecified
+           , tE2 1 "cow.exp"            "no"  (Assumed "llvm9")   NotSpecified
+           , tE1 2 "cow.exp"            "yes" (Assumed "llvm10")  NotSpecified
+           , tE2 3 "cow.exp"            "yes" (Assumed "llvm9")   NotSpecified
+           , tE1 4 "O0/cow-llvm13.exp"  "no"  (Explicit "llvm13") NotSpecified
+           , tE1 5 "O0/cow.exp"         "no"  (Assumed "llvm10")  (Explicit "O0")
+           , tE2 6 "O0/cow.exp"         "no"  (Assumed "llvm9")   (Explicit "O0")
+           , tE1 7 "O0/cow-llvm13.exp"  "yes" (Explicit "llvm13") NotSpecified
+           , tE1 8 "O0/cow.exp"         "yes" (Assumed "llvm10")  (Explicit "O0")
+           , tE2 9 "O0/cow.exp"         "yes" (Assumed "llvm9")   (Explicit "O0")
+           , tE1 10 "O0/cow-llvm13.exp" "no"  (Explicit "llvm13") (Explicit "O0")
+           , tE1 11 "O0/cow-llvm13.exp" "yes" (Explicit "llvm13") (Explicit "O0")
            ]
 
       , let sweetNum = 2
             sweet = head $ drop (sweetNum - 1) sweets
+            tExp n e d l o =
+              let lda = ("ld-config"
+                        , takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
+                  ex = exp (takeDirectory testInpPath3) "cow.c" e d (Explicit l) o
+              in testCase ("Exp #" <> show n)
+                 $ safeElem n (expected sweet)
+                 @?= Just (ex { associated = lda : associated ex })
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "cow.exe" @=? rootMatchName sweet
            , testCase "root file" $ takeDirectory testInpPath3 </> "O0/llvm9/cow.exe" @=? rootFile sweet
            , testCase "# expectations" $ 4 @=? length (expected sweet)
            -- n.b. See note for Sweet #1
-           , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "cow.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm9")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
-                            , ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "cow.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm9")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
-                            , ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #3" $ head (drop 2 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm9")
-                                , ("opt", Explicit "O0")
-                                ]
-             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
-                            , ("source", testInpPath </> "cow.c") ]
-             }
-           , testCase "Exp #4" $ head (drop 3 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "O0" </> "cow.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm9")
-                                , ("opt", Explicit "O0")
-                                ]
-             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
-                            , ("source", testInpPath </> "cow.c") ]
-             }
+           , tExp 0 "cow.exp"    "no"  "llvm9" NotSpecified
+           , tExp 1 "cow.exp"    "yes" "llvm9" NotSpecified
+           , tExp 2 "O0/cow.exp" "no"  "llvm9" (Explicit "O0")
+           , tExp 3 "O0/cow.exp" "yes" "llvm9" (Explicit "O0")
            ]
 
       , let sweetNum = 9
             sweet = head $ drop (sweetNum - 1) sweets
+            tE1 n e d l o =
+              testCase ("Exp #" <> show n)
+              $ safeElem n (expected sweet)
+              @?= Just (exp (takeDirectory testInpPath3) "foo.c" e d (Explicit l) o)
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "foo.O1-llvm10.exe" @=? rootMatchName sweet
            , testCase "root file" $ testInpPath2 </> "foo.O1-llvm10.exe" @=? rootFile sweet
            , testCase "# expectations" $ 2 @=? length (expected sweet)
-           , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "llvm10" </> "foo.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm10")
-                                , ("opt", Explicit "O1")
-                                ]
-             , associated = [ ("source", testInpPath </> "foo.c") ]
-             }
-           , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "llvm10" </> "foo.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm10")
-                                , ("opt", Explicit "O1")
-                                ]
-             , associated = [ ("source", testInpPath </> "foo.c") ]
-             }
+           , tE1 0 "llvm10/foo.exp" "no"  "llvm10" (Explicit "O1")
+           , tE1 1 "llvm10/foo.exp" "yes" "llvm10" (Explicit "O1")
            ]
 
       , let sweetNum = 10
             sweet = head $ drop (sweetNum - 1) sweets
+            tE1 n e d l o =
+              testCase ("Exp #" <> show n)
+              $ safeElem n (expected sweet)
+              @?= Just (exp testInpPath "foo.c" e d (Explicit l) o)
+            tE3 n e d l o =
+              testCase ("Exp #" <> show n)
+              $ safeElem n (expected sweet)
+              @?= Just (exp (takeDirectory testInpPath3) "foo.c" e d (Explicit l) o)
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "foo.llvm10.O2.exe" @=? rootMatchName sweet
            , testCase "root file" $ testInpPath </> "foo.llvm10.O2.exe" @=? rootFile sweet
            , testCase "# expectations" $ 4 @=? length (expected sweet)
-           , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "llvm10" </> "foo.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm10")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "foo.c") ]
-             }
-           , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-             Expectation
-             {
-               expectedFile = takeDirectory testInpPath3 </> "llvm10" </> "foo.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm10")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "foo.c") ]
-             }
-           , testCase "Exp #3" $ head (drop 2 $ expected sweet) @?=
-             Expectation
-             { expectedFile = testInpPath </> "foo.llvm10-O2-exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm10")
-                                , ("opt", Explicit "O2")
-                                ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
-           , testCase "Exp #4" $ head (drop 3 $ expected sweet) @?=
-             Expectation
-             { expectedFile = testInpPath </> "foo.llvm10-O2-exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm10")
-                                , ("opt", Explicit "O2")
-                                ]
-            , associated = [ ("source", testInpPath </> "foo.c") ]
-            }
+           , tE3 0 "llvm10/foo.exp"    "no"  "llvm10" NotSpecified
+           , tE3 1 "llvm10/foo.exp"    "yes" "llvm10" NotSpecified
+           , tE1 2 "foo.llvm10-O2-exp" "no"  "llvm10" (Explicit "O2")
+           , tE1 3 "foo.llvm10-O2-exp" "yes" "llvm10" (Explicit "O2")
            ]
 
       , let sweetNum = 11
             sweet = head $ drop (sweetNum - 1) sweets
+            tE1 n e d =
+              testCase ("Exp #" <> show n)
+              $ safeElem n (expected sweet)
+              @?= Just (exp testInpPath2 "foo.c" e d (Explicit "llvm13") NotSpecified)
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "foo.llvm13.exe" @=? rootMatchName sweet
            , testCase "root file" $ testInpPath </> "foo.llvm13.exe" @=? rootFile sweet
            , testCase "# expectations" $ 2 @=? length (expected sweet)
-           , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-             Expectation
-             { expectedFile = testInpPath2 </> "foo-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "foo.c") ]
-             }
-           , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-             Expectation
-             { expectedFile = testInpPath2 </> "foo-llvm13.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "foo.c") ]
-             }
+           , tE1 0 "foo-llvm13.exp" "no"
+           , tE1 1 "foo-llvm13.exp" "yes"
            ]
 
       , let sweetNum = 12
             sweet = head $ drop (sweetNum - 1) sweets
+            tE1 n e d =
+              testCase ("Exp #" <> show n)
+              $ safeElem n (expected sweet)
+              @?= Just (exp testInpPath "foo.c" e d (Explicit "llvm9") NotSpecified)
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "foo.llvm9.exe" @=? rootMatchName sweet
            , testCase "root file" $ testInpPath </> "foo.llvm9.exe" @=? rootFile sweet
            , testCase "# expectations" $ 2 @=? length (expected sweet)
-           , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-             Expectation
-             { expectedFile = testInpPath </> "foo.llvm9.exp"
-             , expParamsMatch = [ ("debug", Assumed "no")
-                                , ("llvm", Explicit "llvm9")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "foo.c") ]
-             }
-           , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-             Expectation
-             { expectedFile = testInpPath </> "foo.llvm9.exp"
-             , expParamsMatch = [ ("debug", Assumed "yes")
-                                , ("llvm", Explicit "llvm9")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ("source", testInpPath </> "foo.c") ]
-             }
+           , tE1 0 "foo.llvm9.exp" "no"
+           , tE1 1 "foo.llvm9.exp" "yes"
            ]
 
       , let sweetNum = 5
             sweet = head $ drop (sweetNum - 1) sweets
+            tE1 n e d o =
+              let ex = exp0 (takeDirectory testInpPath3) "foo.c" e d (Explicit "llvm9") o
+              in testCase ("Exp #" <> show n)
+                 $ safeElem n (expected sweet)
+                 @?= Just (ex { associated = [] })
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "frog.exe" @=? rootMatchName sweet
            , testCase "root file" $ takeDirectory testInpPath3 </> "gen/llvm9/frog.exe" @=? rootFile sweet
            , testCase "# expectations" $ 6 @=? length (expected sweet)
-           , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-llvm9-no.exp"
-             , expParamsMatch = [ ("debug", Explicit "no")
-                                , ("llvm", Explicit "llvm9")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-yes.exp"
-             , expParamsMatch = [ ("debug", Explicit "yes")
-                                , ("llvm", Explicit "llvm9")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #3" $ head (drop 2 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-llvm9-no.exp"
-             , expParamsMatch = [ ("debug", Explicit "no")
-                                , ("llvm", Explicit "llvm9")
-                                , ("opt", Explicit "gen")
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #4" $ head (drop 3 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-llvm9-no.exp"
-             , expParamsMatch = [ ("debug", Explicit "no")
-                                , ("llvm", Explicit "llvm9")
-                                , ("opt", Explicit "want")
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #5" $ head (drop 4 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-yes.exp"
-             , expParamsMatch = [ ("debug", Explicit "yes")
-                                , ("llvm", Explicit "llvm9")
-                                , ("opt", Explicit "gen")
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #6" $ head (drop 5 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-yes.exp"
-             , expParamsMatch = [ ("debug", Explicit "yes")
-                                , ("llvm", Explicit "llvm9")
-                                , ("opt", Explicit "want")
-                                ]
-             , associated = [ ]
-             }
+           , tE1 0 "want/frog-llvm9-no.exp"  (Explicit "no")  NotSpecified
+           , tE1 1 "want/frog-yes.exp"       (Explicit "yes") NotSpecified
+           , tE1 2 "want/frog-llvm9-no.exp"  (Explicit "no")  (Explicit "gen")
+           , tE1 3 "want/frog-llvm9-no.exp"  (Explicit "no")  (Explicit "want")
+           , tE1 4 "want/frog-yes.exp"       (Explicit "yes")  (Explicit "gen")
+           , tE1 5 "want/frog-yes.exp"       (Explicit "yes")  (Explicit "want")
            ]
 
       , let sweetNum = 3
             sweet = head $ drop (sweetNum - 1) sweets
+            tE1 n e d o =
+              let ex = exp0 (takeDirectory testInpPath3) "foo.c" e d (Explicit "llvm10") o
+              in testCase ("Exp #" <> show n)
+                 $ safeElem n (expected sweet)
+                 @?= Just (ex { associated = [] })
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "frog.exe" @=? rootMatchName sweet
            , testCase "root file" $ takeDirectory testInpPath3 </> "gen/llvm10/frog.exe" @=? rootFile sweet
            , testCase "# expectations" $ 6 @=? length (expected sweet)
-           , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-no.exp"
-             , expParamsMatch = [ ("debug", Explicit "no")
-                                , ("llvm", Explicit "llvm10")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-yes.exp"
-             , expParamsMatch = [ ("debug", Explicit "yes")
-                                , ("llvm", Explicit "llvm10")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #3" $ head (drop 2 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-no.exp"
-             , expParamsMatch = [ ("debug", Explicit "no")
-                                , ("llvm", Explicit "llvm10")
-                                , ("opt", Explicit "gen")
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #4" $ head (drop 3 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-no.exp"
-             , expParamsMatch = [ ("debug", Explicit "no")
-                                , ("llvm", Explicit "llvm10")
-                                , ("opt", Explicit "want")
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #5" $ head (drop 4 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-yes.exp"
-             , expParamsMatch = [ ("debug", Explicit "yes")
-                                , ("llvm", Explicit "llvm10")
-                                , ("opt", Explicit "gen")
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #6" $ head (drop 5 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-yes.exp"
-             , expParamsMatch = [ ("debug", Explicit "yes")
-                                , ("llvm", Explicit "llvm10")
-                                , ("opt", Explicit "want")
-                                ]
-             , associated = [ ]
-             }
+           , tE1 0 "want/frog-no.exp"  (Explicit "no")  NotSpecified
+           , tE1 1 "want/frog-yes.exp" (Explicit "yes") NotSpecified
+           , tE1 2 "want/frog-no.exp"  (Explicit "no")  (Explicit "gen")
+           , tE1 3 "want/frog-no.exp"  (Explicit "no")  (Explicit "want")
+           , tE1 4 "want/frog-yes.exp" (Explicit "yes") (Explicit "gen")
+           , tE1 5 "want/frog-yes.exp" (Explicit "yes") (Explicit "want")
            ]
 
       , let sweetNum = 4
             sweet = head $ drop (sweetNum - 1) sweets
+            tE1 n e d o =
+              let ex = exp0 (takeDirectory testInpPath3) "foo.c" e d (Explicit "llvm13") o
+              in testCase ("Exp #" <> show n)
+                 $ safeElem n (expected sweet)
+                 @?= Just (ex { associated = [] })
         in TT.testGroup ("Sweet #" <> show sweetNum) $
            [
              testCase "root match" $ "frog.exe" @=? rootMatchName sweet
            , testCase "root file" $ takeDirectory testInpPath3 </> "gen/llvm13/frog.exe" @=? rootFile sweet
            , testCase "# expectations" $ 6 @=? length (expected sweet)
-           , testCase "Exp #1" $ head (drop 0 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-no.exp"
-             , expParamsMatch = [ ("debug", Explicit "no")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #2" $ head (drop 1 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-yes.exp"
-             , expParamsMatch = [ ("debug", Explicit "yes")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", NotSpecified)
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #3" $ head (drop 2 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-no.exp"
-             , expParamsMatch = [ ("debug", Explicit "no")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "gen")
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #4" $ head (drop 3 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-no.exp"
-             , expParamsMatch = [ ("debug", Explicit "no")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "want")
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #5" $ head (drop 4 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-yes.exp"
-             , expParamsMatch = [ ("debug", Explicit "yes")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "gen")
-                                ]
-             , associated = [ ]
-             }
-           , testCase "Exp #6" $ head (drop 5 $ expected sweet) @?=
-             Expectation
-             { expectedFile = takeDirectory testInpPath3 </> "want/frog-yes.exp"
-             , expParamsMatch = [ ("debug", Explicit "yes")
-                                , ("llvm", Explicit "llvm13")
-                                , ("opt", Explicit "want")
-                                ]
-             , associated = [ ]
-             }
+           , tE1 0 "want/frog-no.exp"  (Explicit "no")  NotSpecified
+           , tE1 1 "want/frog-yes.exp" (Explicit "yes") NotSpecified
+           , tE1 2 "want/frog-no.exp"  (Explicit "no")  (Explicit "gen")
+           , tE1 3 "want/frog-no.exp"  (Explicit "no")  (Explicit "want")
+           , tE1 4 "want/frog-yes.exp" (Explicit "yes") (Explicit "gen")
+           , tE1 5 "want/frog-yes.exp" (Explicit "yes") (Explicit "want")
            ]
 
       , testCase "correct # of foo sweets" $ 4 @=?

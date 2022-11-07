@@ -62,6 +62,17 @@ wildcardAssocTests =
                        , associatedNames = [ ("extern", "ex") ]
                        }
            p = (testInpPath </>)
+           exp e = Expectation { expectedFile = p e
+                               , associated = []
+                               , expParamsMatch = []
+                               }
+           expE e a = (exp e) { associated = [("extern", p a)] }
+           sw m b f e = Sweets { rootBaseName = b
+                               , rootMatchName = m
+                               , rootFile = p f
+                               , cubeParams = []
+                               , expected = e
+                               }
        in [ sugarTestEq "correct found count" sugarCube sample1 5 length
 
             -- foo.ex is an associated name for foo, but removing its
@@ -87,67 +98,11 @@ wildcardAssocTests =
             compareBags "default result"
             (fst $ findSugarIn sugarCube (sample1 sugarCube)) $
             let p = (testInpPath </>) in
-              [
-                Sweets { rootMatchName = "foo"
-                       , rootBaseName = "foo"
-                       , rootFile = p "foo"
-                       , cubeParams = []
-                       , expected =
-                         [ Expectation
-                           { expectedFile = p "foo.exp"
-                           , expParamsMatch = []
-                           , associated = [ ("extern", p "foo.ex") ]
-                           }
-                         ]
-                       }
-              , Sweets { rootMatchName = "foo.ex"
-                       , rootBaseName = "foo"
-                       , rootFile = p "foo.ex"
-                       , cubeParams = []
-                       , expected =
-                         [ Expectation
-                           { expectedFile = p "foo.exp"
-                           , expParamsMatch = []
-                           , associated = []
-                           }
-                         ]
-                       }
-              , Sweets { rootMatchName = "bar."
-                       , rootBaseName = "bar"
-                       , rootFile = p "bar."
-                       , cubeParams = []
-                       , expected =
-                         [ Expectation
-                           { expectedFile = p "bar.exp"
-                           , expParamsMatch = []
-                           , associated = [ ("extern", p "bar-ex") ]
-                           }
-                         ]
-                       }
-              , Sweets { rootMatchName = "bar-ex"
-                       , rootBaseName = "bar"
-                       , rootFile = p "bar-ex"
-                       , cubeParams = []
-                       , expected =
-                         [ Expectation
-                           { expectedFile = p "bar.exp"
-                           , expParamsMatch = []
-                           , associated = []
-                           }
-                         ]
-                       }
-              , Sweets { rootMatchName = "dog.bark"
-                       , rootBaseName = "dog.bark"
-                       , rootFile = p "dog.bark"
-                       , cubeParams = []
-                       , expected =
-                         [ Expectation
-                           { expectedFile = p "dog.bark-exp"
-                           , expParamsMatch = []
-                           , associated = []
-                           }
-                         ]
-                       }
+              [ sw "foo"      "foo"      "foo"      [ expE "foo.exp" "foo.ex" ]
+              , sw "foo.ex"   "foo"      "foo.ex"   [ exp "foo.exp" ]
+              , sw "bar."     "bar"      "bar."     [ expE "bar.exp" "bar-ex" ]
+              , sw "bar-ex"   "bar"      "bar-ex"   [ exp "bar.exp" ]
+              , sw "dog.bark" "dog.bark" "dog.bark" [ exp "dog.bark-exp" ]
               ]
           ]
 
@@ -162,6 +117,17 @@ wildcardAssocTests =
                        , associatedNames = [ ("extern", "ex") ]
                        }
            p = (testInpPath </>)
+           exp e = Expectation { expectedFile = p e
+                               , associated = []
+                               , expParamsMatch = []
+                               }
+           expE e a = (exp e) { associated = [("extern", p a)] }
+           sw m b f e = Sweets { rootBaseName = b
+                               , rootMatchName = m
+                               , rootFile = p f
+                               , cubeParams = []
+                               , expected = e
+                               }
        in [ sugarTestEq "correct found count" sugarCube sample1 2 length
           , sugarTestEq "bar is a case" sugarCube sample1 1 $
             \sugar -> length [ x | x <- sugar, rootFile x == p "bar." ]
@@ -174,31 +140,8 @@ wildcardAssocTests =
             compareBags "default result"
             (fst $ findSugarIn sugarCube (sample1 sugarCube)) $
             let p = (testInpPath </>) in
-              [
-                Sweets { rootMatchName = "bar."
-                       , rootBaseName = "bar."
-                       , rootFile = p "bar."
-                       , cubeParams = []
-                       , expected =
-                         [ Expectation
-                           { expectedFile = p "bar.exp"
-                           , expParamsMatch = []
-                           , associated = []
-                           }
-                         ]
-                       }
-              , Sweets { rootMatchName = "cow.moo"
-                       , rootBaseName = "cow.moo"
-                       , rootFile = p "cow.moo"
-                       , cubeParams = []
-                       , expected =
-                         [ Expectation
-                           { expectedFile = p "cow.mooexp"
-                           , expParamsMatch = []
-                           , associated = [ ("extern", p "cow.mooex") ]
-                           }
-                         ]
-                       }
+              [ sw "bar."    "bar."    "bar."    [ exp "bar.exp" ]
+              , sw "cow.moo" "cow.moo" "cow.moo" [ expE "cow.mooexp" "cow.mooex" ]
               ]
           ]
 
@@ -213,6 +156,17 @@ wildcardAssocTests =
                        , associatedNames = [ ("extern", "ex") ]
                        }
            p = (testInpPath </>)
+           exp e = Expectation { expectedFile = p e
+                               , associated = []
+                               , expParamsMatch = []
+                               }
+           expE e a = (exp e) { associated = [("extern", p a)] }
+           sw m b f e = Sweets { rootBaseName = b
+                               , rootMatchName = m
+                               , rootFile = p f
+                               , cubeParams = []
+                               , expected = e
+                               }
        in  [ sugarTestEq "correct found count" sugarCube sample1 4 length
 
              -- see notes for default seps tests above
@@ -236,55 +190,10 @@ wildcardAssocTests =
             compareBags "default result"
             (fst $ findSugarIn sugarCube (sample1 sugarCube)) $
             let p = (testInpPath </>) in
-              [
-                Sweets { rootMatchName = "foo"
-                       , rootBaseName = "foo"
-                       , rootFile = p "foo"
-                       , cubeParams = []
-                       , expected =
-                         [ Expectation
-                           { expectedFile = p "foo.exp"
-                           , expParamsMatch = []
-                           , associated = [ ("extern", p "foo.ex") ]
-                           }
-                         ]
-                       }
-              , Sweets { rootMatchName = "foo.ex"
-                       , rootBaseName = "foo"
-                       , rootFile = p "foo.ex"
-                       , cubeParams = []
-                       , expected =
-                         [ Expectation
-                           { expectedFile = p "foo.exp"
-                           , expParamsMatch = []
-                           , associated = []
-                           }
-                         ]
-                       }
-              , Sweets { rootMatchName = "bar."
-                       , rootBaseName = "bar"
-                       , rootFile = p "bar."
-                       , cubeParams = []
-                       , expected =
-                         [ Expectation
-                           { expectedFile = p "bar.exp"
-                           , expParamsMatch = []
-                           , associated = [ ("extern", p "bar-ex") ]
-                           }
-                         ]
-                       }
-              , Sweets { rootMatchName = "bar-ex"
-                       , rootBaseName = "bar"
-                       , rootFile = p "bar-ex"
-                       , cubeParams = []
-                       , expected =
-                         [ Expectation
-                           { expectedFile = p "bar.exp"
-                           , expParamsMatch = []
-                           , associated = []
-                           }
-                         ]
-                       }
+              [ sw "foo"    "foo" "foo"    [ expE "foo.exp" "foo.ex" ]
+              , sw "foo.ex" "foo" "foo.ex" [ exp "foo.exp" ]
+              , sw "bar."   "bar" "bar."   [ expE "bar.exp" "bar-ex" ]
+              , sw "bar-ex" "bar" "bar-ex" [ exp "bar.exp" ]
               ]
            ]
 

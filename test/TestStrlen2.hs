@@ -99,78 +99,40 @@ strlen2SampleTests =
 
      , testCase "Expectations" $ compareBags "expected" (expected $ head sugar) $
        let p = (testInpPath </>) in
+       let exp1 e a f =
+             Expectation { expectedFile = p e
+                         , expParamsMatch = [("solver", a), ("loop-merging", f)]
+                         , associated = [("stdio", p "strlen_test2.print")]
+                         }
+           exp2 e a f c =
+             let e1 = exp1 e a f
+             in e1 { associated = ("config", p c) : associated e1 }
+           e = Explicit
+           a = Assumed
+           l = "loop"
+           m = "loopmerge"
+       in
          [
-           Expectation
-           { expectedFile = p "strlen_test2.boolector.loopmerge.good"
-           , expParamsMatch = [ ("solver", Explicit "boolector")
-                              , ("loop-merging", Explicit "loopmerge")
-                              ]
-           , associated = [ ("config", p "strlen_test2.loopmerge.config")
-                          , ("stdio", p "strlen_test2.print")
-                          ]
-           }
-         , Expectation
-           { expectedFile = p "strlen_test2.boolector.good"
-           , expParamsMatch = [ ("solver", Explicit "boolector")
-                              , ("loop-merging", Assumed "loop")
-                              ]
-           , associated = [ ("stdio", p "strlen_test2.print")
-                          ]
-           }
+           exp2 "strlen_test2.boolector.loopmerge.good" (e "boolector") (e m)
+                "strlen_test2.loopmerge.config"
 
-         , Expectation
-           { expectedFile = p "strlen_test2.loopmerge.cvc4.good"
-           , expParamsMatch = [ ("solver", Explicit "cvc4")
-                              , ("loop-merging", Explicit "loopmerge")
-                              ]
-           , associated = [ ("config", p "strlen_test2.loopmerge.config")
-                          , ("stdio", p "strlen_test2.print")
-                          ]
-           }
-         , Expectation
-           { expectedFile = p "strlen_test2.cvc4.loop.good"
-           , expParamsMatch = [ ("solver", Explicit "cvc4")
-                              , ("loop-merging", Explicit "loop")
-                              ]
-           , associated = [ ("stdio", p "strlen_test2.print")
-                          ]
-           }
+         , exp1 "strlen_test2.boolector.good"           (e "boolector") (a l)
 
-         , Expectation
-           { expectedFile = p "strlen_test2.loopmerge.good"
-           , expParamsMatch = [ ("loop-merging", Explicit "loopmerge")
-                              , ("solver", Assumed "yices")
-                              ]
-           , associated = [ ("config", p "strlen_test2.loopmerge.config")
-                          , ("stdio", p "strlen_test2.print")
-                          ]
-           }
-         , Expectation
-           { expectedFile = p "strlen_test2.good"
-           , expParamsMatch = [ ("loop-merging", Assumed "loop")
-                              , ("solver", Assumed "yices")
-                              ]
-           , associated = [ ("stdio", p "strlen_test2.print")
-                          ]
-           }
+         , exp2 "strlen_test2.loopmerge.cvc4.good"      (e "cvc4")      (e m)
+                "strlen_test2.loopmerge.config"
 
-         , Expectation
-           { expectedFile = p "strlen_test2.z3.good"
-           , expParamsMatch = [ ("solver", Explicit "z3")
-                              , ("loop-merging", Assumed "loopmerge")
-                              ]
-           , associated = [ ("config", p "strlen_test2.loopmerge.config")
-                          , ("stdio", p "strlen_test2.print")
-                          ]
-           }
-         , Expectation
-           { expectedFile = p "strlen_test2.z3.good"
-           , expParamsMatch = [ ("solver", Explicit "z3")
-                              , ("loop-merging", Assumed "loop")
-                              ]
-           , associated = [ ("stdio", p "strlen_test2.print")
-                          ]
-           }
+         , exp1 "strlen_test2.cvc4.loop.good"           (e "cvc4")      (e l)
+
+         , exp2 "strlen_test2.loopmerge.good"           (a "yices")     (e m)
+                "strlen_test2.loopmerge.config"
+
+         , exp1 "strlen_test2.good"                     (a "yices")     (a l)
+
+         , exp2 "strlen_test2.z3.good"                  (e "z3")        (a m)
+                "strlen_test2.loopmerge.config"
+
+         , exp1 "strlen_test2.z3.good"                  (e "z3")        (a l)
+
          -- Note that there exists strlen_test2.z3.good and
          -- strlen_test2.loopmerge.good, so this will create Expectations
          -- against _each_ file with different sets of Assumed and Explicit

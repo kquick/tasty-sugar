@@ -11,6 +11,8 @@ import           Test.Tasty.Sugar
 import           TestUtils
 import           Text.RawString.QQ
 
+import           Prelude hiding ( exp )
+
 
 testInpPath = "test-data/samples"
 
@@ -53,82 +55,48 @@ gcdSampleTests =
 
      , testCase "Expectations" $ compareBags "expected" (expected $ head sugar) $
        let p = (testInpPath </>) in
+       let exp e s l c o =
+             Expectation
+             { expectedFile = p e
+             , expParamsMatch = [("solver", s), ("loop-merging", l)]
+             , associated = [ ("config", p c), ("stdio", p o)]
+             }
+           e = Explicit
+           a = Assumed
+       in
          [
-           Expectation
-           { expectedFile = p "gcd-test.boolector.good"
-           , expParamsMatch = [ ("solver", Explicit "boolector")
-                              , ("loop-merging", Assumed "loopmerge")
-                              ]
-           , associated = [ ("config", p "gcd-test.loopmerge.config")
-                          , ("stdio", p "gcd-test.boolector.print")
-                          ]
-           }
-         , Expectation
-           { expectedFile = p "gcd-test.boolector.good"
-           , expParamsMatch = [ ("solver", Explicit "boolector")
-                              , ("loop-merging", Assumed "loop")
-                              ]
-           , associated = [ ("config", p "gcd-test.config")
-                          , ("stdio", p "gcd-test.boolector.print")
-                          ]
-           }
+           exp "gcd-test.boolector.good" (e "boolector") (a "loopmerge")
+               "gcd-test.loopmerge.config"
+               "gcd-test.boolector.print"
 
-         , Expectation
-           { expectedFile = p "gcd-test.good"
-           , expParamsMatch = [ ("solver", Assumed "cvc4")
-                              , ("loop-merging", Assumed "loopmerge")
-                              ]
-           , associated = [ ("config", p "gcd-test.loopmerge.config")
-                          , ("stdio", p "gcd-test.print")
-                          ]
-           }
-         , Expectation
-           { expectedFile = p "gcd-test.good"
-           , expParamsMatch = [ ("solver", Assumed "cvc4")
-                              , ("loop-merging", Assumed "loop")
-                              ]
-           , associated = [ ("config", p "gcd-test.config")
-                          , ("stdio", p "gcd-test.print")
-                          ]
-           }
+         , exp "gcd-test.boolector.good" (e "boolector") (a "loop")
+               "gcd-test.config"
+               "gcd-test.boolector.print"
 
-         , Expectation
-           { expectedFile = p "gcd-test.good"
-           , expParamsMatch = [ ("solver", Assumed "yices")
-                              , ("loop-merging", Assumed "loopmerge")
-                              ]
-           , associated = [ ("config", p "gcd-test.loopmerge.config")
-                          , ("stdio", p "gcd-test.print")
-                          ]
-           }
-         , Expectation
-           { expectedFile = p "gcd-test.good"
-           , expParamsMatch = [ ("solver", Assumed "yices")
-                              , ("loop-merging", Assumed "loop")
-                              ]
-           , associated = [ ("config", p "gcd-test.config")
-                          , ("stdio", p "gcd-test.print")
-                          ]
-           }
+         , exp "gcd-test.good"           (a "cvc4")      (a "loopmerge")
+               "gcd-test.loopmerge.config"
+               "gcd-test.print"
 
-         , Expectation
-           { expectedFile = p "gcd-test.good"
-           , expParamsMatch = [ ("solver", Assumed "z3")
-                              , ("loop-merging", Assumed "loopmerge")
-                              ]
-           , associated = [ ("config", p "gcd-test.loopmerge.config")
-                          , ("stdio", p "gcd-test.print")
-                          ]
-           }
-         , Expectation
-           { expectedFile = p "gcd-test.good"
-           , expParamsMatch = [ ("solver", Assumed "z3")
-                              , ("loop-merging", Assumed "loop")
-                              ]
-           , associated = [ ("config", p "gcd-test.config")
-                          , ("stdio", p "gcd-test.print")
-                          ]
-           }
+         , exp "gcd-test.good"           (a "cvc4")      (a "loop")
+               "gcd-test.config"
+               "gcd-test.print"
+
+         , exp "gcd-test.good"           (a "yices")     (a "loopmerge")
+               "gcd-test.loopmerge.config"
+               "gcd-test.print"
+
+         , exp "gcd-test.good"           (a "yices")     (a "loop")
+               "gcd-test.config"
+               "gcd-test.print"
+
+         , exp "gcd-test.good"           (a "z3")        (a "loopmerge")
+               "gcd-test.loopmerge.config"
+               "gcd-test.print"
+
+         , exp "gcd-test.good"           (a "z3")        (a "loop")
+               "gcd-test.config"
+               "gcd-test.print"
+
          ]
      ]
 

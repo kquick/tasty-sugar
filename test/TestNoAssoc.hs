@@ -109,6 +109,14 @@ noAssocTests =
 
      , testCase "results" $ compareBags "results" sugar1
        $ let p = (testInpPath </>) in
+       let exp0 e a f =
+             Expectation { expectedFile = p e
+                         , expParamsMatch = [("arch", a), ("form", f)]
+                         , associated = []
+                         }
+           e = Explicit
+           a = Assumed
+       in
        [
          Sweets { rootMatchName = "global-max-good.c"
                 , rootBaseName = "global-max-good"
@@ -116,30 +124,10 @@ noAssocTests =
                 , cubeParams = validParams sugarCube
                 , expected =
                   [
-                    Expectation
-                    { expectedFile = p "global-max-good.ppc.expected"
-                    , expParamsMatch = [("arch", Explicit "ppc"),
-                                        ("form", Assumed "base")]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "global-max-good.ppc.expected"
-                    , expParamsMatch = [("arch", Explicit "ppc"),
-                                        ("form", Assumed "refined")]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "global-max-good.x86.expected"
-                    , expParamsMatch = [("arch", Explicit "x86"),
-                                        ("form", Assumed "base")]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "global-max-good.x86.expected"
-                    , expParamsMatch = [("arch", Explicit "x86"),
-                                        ("form", Assumed "refined")]
-                    , associated = []
-                    }
+                    exp0 "global-max-good.ppc.expected" (e "ppc") (a "base")
+                  , exp0 "global-max-good.ppc.expected" (e "ppc") (a "refined")
+                  , exp0 "global-max-good.x86.expected" (e "x86") (a "base")
+                  , exp0 "global-max-good.x86.expected" (e "x86") (a "refined")
                   ]
                 }
 
@@ -148,30 +136,10 @@ noAssocTests =
                 , rootFile = p "jumpfar.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ Expectation
-                    { expectedFile = p "jumpfar.ppc.expected"
-                    , expParamsMatch = [ ("arch" , Explicit "ppc")
-                                       , ("form" , Assumed "base") ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "jumpfar.ppc.expected"
-                    , expParamsMatch = [ ("arch" , Explicit "ppc")
-                                       , ("form" , Assumed "refined") ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "jumpfar.x86.expected"
-                    , expParamsMatch = [ ("arch", Explicit "x86")
-                                       , ("form", Assumed "base") ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "jumpfar.x86.expected"
-                    , expParamsMatch = [ ("arch", Explicit "x86")
-                                       , ("form", Assumed "refined")]
-                    , associated = []
-                    }
+                  [ exp0 "jumpfar.ppc.expected" (e "ppc") (a "base")
+                  , exp0 "jumpfar.ppc.expected" (e "ppc") (a "refined")
+                  , exp0 "jumpfar.x86.expected" (e "x86") (a "base")
+                  , exp0 "jumpfar.x86.expected" (e "x86") (a "refined")
                   ]
                 }
        , Sweets { rootMatchName = "looping.c"
@@ -179,30 +147,10 @@ noAssocTests =
                 , rootFile = p "looping.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ Expectation
-                    { expectedFile = p "looping.ppc.expected"
-                    , expParamsMatch = [ ("arch" , Explicit "ppc")
-                                       , ("form" , Assumed "base") ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "looping.ppc.expected"
-                    , expParamsMatch = [ ("arch" , Explicit "ppc")
-                                       , ("form" , Assumed "refined") ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "looping.x86.expected"
-                    , expParamsMatch = [ ("arch", Explicit "x86")
-                                       , ("form", Assumed "base") ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "looping.x86.expected"
-                    , expParamsMatch = [ ("arch", Explicit "x86")
-                                       , ("form", Assumed "refined")]
-                    , associated = []
-                    }
+                  [ exp0 "looping.ppc.expected" (e "ppc") (a "base")
+                  , exp0 "looping.ppc.expected" (e "ppc") (a "refined")
+                  , exp0 "looping.x86.expected" (e "x86") (a "base")
+                  , exp0 "looping.x86.expected" (e "x86") (a "refined")
                   ]
                 }
        , Sweets { rootMatchName = "looping-around.c"
@@ -210,30 +158,10 @@ noAssocTests =
                 , rootFile = p "looping-around.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ Expectation
-                    { expectedFile = p "looping-around.expected"
-                    , expParamsMatch = [ ("arch", Assumed "x86")
-                                       , ("form", Assumed "base") ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "looping-around.expected"
-                    , expParamsMatch = [ ("arch", Assumed "x86")
-                                       , ("form", Assumed "refined")]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "looping-around.ppc.expected"
-                    , expParamsMatch = [ ("arch" , Explicit "ppc")
-                                       , ("form" , Assumed "base") ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "looping-around.ppc.expected"
-                    , expParamsMatch = [ ("arch" , Explicit "ppc")
-                                       , ("form" , Assumed "refined") ]
-                    , associated = []
-                    }
+                  [ exp0 "looping-around.expected"     (a "x86") (a "base")
+                  , exp0 "looping-around.expected"     (a "x86") (a "refined")
+                  , exp0 "looping-around.ppc.expected" (e "ppc") (a "base")
+                  , exp0 "looping-around.ppc.expected" (e "ppc") (a "refined")
                   ]
                 }
        , Sweets { rootMatchName = "switching.c"
@@ -241,58 +169,20 @@ noAssocTests =
                 , rootFile = p "switching.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ Expectation
-                    { expectedFile = p "switching.ppc.base-expected"
-                    , expParamsMatch = [ ("arch", Explicit "ppc")
-                                       , ("form", Explicit "base")
-                                       ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "switching.x86.base-expected"
-                    , expParamsMatch = [ ("arch", Explicit "x86")
-                                       , ("form", Explicit "base")
-                                       ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "switching.x86.refined-expected"
-                    , expParamsMatch = [ ("arch", Explicit "x86")
-                                       , ("form", Explicit "refined")
-                                       ]
-                    , associated = []
-                    }
-            ]
-        }
+                  [ exp0 "switching.ppc.base-expected"    (e "ppc") (e "base")
+                  , exp0 "switching.x86.base-expected"    (e "x86") (e "base")
+                  , exp0 "switching.x86.refined-expected" (e "x86") (e "refined")
+                  ]
+                }
        , Sweets { rootMatchName = "tailrecurse.c"
                 , rootBaseName = "tailrecurse"
                 , rootFile = p "tailrecurse.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ Expectation
-                    { expectedFile = p "tailrecurse.expected"
-                    , expParamsMatch = [ ("arch", Assumed "ppc"),
-                                         ("form", Assumed "base") ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "tailrecurse.expected"
-                    , expParamsMatch = [ ("arch", Assumed "ppc")
-                                       , ("form", Assumed "refined") ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "tailrecurse.x86.expected"
-                    , expParamsMatch = [ ("arch", Explicit "x86"),
-                                         ("form", Assumed "base") ]
-                    , associated = []
-                    }
-                  , Expectation
-                    { expectedFile = p "tailrecurse.x86.expected"
-                    , expParamsMatch = [ ("arch", Explicit "x86")
-                                       , ("form", Assumed "refined") ]
-                    , associated = []
-                    }
+                  [ exp0 "tailrecurse.expected" (a "ppc") (a "base")
+                  , exp0 "tailrecurse.expected" (a "ppc") (a "refined")
+                  , exp0 "tailrecurse.x86.expected" (e "x86") (a "base")
+                  , exp0 "tailrecurse.x86.expected" (e "x86") (a "refined")
                   ]
                 }
        ]
