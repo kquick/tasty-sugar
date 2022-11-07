@@ -114,6 +114,10 @@ data CUBE = CUBE
      -- Specified as a list of tuples, where each tuple is the
      -- (arbitrary) name of the associated file type, and the file
      -- type suffix (with no period or other separator).
+     --
+     -- If there is a blank FileSuffix for an associated name, that indicates
+     -- that the associated name matches the rootname *without* any suffix (and
+     -- implies that the root name has a suffix that can be removed).
    , associatedNames :: [ (String, FileSuffix) ]
 
      -- | The 'validParams' can be used to specify various parameters
@@ -239,7 +243,14 @@ prettyParamPatterns = \case
 data CandidateFile = CandidateFile { candidateDir :: FilePath
                                    , candidateSubdirs :: [ FilePath ]
                                    , candidateFile :: FilePath
+                                     -- | Portions of the candidateFile (or
+                                     -- candidateSubdirs) that match parameters
                                    , candidatePMatch :: [NamedParamMatch]
+                                     -- | If there are candidatePMatch, this is
+                                     -- the index of the first match.  This
+                                     -- therefore is also the end of the "root"
+                                     -- file match portion.
+                                   , candidateMatchIdx :: Natural
                                    }
                      deriving (Eq, Show)  -- Show is for for debugging/tracing
 

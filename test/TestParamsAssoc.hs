@@ -57,29 +57,28 @@ sugarCube = mkCUBE { inputDirs = [ testInpPath ]
 paramsAssocTests :: [TT.TestTree]
 paramsAssocTests =
   let (sugar1,_s1desc) = findSugarIn sugarCube (sample sugarCube)
-      chkCandidate nm pm =
-        testCase (nm <> " candidate")
-        $ find ((nm ==) . candidateFile) (sample sugarCube)
-        @?= Just (CandidateFile { candidateDir = testInpPath
-                                , candidateSubdirs = []
-                                , candidateFile = nm
-                                , candidatePMatch = pm
-                                })
+      chkCandidate = checkCandidate sugarCube sample testInpPath [] 0
   in [ testCase "valid sample" $ 13 @=? length (sample sugarCube)
 
      , TT.testGroup "candidates"
        [
          chkCandidate "recursive.rs" []
        , chkCandidate "recursive.fast.exe" [("optimization", Explicit "fast")]
-       , chkCandidate "simple.noopt.clang.exe" [("c-compiler", Explicit "clang")]
-       , chkCandidate "simple.noopt.gcc.exe" [("c-compiler", Explicit "gcc")]
-       , chkCandidate "simple.noopt-gcc.expct" [("c-compiler", Explicit "gcc")]
-       , chkCandidate "simple.opt-clang.exe" [("c-compiler", Explicit "clang")]
-       , chkCandidate "simple.clang-noopt-clang.exe" [("c-compiler", Explicit "clang")]
+       , chkCandidate "simple.noopt.clang.exe" [("c-compiler", Explicit "clang")
+                                               , ("optimization", Explicit "noopt")]
+       , chkCandidate "simple.noopt.gcc.exe" [("c-compiler", Explicit "gcc")
+                                             , ("optimization", Explicit "noopt")]
+       , chkCandidate "simple.noopt-gcc.expct" [("c-compiler", Explicit "gcc")
+                                               , ("optimization", Explicit "noopt")]
+       , chkCandidate "simple.opt-clang.exe" [("c-compiler", Explicit "clang")
+                                             , ("optimization", Explicit "opt")]
+       , chkCandidate "simple.clang-noopt-clang.exe" [("c-compiler", Explicit "clang")
+                                                     , ("optimization", Explicit "noopt")]
        , chkCandidate "simple.clang-gcc.exe" [("c-compiler", Explicit "clang")
-                                               ,("c-compiler", Explicit "gcc")]
+                                             ,("c-compiler", Explicit "gcc")]
        , chkCandidate "simple-opt.expct" [("optimization", Explicit "opt")]
-       , chkCandidate "simple-opt.gcc-exe" [("c-compiler", Explicit "gcc")]
+       , chkCandidate "simple-opt.gcc-exe" [("c-compiler", Explicit "gcc")
+                                           , ("optimization", Explicit "opt")]
        ]
 
      , sugarTestEq "correct found count" sugarCube sample 6 length

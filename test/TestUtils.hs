@@ -118,3 +118,31 @@ sugarTest name cube sample test =
 sugarTestEq name cube sample expVal test =
   let (r,d) = findSugarIn cube (sample cube)
   in testCase name $ eqTestWithFailInfo d expVal $ test r
+
+
+checkCandidate cube files path subdirs sepSkip nm pm =
+  testCase (nm <> " candidate")
+  $ L.find (\c -> and [ nm == candidateFile c
+                      , subdirs == candidateSubdirs c
+                      ]) (files cube)
+  @?= Just (CandidateFile { candidateDir = path
+                          , candidateSubdirs = subdirs
+                          , candidateFile = nm
+                          , candidatePMatch = pm
+                          , candidateMatchIdx = toEnum
+                            $ let isSep = (`elem` (separators cube))
+                                  sepsAt = L.findIndices isSep nm
+                                  fstSep = case L.drop sepSkip
+                                                sepsAt of
+                                             (l:_) -> Just l
+                                             [] -> Nothing
+                                  lstSep = case reverse sepsAt of
+                                             (l:_) -> Just l
+                                             [] -> Nothing
+                                  ln = length nm
+                              in if null pm
+                                 then maybe ln (1+) lstSep
+                                 else if null pm
+                                      then ln
+                                      else maybe ln (+1) fstSep
+                          })

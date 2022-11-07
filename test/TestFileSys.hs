@@ -67,15 +67,8 @@ fsTests1 = do
   sweets <- findSugar sugarCube1
   cands <- findCandidates sugarCube1 testInpPath
   -- putStrLn $ ppShow sweets
-  let chkCandidate nm pm =
-        testCase (nm <> " candidate")
-        $ L.find ((nm ==) . candidateFile) (rights cands)
-        @?= Just (CandidateFile { candidateDir = testInpPath
-                                , candidateSubdirs = []
-                                , candidateFile = nm
-                                , candidatePMatch = pm
-                                })
-
+  let chkCandidate = checkCandidate sugarCube1 (const $ rights cands)
+                     testInpPath [] 0
   return
     [ TT.testGroup "Cube 1"
       [ testCase "correct # of sweets" $ 3 @=? length sweets
@@ -205,14 +198,7 @@ fsTests2 = do
   cands <- concat <$> mapM (findCandidates sugarCube2) (inputDirs sugarCube2)
   let warns = lefts cands
   -- putStrLn $ ppShow sweets
-  let chkCand d nm pm =
-        testCase (nm <> " candidate")
-        $ L.find ((nm ==) . candidateFile) (rights cands)
-        @?= Just (CandidateFile { candidateDir = d
-                                , candidateSubdirs = []
-                                , candidateFile = nm
-                                , candidatePMatch = pm
-                                })
+  let chkCand d = checkCandidate sugarCube2 (const $ rights cands) d [] 0
   let chkCandidate1 = chkCand testInpPath
   let chkCandidate2 = chkCand testInpPath2
   return
@@ -244,7 +230,8 @@ fsTests2 = do
         , chkCandidate1 "foo.llvm9.exp" [("llvm", Explicit "llvm9")]
         , chkCandidate2 "cow-O2.exe" [("opt", Explicit "O2")]
         , chkCandidate2 "foo-llvm13.exp" [("llvm", Explicit "llvm13")]
-        , chkCandidate2 "foo.O1-llvm10.exe" [("llvm", Explicit "llvm10")]
+        , chkCandidate2 "foo.O1-llvm10.exe" [("llvm", Explicit "llvm10")
+                                            , ("opt", Explicit "O1")]
         ]
 
       , TT.testGroup "Sweet #1" $
@@ -441,17 +428,7 @@ fsTests3 = do
   -- putStrLn $ ppShow sweets
   cands <- concat <$> mapM (findCandidates sugarCube3) (inputDirs sugarCube3)
   let warns = lefts cands
-  -- putStrLn $ ppShow sweets
-  let chkCand d sds nm pm =
-        testCase (nm <> " candidate")
-        $ L.find (\c -> and [ nm == candidateFile c
-                            , sds == candidateSubdirs c
-                            ]) (rights cands)
-        @?= Just (CandidateFile { candidateDir = d
-                                , candidateSubdirs = sds
-                                , candidateFile = nm
-                                , candidatePMatch = pm
-                                })
+  let chkCand t s = checkCandidate sugarCube3 (const $ rights cands) t s 0
   let chkCandidate1 = chkCand testInpPath []
   let chkCandidate2 = chkCand testInpPath2 []
   let tbDir = "test/builds"
@@ -472,32 +449,58 @@ fsTests3 = do
         , chkCandidate1 "foo.c" []
         , chkCandidate1 "foo.exp" []
         , chkCandidate1 "foo.llvm10-O2-exp" [("llvm", Explicit "llvm10")
-                                            ,("opt", Explicit "O2")]
+                                            ,("opt", Explicit "O2")
+                                            ]
         , chkCandidate1 "foo.llvm10.O2.exe" [("llvm", Explicit "llvm10")
-                                            ,("opt", Explicit "O2")]
+                                            ,("opt", Explicit "O2")
+                                            ]
         , chkCandidate1 "foo.llvm13.exe" [("llvm", Explicit "llvm13")]
         , chkCandidate1 "foo.llvm199.exp"  [("opt", Explicit "llvm199")]
         , chkCandidate1 "foo.llvm9.exe" [("llvm", Explicit "llvm9")]
         , chkCandidate1 "foo.llvm9.exp" [("llvm", Explicit "llvm9")]
         , chkCandidate2 "cow-O2.exe" [("opt", Explicit "O2")]
         , chkCandidate2 "foo-llvm13.exp" [("llvm", Explicit "llvm13")]
-        , chkCandidate2 "foo.O1-llvm10.exe" [("llvm", Explicit "llvm10")]
-        , chkCand tbDir ["O0"] "cow-llvm13.exp" [("llvm", Explicit "llvm13")]
-        , chkCand tbDir ["O0"] "cow.exe" []
-        , chkCand tbDir ["O0"] "cow.exp" []
-        , chkCand tbDir ["O0", "llvm9"] "cow.exe" [("llvm", Explicit "llvm9")]
-        , chkCand tbDir ["O0", "llvm9"] "cow.lnk" [("llvm", Explicit "llvm9")]
+        , chkCandidate2 "foo.O1-llvm10.exe" [("llvm", Explicit "llvm10")
+                                            , ("opt", Explicit "O1")
+                                            ]
+        , chkCand tbDir ["O0"] "cow-llvm13.exp" [("llvm", Explicit "llvm13")
+                                                ,("opt", Explicit "O0")
+                                                ]
+        , chkCand tbDir ["O0"] "cow.exe" [("opt", Explicit "O0")]
+        , chkCand tbDir ["O0"] "cow.exp" [("opt", Explicit "O0")]
+        , chkCand tbDir ["O0", "llvm9"] "cow.exe" [("llvm", Explicit "llvm9")
+                                                  ,("opt", Explicit "O0")
+                                                  ]
+        , chkCand tbDir ["O0", "llvm9"] "cow.lnk" [("llvm", Explicit "llvm9")
+                                                  ,("opt", Explicit "O0")
+                                                  ]
         , chkCand tbDir [] "cow.exp" []
-        , chkCand tbDir ["gen", "llvm10"] "frog.exe" [("llvm", Explicit "llvm10")]
-        , chkCand tbDir ["gen", "llvm13"] "frog.exe" [("llvm", Explicit "llvm13")]
-        , chkCand tbDir ["gen", "llvm9"] "frog.exe" [("llvm", Explicit "llvm9")]
+        , chkCand tbDir ["gen", "llvm10"] "frog.exe" [("llvm", Explicit "llvm10")
+                                                     ,("opt", Explicit "gen")
+                                                     ]
+        , chkCand tbDir ["gen", "llvm13"] "frog.exe" [("llvm", Explicit "llvm13")
+                                                     ,("opt", Explicit "gen")
+                                                     ]
+        , chkCand tbDir ["gen", "llvm9"] "frog.exe" [("llvm", Explicit "llvm9")
+                                                    ,("opt", Explicit "gen")
+                                                    ]
         , chkCand tbDir ["llvm10"] "foo.exp" [("llvm", Explicit "llvm10")]
         , chkCand tbDir ["llvm13"] "cow.exe" [("llvm", Explicit "llvm13")]
-        , chkCand tbDir ["llvm13", "opts", "O3"] "cow.exe" [("llvm", Explicit "llvm13")]
+        , chkCand tbDir ["llvm13", "opts", "O3"] "cow.exe"
+          [("llvm", Explicit "llvm13")
+          ,("opt", Explicit "O3")
+          ,("opt", Explicit "opts")
+          ]
         , chkCand tbDir ["want"] "frog-llvm9-no.exp" [("debug", Explicit "no")
-                                                     ,("llvm", Explicit "llvm9")]
-        , chkCand tbDir ["want"] "frog-no.exp" [("debug", Explicit "no")]
-        , chkCand tbDir ["want"] "frog-yes.exp" [("debug", Explicit "yes")]
+                                                     ,("llvm", Explicit "llvm9")
+                                                     ,("opt", Explicit "want")
+                                                     ]
+        , chkCand tbDir ["want"] "frog-no.exp" [("debug", Explicit "no")
+                                               ,("opt", Explicit "want")
+                                               ]
+        , chkCand tbDir ["want"] "frog-yes.exp" [("debug", Explicit "yes")
+                                                ,("opt", Explicit "want")
+                                                ]
         ]
 
       , let sweetNum = 8
@@ -533,8 +536,7 @@ fsTests3 = do
                                 , ("llvm", Assumed "llvm9")
                                 , ("opt", Explicit "O2")
                                 ]
-             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
-                            , ("source", testInpPath </> "cow.c") ]
+             , associated = [ ("source", testInpPath </> "cow.c") ]
              }
            , testCase "Exp #4" $ head (drop 3 $ expected sweet) @?=
              Expectation
@@ -562,11 +564,7 @@ fsTests3 = do
                                 , ("llvm", Assumed "llvm9")
                                 , ("opt", Explicit "O2")
                                 ]
-               -- n.b. O0/llvm9/cow.lnk matches because opt is a wildcard, so no
-               -- way to know that O0 in cow.lnk is conflicing with O2 in
-               -- cow.O2.exp.
-             , associated = [ ("ld-config", takeDirectory testInpPath3 </> "O0/llvm9/cow.lnk")
-                            , ("source", testInpPath </> "cow.c") ]
+             , associated = [ ("source", testInpPath </> "cow.c") ]
              }
            ]
 

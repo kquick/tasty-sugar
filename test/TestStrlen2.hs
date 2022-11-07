@@ -31,14 +31,7 @@ sugarCube = mkCUBE
 strlen2SampleTests :: [TT.TestTree]
 strlen2SampleTests =
   let (sugar,sdesc) = findSugarIn sugarCube (strlen2Samples sugarCube)
-      chkCandidate nm pm =
-        testCase (nm <> " candidate")
-        $ find ((nm ==) . candidateFile) (strlen2Samples sugarCube)
-        @?= Just (CandidateFile { candidateDir = testInpPath
-                                , candidateSubdirs = []
-                                , candidateFile = nm
-                                , candidatePMatch = pm
-                                })
+      chkCandidate = checkCandidate sugarCube strlen2Samples testInpPath [] 0
   in [ testCase "valid sample" $ 24 @=? length (strlen2Samples sugarCube)
      , sugarTestEq "correct found count" sugarCube strlen2Samples 1 length
 
