@@ -212,9 +212,11 @@ findSugarIn pat allFiles =
                         pretty (length sres)
                       , "parameters = " <+> pretty (validParams pat)
                       ] <> ((("--?" <+>) . pretty) <$> (concatMap snd sres))
-                      <> [ "", "Stats:" ]
-                      <> ((\(k,v) -> "  #" <+> pretty k <+> " = " <> pretty v)
-                          <$> Map.toList stats)
+                      <> if null stats
+                         then []
+                         else [ "", "Stats:" ]
+                              <> ((\(k,v) -> "  #" <+> pretty k <+> " = " <> pretty v)
+                                  <$> Map.toList stats)
              ]
   in case cubeIsValid pat of
        Right _ -> (L.sortBy (compare `on` rootFile) inps, expl)

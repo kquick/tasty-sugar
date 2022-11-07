@@ -26,6 +26,12 @@ joinStats = Map.unionWith (+)
 
 type LogicI a = LogicT (StateT IterStat Identity) a
 
+-- Note: stats collection can increase the runtime if the amount of backtracking
+-- becomes significant.  It can also increase runtime because a stats report
+-- (from --showsearch) will force the evaluation of branches that might otherwise
+-- have been lazily ignored.  To disable the dilatory effects (and disable stats
+-- collection), disable the modify statements in addSubLogicStats and eachFrom.
+
 addSubLogicStats :: (a, IterStat) -> LogicI a
 addSubLogicStats (r, stats) = do modify $ joinStats stats
                                  return r
@@ -41,7 +47,6 @@ observeIT op = runIdentity $ runStateT (observeManyT 1 op) emptyStats
 -- | Core Logic function to iteratively return elements of a list via
 -- backtracking.
 eachFrom :: Text -> [a] -> LogicI a
--- eachFrom location = foldr (mplus . return) mzero
 eachFrom location =
   let attempt c a = do modify $ Map.insertWith (+) location 1
                        return c `mplus` a
