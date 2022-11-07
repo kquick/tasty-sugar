@@ -106,22 +106,43 @@ makeCandidate cube topDir subPath fName =
           Nothing -> []
           Just (p,_) ->
             let chkRange = [(firstSep, fle)]
+                -- arbs is the (start,len) spans where arbitrary values could
+                -- occur
                 arbs = holes chkRange (snd <$> pmatches)
-                getRange (s,e) = let s' = fromEnum s in DL.take (e - s' - 1) $ DL.drop s' fName
-                holeVals = (\r -> (getRange r, r)) <$> arbs
-                pvals = getParamVal . snd . fst <$> pmatches
-                dirVals = (, (0,0)) <$> filter (not . (`elem` pvals) . Just) subPath
+                -- getRange extracts a substring range from the fName
+                getRange (s,e) = let s' = fromEnum s
+                                 in DL.take (e - s' - 1) $ DL.drop s' fName
+                -- holeVals are the separator-divided values extracted from the
+                -- arbs ranges of fName.
+                holeVals = let neither f a b = not $ or [f a, f b]
+                               splitBySep = filter (not . all isSep)
+                                            . DL.groupBy (neither isSep)
+                               rangeVals r = (,r) <$> (splitBySep $ getRange r)
+                           in
+                             concatMap rangeVals arbs
+                -- dirVals are the subdirectory elements that could be used for
+                -- arbitrary value matching (i.e. they don't explicitly match).
+                dirVals =
+                  let pvals = getParamVal . snd . fst <$> pmatches
+                  in (, (0,0)) <$> filter (not . (`elem` pvals) . Just) subPath
             in (first ((p,) . Explicit)) <$> (holeVals <> dirVals)
       pAll = pmatches <> pmatchArbitrary
+      dropSeps i =
+        let lst = last $ DL.group $ DL.take (fromEnum i) fName
+        in if isSep $ head lst
+           then i - (toEnum (length lst) - 1)
+           else i
+      mtchIdx = dropSeps
+                $ minimum
+                $ toEnum fle
+                : filter (/= 0) (fst . snd <$> pAll)
   in CandidateFile { candidateDir = topDir
                    , candidateSubdirs = subPath
                    , candidateFile = fName
                    -- nub the results in case a v value appears twice in a single
                    -- file.  Sort the results for stability in testing.
                    , candidatePMatch = DL.nub $ DL.sort $ (fst <$> pAll)
-                   , candidateMatchIdx = minimum
-                                         $ toEnum fle
-                                         : filter (/= 0) (fst . snd <$> pAll)
+                   , candidateMatchIdx = mtchIdx
                    }
 
 
@@ -135,7 +156,7 @@ holes chkRange present =
              then rmvKnown (toEnum e,pe) rs
              else if abs(pe-e) <= 1
                   then rs
-                  else (toEnum pe + 1, e) : rs -- KWQ 1
+                  else (toEnum pe + 1, e) : rs
         else if ps >= s && fromEnum ps < e
              then if abs(pe - e) <= 1
                   then (s, fromEnum ps) : rs

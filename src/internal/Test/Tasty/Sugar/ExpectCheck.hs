@@ -70,7 +70,9 @@ findExpectation pat params rootN allNames (rootPMatches, matchPrefix) =
       trimExpectations =
         -- If a parameter is Explicitly matched, discard any
         -- Expectation with the same Assumed matches.
+
         removeNonExplicitMatchingExpectations
+
         -- remove duplicates (uses the Eq instance for Expectation
         -- that ignores the order of the expParamsMatch and associated
         -- to ensure that different ordering with the same values
@@ -177,7 +179,6 @@ removeNonExplicitMatchingExpectations allExps =
       expGrps = L.groupBy ((==) `on` paramsAndVals)
                 $ L.sortBy (compare `on` paramsAndVals)
                 $ allExps
-
   in
     -- For each group of expectations that have the same values, find the best of
     -- the group by ordering first on ParamMatch, and then resolving ties based
