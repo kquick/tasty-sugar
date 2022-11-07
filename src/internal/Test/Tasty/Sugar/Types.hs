@@ -242,11 +242,6 @@ data CandidateFile = CandidateFile { candidateDir :: FilePath
                                    }
                      deriving (Eq, Show)  -- Show is for for debugging/tracing
 
--- | This converts a CandidatFile into a regular FilePath for access
-candidateToPath :: CandidateFile -> FilePath
-candidateToPath c =
-  candidateDir c </> foldr (</>) (candidateFile c) (candidateSubdirs c)
-
 
 -- | Each identified test input set is represented as a 'Sweets'
 -- object.. a Specifications With Existing Expected Testing Samples.

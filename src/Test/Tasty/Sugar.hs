@@ -92,8 +92,9 @@ import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Control.Monad.Logic
-import           Data.Function
+import           Data.Either ( lefts, rights )
 import qualified Data.Foldable as F
+import           Data.Function
 import qualified Data.List as L
 import qualified Data.Map as Map
 import           Data.Maybe ( isJust, isNothing, fromJust )
@@ -102,15 +103,12 @@ import qualified Data.Text as T
 import           Data.Typeable ( Typeable )
 import           Numeric.Natural ( Natural )
 import           Prettyprinter
-import           System.Directory ( doesDirectoryExist, getCurrentDirectory
-                                  , listDirectory, doesDirectoryExist )
-import           System.FilePath ( (</>), isRelative, makeRelative
-                                 , splitPath, takeDirectory, takeFileName)
 import           System.IO ( hPutStrLn, stderr )
 import           Test.Tasty.Ingredients
 import           Test.Tasty.Options
 
 import Test.Tasty.Sugar.Analysis
+import Test.Tasty.Sugar.Candidates
 import Test.Tasty.Sugar.Report
 import Test.Tasty.Sugar.Types
 
@@ -177,50 +175,14 @@ findSugar :: MonadIO m => CUBE -> m [Sweets]
 findSugar cube = fst <$> findSugar' cube
 
 findSugar' :: MonadIO m => CUBE -> m ([Sweets], Doc ann)
-findSugar' pat =
-  let collectDirEntries d =
-        let recurse = takeFileName d == "*"
-            top = if recurse then Just (takeDirectory d) else Nothing
-            start = if recurse then takeDirectory d else d
-        in dirListWithPaths top start
-      dirListWithPaths topDir d =
-        -- putStrLn ("Reading " <> show d) >>
-        doesDirectoryExist d >>= \case
-          True ->
-            do dirContents <- listDirectory d
-               case topDir of
-                 Nothing -> do
-                   let mkC f = CandidateFile { candidateDir = d
-                                             , candidateSubdirs = []
-                                             , candidateFile = f
-                                             }
-                   return (mkC <$> dirContents)
-                 Just topdir -> do
-                   let subs = filter (not . null)
-                              (init
-                               <$> init (splitPath
-                                          $ makeRelative topdir (d </> "x")))
-                   let mkC f = CandidateFile { candidateDir = topdir
-                                             , candidateSubdirs = subs
-                                             , candidateFile = f
-                                             }
-                   subdirs <- filterM (doesDirectoryExist . (d </>)) dirContents
-                   let here = mkC <$> (filter (not . (`elem` subdirs)) dirContents)
-                   subCandidates <- mapM (dirListWithPaths topDir)
-                                    ((d </>) <$> subdirs)
-                   return (here <> (concat subCandidates))
-          False -> do
-            showD <- case isRelative d of
-                       True -> do cwd <- getCurrentDirectory
-                                  return $ "[" <> cwd <> "/]" <> d
-                       False -> return d
-            hPutStrLn stderr $ "WARNING: " <> showD <> " does not exist"
-            return []
-  in findSugarIn pat
-     <$> liftIO (concat <$> (mapM collectDirEntries
+findSugar' pat = do
+  candidates <- liftIO (concat
+                        <$> (mapM (findCandidates pat)
                              $ L.filter (not . null)
                              $ L.nub
                              $ inputDir pat : inputDirs pat))
+  mapM_ (liftIO . hPutStrLn stderr . ("WARNING: " <>)) $ lefts candidates
+  return $ findSugarIn pat $ rights candidates
 
 
 -- | Given a list of filepaths and a CUBE, returns the list of matching

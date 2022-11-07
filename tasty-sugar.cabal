@@ -110,6 +110,7 @@ library
 library tasty-sugar-internal
   exposed-modules:   Test.Tasty.Sugar.Analysis
                    , Test.Tasty.Sugar.AssocCheck
+                   , Test.Tasty.Sugar.Candidates
                    , Test.Tasty.Sugar.ExpectCheck
                    , Test.Tasty.Sugar.Iterations
                    , Test.Tasty.Sugar.ParamCheck
@@ -118,6 +119,7 @@ library tasty-sugar-internal
                    , Test.Tasty.Sugar.Types
   build-depends:     base >= 4.10
                    , containers >= 0.6 && < 0.7
+                   , directory
                    , filepath
                    , filemanip
                    , kvitable >= 1.0 && < 1.1

@@ -17,6 +17,7 @@ import           Data.Bifunctor ( first )
 import qualified Data.List as L
 
 import           Test.Tasty.Sugar.AssocCheck
+import           Test.Tasty.Sugar.Candidates
 import           Test.Tasty.Sugar.Iterations
 import           Test.Tasty.Sugar.ParamCheck
 import           Test.Tasty.Sugar.Types
