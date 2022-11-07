@@ -100,7 +100,4 @@ getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
                                           return (n+1, [s] <> v <> l, r)
 
     npseq = eachFrom "assoc params permutations"
-            . ([]:)                -- consider no parameters just once
-            . filter (not . null)  -- excluding multiple blanks in
-            . concatMap L.inits    -- any number of the
-            . L.permutations       -- parameters in each possible order
+            . combosLongToShort

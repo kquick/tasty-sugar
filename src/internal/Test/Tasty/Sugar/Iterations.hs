@@ -6,7 +6,9 @@ where
 import           Control.Monad ( mplus, mzero )
 import           Control.Monad.Logic
 import           Control.Monad.State ( StateT, runStateT, modify )
+import           Data.Function ( on )
 import           Data.Functor.Identity ( Identity, runIdentity )
+import qualified Data.List as DL
 import qualified Data.Map as Map
 import           Data.Text ( Text )
 
@@ -42,3 +44,14 @@ eachFrom location =
   let attempt c a = do modify $ Map.insertWith (+) location 1
                        return c `mplus` a
   in foldr attempt mzero
+
+
+-- | Given a list, return the list of lists representing all permutations of the
+-- same length or shorter, removing any duplications, from longest to shortest
+-- (shortest being the empty list).
+combosLongToShort :: Eq a => [a] -> [ [a] ]
+combosLongToShort = reverse
+                    . DL.sortBy (compare `on` length)
+                    . DL.nub
+                    . concatMap DL.inits
+                    . DL.permutations
