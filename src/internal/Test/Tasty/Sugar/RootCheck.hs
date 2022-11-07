@@ -2,6 +2,7 @@
 -- name.  The root name may contain zero or more parameter values.
 
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Test.Tasty.Sugar.RootCheck
   (
@@ -14,7 +15,7 @@ import           Control.Monad.Logic
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes, isNothing )
 
-import           Test.Tasty.Sugar.Iterations ( eachFrom )
+import           Test.Tasty.Sugar.Iterations ( LogicI, eachFrom )
 import           Test.Tasty.Sugar.ParamCheck
 import           Test.Tasty.Sugar.Types
 
@@ -24,7 +25,7 @@ import           Test.Tasty.Sugar.Types
 -- Parameter values are taken from subdirectory paths or filename elements (in
 -- that order).
 rootMatch :: CandidateFile -> Separators -> [ParameterPattern] -> String
-          -> Logic ([NamedParamMatch], CandidateFile, String)
+          -> LogicI ([NamedParamMatch], CandidateFile, String)
 rootMatch origRoot seps params rootCmp = do
   (dmatch, drem) <- dirMatches origRoot params params
   (rpm, p, s) <- ifte
@@ -68,7 +69,7 @@ rpNPM = let bld (RootParNm n v) = Just [(n, Explicit v)]
 -- explicit parameter matches that comprise the central portion.
 rootParamMatch :: CandidateFile
                -> Separators -> [ParameterPattern] -> String
-               -> Logic ([NamedParamMatch], CandidateFile, String)
+               -> LogicI ([NamedParamMatch], CandidateFile, String)
 rootParamMatch origRoot seps params rootCmp =
   if null seps
   then rootParamMatchNoSeps origRoot seps params
@@ -77,7 +78,7 @@ rootParamMatch origRoot seps params rootCmp =
 
 rootParamFileMatches :: CandidateFile
                      -> Separators -> [ParameterPattern] -> String
-                     -> Logic ([NamedParamMatch], CandidateFile, String)
+                     -> LogicI ([NamedParamMatch], CandidateFile, String)
 rootParamFileMatches rootF seps parms rMatch = do
   let rnSplit = sepSplit $ candidateFile rootF
       sepSplit = L.groupBy sepPoint
@@ -85,12 +86,13 @@ rootParamFileMatches rootF seps parms rMatch = do
       rnPartIndices = [ n | n <- [0 .. length rnParts - 1] , even n ]
       freeValueParm = L.find (isNothing . snd) parms
 
+      globChars = "[*]\\(|)" :: String
       txtRootSfx = sepSplit $ reverse $
                    -- Find the concrete extension in the
                    -- rootName. Somewhat crude, but basically stops at
                    -- any character that could be part of a filemanip
                    -- GlobPattern.
-                   takeWhile (not . flip elem "[*]\\(|)") $ reverse rMatch
+                   takeWhile (not . flip elem globChars) $ reverse rMatch
 
       -- if a part of the root filename matches a known parameter value, that is
       -- the only way that part can be interpreted, and that anchors it.
@@ -152,7 +154,8 @@ rootParamFileMatches rootF seps parms rMatch = do
         else case freeValueParm of
                Nothing -> mzero
                Just p ->
-                 do idx <- eachFrom [i | i <- [2..length allRP], even i]
+                 do idx <- eachFrom "rootname part index"
+                           $ [i | i <- [2..length allRP], even i]
                     case drop idx allRP of
                       (RootText idxv:_) -> do
                         let free = RootParNm (fst p) idxv
@@ -231,9 +234,10 @@ rootParamFileMatches rootF seps parms rMatch = do
 -- sequence of paramvals in the middle of the string and extract
 -- the prefix and suffix (if any) around those paramvals.
 rootParamMatchNoSeps :: CandidateFile -> Separators -> [ParameterPattern]
-                     -> Logic ([NamedParamMatch], CandidateFile, String)
+                     -> LogicI ([NamedParamMatch], CandidateFile, String)
 rootParamMatchNoSeps rootF seps' parms = do
-  pseq <- eachFrom $ filter (not . null) $ L.permutations parms
+  pseq <- eachFrom "root param permutation"
+          $ filter (not . null) $ L.permutations parms
   pvals <- getPVals pseq
   (pvset, _pvcnt, pvstr) <- pvalMatch seps' [] pvals
   -- _pvcnt can be ignored because each is a different root
@@ -257,12 +261,12 @@ rootParamMatchNoSeps rootF seps' parms = do
 
 -- Return origRootName up to each sep-indicated point.
 noRootParamMatch :: CandidateFile -> Separators
-                 -> Logic ([NamedParamMatch], CandidateFile, String)
+                 -> LogicI ([NamedParamMatch], CandidateFile, String)
 noRootParamMatch origRoot seps =
   return ([], origRoot, "") `mplus`
-  do s <- eachFrom seps
+  do s <- eachFrom "seps for no root params" seps
      let origRootName = candidateFile origRoot
-     i <- eachFrom [1..length origRootName - 1]
+     i <- eachFrom "indices of orig root name" [1..length origRootName - 1]
      let a = origRoot { candidateFile = take i origRootName }
      let b = drop i origRootName
      if null b

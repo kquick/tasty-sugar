@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Functions for checking different parameter/value combinations.
 
@@ -17,7 +18,6 @@ module Test.Tasty.Sugar.ParamCheck
   where
 
 import           Control.Monad
-import           Control.Monad.Logic
 import           Data.Function ( on )
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes, fromJust, isNothing, listToMaybe )
@@ -25,15 +25,15 @@ import           Data.Bifunctor ( first )
 import           Data.Maybe ( fromMaybe )
 
 import           Test.Tasty.Sugar.Types
-import           Test.Tasty.Sugar.Iterations ( eachFrom )
+import           Test.Tasty.Sugar.Iterations ( LogicI, eachFrom )
 
 
 -- | Returns various combinations of parameter value selections
-getPVals :: [ParameterPattern] -> Logic [(String, Maybe String)]
+getPVals :: [ParameterPattern] -> LogicI [(String, Maybe String)]
 getPVals = mapM getPVal
   where
     getPVal (pn, Nothing) = return (pn, Nothing)
-    getPVal (pn, Just pv) = do pv' <- eachFrom pv
+    getPVal (pn, Just pv) = do pv' <- eachFrom "possible param value" pv
                                return (pn, Just pv')
 
 -- | Returns a ParameterPattern admitting only a single value for each parameter,
@@ -41,14 +41,15 @@ getPVals = mapM getPVal
 -- is useful for callers wishing to handle each combination of parameter values
 -- separately.
 singlePVals :: [NamedParamMatch] -> [ParameterPattern]
-            -> Logic [ParameterPattern]
+            -> LogicI [ParameterPattern]
 singlePVals sel = mapM eachVal
   where eachVal (pn,Nothing) =
           return (pn, (:[]) <$> (lookup pn sel >>= getParamVal))
         eachVal (pn,Just pvs) =
-          do pv <- eachFrom $ case lookup pn sel >>= getParamVal of
-                                Nothing -> L.sort pvs
-                                Just v -> [v]
+          do pv <- eachFrom "assumed (non-root) param value"
+                   $ case lookup pn sel >>= getParamVal of
+                       Nothing -> L.sort pvs
+                       Just v -> [v]
              return (pn, Just [pv])
 
 
@@ -79,7 +80,7 @@ singlePVals sel = mapM eachVal
 pvalMatch :: Separators
           -> [NamedParamMatch]
           -> [(String, Maybe String)]
-          -> Logic ([NamedParamMatch], Int, String)
+          -> LogicI ([NamedParamMatch], Int, String)
 pvalMatch seps preset pvals =
   let (ppv, _rpv) = L.partition isPreset pvals
       isPreset p = fst p `elem` (fmap fst preset)
@@ -91,17 +92,17 @@ pvalMatch seps preset pvals =
                                 Just v -> paramMatchVal v pv
                                 Nothing -> True
 
-      genPVStr :: [NamedParamMatch] -> Logic String
+      genPVStr :: [NamedParamMatch] -> LogicI String
       genPVStr pvs =
         let vstr = fromMaybe "" . getExplicit . snd
-            sepJoin :: String -> NamedParamMatch -> Logic String
+            sepJoin :: String -> NamedParamMatch -> LogicI String
             sepJoin r v = if isExplicit (snd v)
-                          then do s <- eachFrom seps
+                          then do s <- eachFrom "seps for param joins" seps
                                   return $ [s] <> vstr v <> r
                           else return r
         in if null seps
            then return $ foldr (\v r -> vstr v <> r) "" pvs
-           else do s <- eachFrom seps
+           else do s <- eachFrom "seps for param checks" seps
                    foldM sepJoin [s] pvs
 
   in do guard $ matchesPreset
@@ -116,7 +117,8 @@ pvalMatch seps preset pvals =
 -- | Generate the various combinations of parameters+values from the possible
 -- set specified by the input.
 
-pvVals :: [NamedParamMatch] -> [(String, Maybe String)] -> Logic [NamedParamMatch]
+pvVals :: [NamedParamMatch] -> [(String, Maybe String)]
+       -> LogicI [NamedParamMatch]
 pvVals _ [] = return []
 pvVals presets ((pn, mpv):ps) =
   do nxt <- pvVals presets ps
@@ -179,7 +181,7 @@ pmatchMax f a b = case pmatchCmp (f a) (f b) of
 -- other parameters.
 
 dirMatches :: CandidateFile -> [ParameterPattern] -> [ParameterPattern]
-           -> Logic ([NamedParamMatch], [ParameterPattern])
+           -> LogicI ([NamedParamMatch], [ParameterPattern])
 dirMatches fname fullParams params = do
   let pathPart = candidateSubdirs fname
 
@@ -215,11 +217,11 @@ dirMatches fname fullParams params = do
 -- second list that has a Nothing label and a True parameter; leave non-Nothings
 -- in the second list unchanged.
 
-inEachNothing :: Maybe a -> [(Maybe a,Bool,b)] -> Logic [(Maybe a,b)]
+inEachNothing :: Maybe a -> [(Maybe a,Bool,b)] -> LogicI [(Maybe a,b)]
 inEachNothing mark into = do
   let canSubst (a,b,_) = b && isNothing a
   let spots = filter (\i -> canSubst (into !! i)) $ [0..(length into) - 1]
-  i <- eachFrom spots
+  i <- eachFrom "arbitrary subst spot" spots
   let deBool (a,_,c) = (a,c)
   let thrd (_,_,c) = c
   return

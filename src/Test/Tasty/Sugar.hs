@@ -92,9 +92,10 @@ import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Control.Monad.Logic
-import qualified Data.Foldable as F
 import           Data.Function
+import qualified Data.Foldable as F
 import qualified Data.List as L
+import qualified Data.Map as Map
 import           Data.Maybe ( isJust, isNothing, fromJust )
 import           Data.Proxy
 import qualified Data.Text as T
@@ -232,7 +233,7 @@ findSugar' pat =
 
 findSugarIn :: CUBE -> [CandidateFile] -> ([Sweets], Doc ann)
 findSugarIn pat allFiles =
-  let (nCandidates, sres) = checkRoots pat allFiles
+  let (nCandidates, sres, stats) = checkRoots pat allFiles
       inps = concat $ fst <$> sres
       expl = vsep $
              [ "Checking for test inputs in:" <+>
@@ -247,6 +248,9 @@ findSugarIn pat allFiles =
                         pretty (length sres)
                       , "parameters = " <+> pretty (validParams pat)
                       ] <> ((("--?" <+>) . pretty) <$> (concatMap snd sres))
+                      <> [ "", "Stats:" ]
+                      <> ((\(k,v) -> "  #" <+> pretty k <+> " = " <> pretty v)
+                          <$> Map.toList stats)
              ]
   in case cubeIsValid pat of
        Right _ -> (L.sortBy (compare `on` rootFile) inps, expl)

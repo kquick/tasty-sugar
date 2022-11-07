@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-deprecations #-}
 
 -- | Function to find expected results files for a specific root file,
@@ -12,11 +13,11 @@ module Test.Tasty.Sugar.ExpectCheck
   where
 
 import           Control.Monad
-import           Control.Monad.Logic
+import           Data.Bifunctor ( first )
 import qualified Data.List as L
 
 import           Test.Tasty.Sugar.AssocCheck
-import           Test.Tasty.Sugar.Iterations ( eachFrom )
+import           Test.Tasty.Sugar.Iterations
 import           Test.Tasty.Sugar.ParamCheck
 import           Test.Tasty.Sugar.Types
 
@@ -28,11 +29,10 @@ findExpectation :: CUBE
                 -> CandidateFile   --  original name of source
                 -> [CandidateFile] --  all of the names to choose from
                 -> ([NamedParamMatch], CandidateFile, String) -- param constraints from the root name
-                -> Maybe ( Sweets, SweetExplanation )
+                -> (Maybe ( Sweets, SweetExplanation ), IterStat)
 findExpectation pat params rootN allNames (rootPMatches, matchPrefix, _) =
-  let r = mkSweet
-          $ trimExpectations
-          $ observeAll
+  let r = first (mkSweet . trimExpectations)
+          $ observeIAll
           $ do guard (not $ null candidates)
                expectedSearch
                  matchPrefix
@@ -71,18 +71,20 @@ findExpectation pat params rootN allNames (rootPMatches, matchPrefix, _) =
         . L.nub
 
   in case r of
-       Nothing -> Nothing
-       Just r' | [] <- expected r' -> Nothing
-       Just r' -> Just ( r'
-                       , SweetExpl { rootPath = candidateToPath rootN
-                                   , base = candidateToPath matchPrefix
-                                   , expectedNames =
-                                       filter
-                                       (if null expSuffix then const True
-                                        else (expSuffix `L.isSuffixOf`))
-                                     (candidateToPath <$> candidates)
-                                   , results = r'
-                                   })
+       (Nothing, stats) -> (Nothing, stats)
+       (Just r', stats) | [] <- expected r' -> (Nothing, stats)
+       (Just r', stats) ->
+         ( Just ( r'
+                , SweetExpl { rootPath = candidateToPath rootN
+                            , base = candidateToPath matchPrefix
+                            , expectedNames =
+                                filter
+                                (if null expSuffix then const True
+                                  else (expSuffix `L.isSuffixOf`))
+                                (candidateToPath <$> candidates)
+                            , results = r'
+                            })
+         , stats )
 
 
 -- Find all Expectations matching this rootMatch
@@ -93,34 +95,34 @@ expectedSearch :: CandidateFile
                -> FileSuffix
                -> [ (String, FileSuffix) ]
                -> [CandidateFile]
-               -> Logic Expectation
+               -> LogicI Expectation
 expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allNames =
   do params' <- singlePVals rootPVMatches params
+     matches <- addSubLogicStats $ observeIAll $
+                do pseq <- eachFrom "exp params permutations" $
+                           ([] :) $
+                           filter (not . null) $
+                           concatMap L.inits $
+                           L.permutations params'
+                   pvals <- getPVals pseq
+                   let compatNames = filter (isCompatible seps params pvals) allNames
+                   guard (not $ null compatNames)
+                   e@(_,_,pmatch) <- getExp rootPrefix rootPVMatches seps params pvals
+                                     expSuffix compatNames
+                   a <- (getAssoc rootPrefix seps pmatch assocNames compatNames)
+                   return (e,a)
      (expFile, pmatch, assocFiles) <-
        let bestRanked :: (Eq a, Eq b, Eq c)
-                      => [((a, Int, [b]),c)] -> Logic (a, [b], c)
+                      => [((a, Int, [b]),c)] -> LogicI (a, [b], c)
            bestRanked l =
              if null l then mzero
              else let m = maximum $ fmap rankValue l
                       rankValue ((_,r,_),_) = r
                       rankMatching v ((_,r,_),_) = v == r
                       dropRank ((a,_,b),c) = (a,b,c)
-                  in eachFrom $ L.nub $ fmap dropRank $ filter (rankMatching m) l
-
-       in bestRanked $
-          observeAll $
-          do pseq <- eachFrom $
-                     ([] :) $
-                     filter (not . null) $
-                     concatMap L.inits $
-                     L.permutations params'
-             pvals <- getPVals pseq
-             let compatNames = filter (isCompatible seps params pvals) allNames
-             guard (not $ null compatNames)
-             e@(_,_,pmatch) <- getExp rootPrefix rootPVMatches seps params pvals
-                               expSuffix compatNames
-             a <- (getAssoc rootPrefix seps pmatch assocNames compatNames)
-             return (e,a)
+                  in eachFrom "ranked exp match"
+                     $ L.nub $ fmap dropRank $ filter (rankMatching m) l
+       in bestRanked matches
      return $ Expectation { expectedFile = candidateToPath expFile
                           , associated = fmap candidateToPath <$> assocFiles
                           , expParamsMatch = L.sort pmatch
@@ -138,7 +140,7 @@ getExp :: CandidateFile
        -> [(String, Maybe String)]
        -> FileSuffix
        -> [CandidateFile]
-       -> Logic (CandidateFile, Int, [NamedParamMatch])
+       -> LogicI (CandidateFile, Int, [NamedParamMatch])
 getExp rootPrefix rootPMatches seps params pvals expSuffix allNames =
   do -- Some of the params may be encoded in the subdirectories instead of in the
      -- target filename (each param value could appear in either).  If a
@@ -159,7 +161,7 @@ getExp rootPrefix rootPMatches seps params pvals expSuffix allNames =
 
      let inpDirMatches = fmap rootMatchesInSubdir <$> zip allNames allNames
 
-     (dirName, inpDirMatch) <- eachFrom inpDirMatches
+     (dirName, inpDirMatch) <- eachFrom "input dir" inpDirMatches
 
      let nonRootMatchPVals = removePVals pvals inpDirMatch
 
@@ -198,7 +200,7 @@ getExpFileParams :: CandidateFile
                  -> [(String, Maybe String)]
                  -> FileSuffix
                  -> [CandidateFile]
-                 -> Logic (CandidateFile, Int, [NamedParamMatch])
+                 -> LogicI (CandidateFile, Int, [NamedParamMatch])
 getExpFileParams rootPrefix rootPMatches seps pvals expSuffix hereNames =
   do let suffixSpecifiesSep = and [ not (null expSuffix)
                                   , head expSuffix `elem` seps
@@ -217,7 +219,7 @@ getExpFileParams rootPrefix rootPMatches seps pvals expSuffix hereNames =
      let ending = if suffixSpecifiesSep then tail expSuffix else expSuffix
 
      expFile <-
-       eachFrom
+       eachFrom "exp file candidate"
        $ filter (((candidateFile rootPrefix <> pmstr <> ending) ==) . candidateFile)
        $ hereNames
 

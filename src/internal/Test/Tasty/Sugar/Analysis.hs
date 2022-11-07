@@ -9,7 +9,6 @@ module Test.Tasty.Sugar.Analysis
   )
 where
 
-import           Control.Monad.Logic
 import           Data.Bifunctor ( bimap )
 import           Data.Function ( on )
 import qualified Data.List as L
@@ -18,8 +17,9 @@ import           Data.Ord ( comparing )
 import qualified System.FilePath.GlobPattern as FPGP
 
 import           Test.Tasty.Sugar.ExpectCheck
-import           Test.Tasty.Sugar.RootCheck
+import           Test.Tasty.Sugar.Iterations
 import           Test.Tasty.Sugar.ParamCheck ( pmatchCmp )
+import           Test.Tasty.Sugar.RootCheck
 import           Test.Tasty.Sugar.Types
 
 import           Prelude hiding ( exp )
@@ -30,16 +30,17 @@ import           Prelude hiding ( exp )
 -- This is the core implementation for the 'Test.Tasty.Sugar.findSugar' API
 -- interface.
 checkRoots :: CUBE -> [CandidateFile]
-           -> (Int, [([Sweets], [SweetExplanation])])
+           -> (Int, [([Sweets], [SweetExplanation])], IterStat)
 checkRoots pat allFiles =
   let isRootMatch n = candidateFile n FPGP.~~ (rootName pat)
       -- roots is all *possible* roots, but some of these are not roots at all,
       -- and some of these may be the other files associated with a root, so
       -- "root" files cannot be eliminated from the search space yet.
       roots = L.filter isRootMatch allFiles
-      checked = filter (not . null . fst)
-                ((checkRoot pat allFiles) <$> roots)
-  in (length checked, checked)
+      allSweets = (checkRoot pat allFiles) <$> roots
+      checked = filter (not . null . fst) (fst <$> allSweets)
+      allStats = foldr joinStats emptyStats (snd <$> allSweets)
+  in (length checked, checked, allStats)
 
 
 -- checkRoot will attempt to split the identified root file into three
@@ -54,7 +55,7 @@ checkRoots pat allFiles =
 checkRoot :: CUBE
           -> [CandidateFile] --  all possible expect candidates
           -> CandidateFile  --  root path
-          -> ([Sweets], [SweetExplanation])
+          -> (([Sweets], [SweetExplanation]), IterStat)
 checkRoot pat allFiles rootF =
   let params = L.sort $ validParams pat
       combineExpRes (swts, expl) = bimap (swts :) (expl :)
@@ -105,9 +106,13 @@ checkRoot pat allFiles rootF =
               in ( swts, e { results = swts } )
         in foldr combineIfRootsMatch [] swl
 
-  in foldr combineExpRes ([], []) $
-     mergeSweets $
-     catMaybes $
-     fmap (findExpectation pat params rootF allFiles) $
-     observeAll $
-     rootMatch rootF (separators pat) params (rootName pat)
+      (roots, stats) = observeIAll
+                       $ rootMatch rootF (separators pat) params (rootName pat)
+
+      expAndStats = fmap (findExpectation pat params rootF allFiles) roots
+
+      sumStats = foldr joinStats stats (snd <$> expAndStats)
+      exps = foldr combineExpRes (mempty, mempty) $ mergeSweets
+             $ catMaybes (fst <$> expAndStats)
+
+  in (exps, sumStats)

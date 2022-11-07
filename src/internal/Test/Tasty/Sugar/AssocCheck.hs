@@ -2,6 +2,7 @@
 -- identified test root file.
 
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Test.Tasty.Sugar.AssocCheck
   (
@@ -13,7 +14,7 @@ import           Control.Monad.Logic
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes )
 
-import           Test.Tasty.Sugar.Iterations ( eachFrom )
+import           Test.Tasty.Sugar.Iterations
 import           Test.Tasty.Sugar.Types
 
 
@@ -26,16 +27,16 @@ getAssoc :: CandidateFile
          -> [NamedParamMatch]
          -> [ (String, FileSuffix) ]
          -> [CandidateFile]
-         -> Logic [(String, CandidateFile)]
+         -> LogicI [(String, CandidateFile)]
 getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
   where
     assocSet = concat <$> mapM fndBestAssoc assocNames
 
     fndBestAssoc :: (String, FileSuffix)
-                 -> Logic [(String, CandidateFile)] -- usually just one
+                 -> LogicI [(String, CandidateFile)] -- usually just one
     fndBestAssoc assoc =
-      do let candidates = L.nub $ catMaybes $
-                          observeAll (fndAnAssoc assoc)
+      do candidates <- L.nub . catMaybes
+                       <$> addSubLogicStats (observeIAll (fndAnAssoc assoc))
          let highestRank = maximum (fst <$> candidates)
              c = filter ((== highestRank) . fst) candidates
          if null candidates
@@ -43,12 +44,12 @@ getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
            else return (snd <$> c)
 
     fndAnAssoc :: (String, FileSuffix)
-               -> Logic (Maybe (Int, (String, CandidateFile)))
+               -> LogicI (Maybe (Int, (String, CandidateFile)))
     fndAnAssoc assoc = ifte (fndAssoc assoc)
                        (return . Just)
                        (return Nothing)
 
-    fndAssoc :: (String, FileSuffix) -> Logic (Int, (String, CandidateFile))
+    fndAssoc :: (String, FileSuffix) -> LogicI (Int, (String, CandidateFile))
     fndAssoc assoc =
       do pseq <- npseq pmatch
          (rank, assocPfx, assocSfx) <- sepParams seps (fmap snd pseq)
@@ -72,32 +73,33 @@ getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
                                 in and $ fmap (not . flip elem mid) seps
                               ]
                     in chk
-         f <- eachFrom $ filter (possible . candidateFile) allNames
+         f <- eachFrom "possible assoc file"
+              $ filter (possible . candidateFile) allNames
          return (rank, (fst assoc, f))
 
-    sepParams :: Separators -> [ParamMatch] -> Logic (Int, String, String)
+    sepParams :: Separators -> [ParamMatch] -> LogicI (Int, String, String)
     sepParams sl =
       let rank (n,_,_) = n
           pfx (_,l,_) = l
       in \case
         [] -> if null sl
               then return (0, [], [])
-              else do s <- eachFrom sl
+              else do s <- eachFrom "sep param for arbitrary assoc" sl
                       return (0, [s], [])
         (NotSpecified:ps) -> do r <- sepParams sl ps
                                 return (rank r, [], pfx r)
         ((Explicit v):ps) -> do (n,l,r) <- sepParams sl ps
                                 if null sl
                                   then return (n+1, v <> l, r)
-                                  else do s <- eachFrom sl
+                                  else do s <- eachFrom "sep param for explicit assoc" sl
                                           return (n+1, [s] <> v <> l, r)
         ((Assumed  v):ps) -> do (n,l,r) <- sepParams sl ps
                                 if null sl
                                   then return (n+1, v <> l, r)
-                                  else do s <- eachFrom sl
+                                  else do s <- eachFrom "sep param for assumed assoc" sl
                                           return (n+1, [s] <> v <> l, r)
 
-    npseq = eachFrom
+    npseq = eachFrom "assoc params permutations"
             . ([]:)                -- consider no parameters just once
             . filter (not . null)  -- excluding multiple blanks in
             . concatMap L.inits    -- any number of the
