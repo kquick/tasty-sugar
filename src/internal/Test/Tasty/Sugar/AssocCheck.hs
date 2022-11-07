@@ -10,6 +10,7 @@ module Test.Tasty.Sugar.AssocCheck
   )
   where
 
+import           Control.Monad ( guard )
 import           Data.Function ( on )
 import qualified Data.List as DL
 
@@ -29,7 +30,10 @@ getAssoc :: CandidateFile
          -> LogicI [(String, CandidateFile)]
 getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
   where
+
     assocSet = concat <$> mapM fndBestAssoc assocNames
+
+    fStart = candidateFile rootPrefix
 
     fndBestAssoc :: (String, FileSuffix)
                  -> LogicI [(String, CandidateFile)] -- usually just one
@@ -37,15 +41,24 @@ getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
 
     fndAssoc :: (String, FileSuffix) -> LogicI (String, CandidateFile)
     fndAssoc assoc =
-      do pseq <- npseq (snd <$> pmatch)
+      do let fEnd = snd assoc
+         -- First, eliminate any files that don't start with rootPrefix or end in
+         -- this assoc suffix (do this before trying any backtracking).
+         let sfxMatch f = and [ fStart `DL.isPrefixOf` f
+                              , null fEnd || fEnd `DL.isSuffixOf` f
+                              ]
+             assocNms = filter (sfxMatch . candidateFile) allNames
+         guard $ not $ null assocNms
+         -- Now try combinations of parameters based on what the rootPrefix
+         -- specified and variations of the others, with various separators.
+         pseq <- npseq (snd <$> pmatch)
          (assocPfx, assocSfx) <- sepParams seps pseq
          let possible =
                if null assocSfx
                then let justSep = null (snd assoc) && length assocPfx == 1
-                        rootNm = candidateFile rootPrefix
                         assocFName = if justSep
-                                     then rootNm
-                                     else rootNm <> assocPfx <> (snd assoc)
+                                     then fStart
+                                     else fStart <> assocPfx <> (snd assoc)
                     in (assocFName ==)
                else let assocStart = candidateFile rootPrefix <> assocPfx
                         assocEnd = assocSfx <> snd assoc
@@ -60,7 +73,7 @@ getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
                               ]
                     in chk
          f <- eachFrom "possible assoc file"
-              $ filter (possible . candidateFile) allNames
+              $ filter (possible . candidateFile) assocNms
          return (fst assoc, f)
 
     sepParams :: Separators -> [ParamMatch] -> LogicI (String, String)
