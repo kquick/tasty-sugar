@@ -22,6 +22,8 @@ import           Test.Tasty.Sugar.RootCheck
 import           Test.Tasty.Sugar.ParamCheck ( pmatchCmp )
 import           Test.Tasty.Sugar.Types
 
+import           Prelude hiding ( exp )
+
 
 -- | Given a 'CUBE' and a list of candidate files in the target directories,
 -- return all 'Sweets' matches along with an explanation of the search process.
@@ -92,13 +94,13 @@ checkRoot pat allFiles rootF =
               let swts = s { expected =
                                foldr mergeExp (expected s) (expected sm)
                            }
-                  mergeExp oneExp exps =
+                  mergeExp oneExp expcts =
                     concat
                     $ fmap (take 1)
                     $ L.groupBy ((==) `on`
                                   (fmap (fmap getParamVal) . expParamsMatch))
                     $ L.sortBy (pmatchCmp `on` expParamsMatch)
-                    $ oneExp : exps
+                    $ oneExp : expcts
               in ( swts, e { results = swts } )
         in foldr combineIfRootsMatch [] swl
 
