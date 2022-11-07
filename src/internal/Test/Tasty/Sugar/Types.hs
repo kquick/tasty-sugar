@@ -163,7 +163,7 @@ data CUBE = CUBE
      -- an explicit blank value).
    , validParams :: [ParameterPattern]
    }
-   deriving (Show, Read)
+   deriving Show
 
 {-# DEPRECATED inputDir "Use inputDirs instead" #-}
 
