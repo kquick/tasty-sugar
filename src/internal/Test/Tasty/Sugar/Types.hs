@@ -367,9 +367,13 @@ instance Pretty Expectation where
 -- NotSpecified if there are no known 'ParameterPattern' values.
 
 data ParamMatch =
-  -- | This parameter value was explicitly specified in the filename
-  -- of the expected file.
-  Explicit String
+  -- | This parameter value was not specified in the filename for the
+  -- expected file.  In addition, the associated 'ParameterPattern'
+  -- specified no defined values (i.e. 'Nothing'), so it is not
+  -- possible to identify any actual values.  Instead, the
+  -- 'Expectation' generated for this expected file will supply this
+  -- 'NotSpecified' for this type of parameter.
+  NotSpecified
 
   -- | This parameter value was not specified in the filename of the
   -- expected file, so the value is being synthetically supplied.
@@ -378,13 +382,9 @@ data ParamMatch =
   -- value, identifying each as 'Assumed'.
   | Assumed String
 
-  -- | This parameter value was not specified in the filename for the
-  -- expected file.  In addition, the associated 'ParameterPattern'
-  -- specified no defined values (i.e. 'Nothing'), so it is not
-  -- possible to identify any actual values.  Instead, the
-  -- 'Expectation' generated for this expected file will supply this
-  -- 'NotSpecified' for this type of parameter.
-  | NotSpecified
+  -- | This parameter value was explicitly specified in the filename
+  -- of the expected file.
+  | Explicit String
 
   deriving (Show, Eq, Ord)
 

@@ -128,7 +128,7 @@ strlen2SampleTests =
 
          , exp1 "strlen_test2.good"                     (a "yices")     (a l)
 
-         , exp2 "strlen_test2.z3.good"                  (e "z3")        (a m)
+         , exp2 "strlen_test2.loopmerge.good"           (a "z3")        (e m)
                 "strlen_test2.loopmerge.config"
 
          , exp1 "strlen_test2.z3.good"                  (e "z3")        (a l)
