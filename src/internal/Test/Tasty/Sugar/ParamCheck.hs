@@ -31,7 +31,7 @@ import           Test.Tasty.Sugar.Iterations ( LogicI, eachFrom )
 
 getSinglePVals :: [NamedParamMatch] -> [ParameterPattern]
                -> LogicI ([NamedParamMatch], [(String, Maybe String)])
-getSinglePVals sel = foldM eachVal (mempty, mempty)
+getSinglePVals sel = fmap (fmap DL.sort) . foldM eachVal (mempty, mempty)
   where eachVal (an,av) (pn, Nothing) =
           case filter ((pn ==) . fst) sel of
             [] -> return (an, (pn, Nothing) : av)

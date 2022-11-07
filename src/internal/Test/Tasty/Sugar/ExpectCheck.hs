@@ -111,6 +111,10 @@ expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allName
 
      let unconstrained = fst <$> L.filter (isNothing . snd) params
 
+     -- Get the parameters matched by the root, and suggested values for the
+     -- other parameters.  This will backtrack through alternative values for
+     -- each parameter.
+
      (rmatch, pvals) <- getSinglePVals rootPVMatches params
                         -- If some of rootPVMatches were related to values that
                         -- might have been useable for an unconstrained
@@ -126,7 +130,6 @@ expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allName
                                   then mzero
                                   else getSinglePVals rm params
                         )
-
 
      efile <- eachFrom "exp candidate"
               $ L.reverse
@@ -165,21 +168,29 @@ expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allName
 -- over those with less.
 
 removeNonExplicitMatchingExpectations :: [Expectation] -> [Expectation]
-removeNonExplicitMatchingExpectations =
-  let removeNonExplicits e l =
-        let (similarExpl, diffExpl) = L.partition (cmpPVals e) l
-            cmpPVals ref ps =
-              -- Compare the two on the intersection subset of parameters
-              if length (expParamsMatch ref) < length (expParamsMatch ps)
-              then expPVals ref ref == expPVals ref ps
-              else expPVals ps ps == expPVals ps ref
-            expPVals ref ps =
-              -- Compare parameters by comparing the values of matching names
-              let ps' = expParamsMatch ps
-                  ref' = expParamsMatch ref
-                  refNames = fst <$> ref'
-              in (\n -> lookup n ps' >>= getParamVal) <$> refNames
-        in if null similarExpl
-           then e : l
-           else (pmatchMax expParamsMatch e <$> similarExpl) <> diffExpl
-  in foldr removeNonExplicits mempty
+removeNonExplicitMatchingExpectations allExps =
+  let paramsAndVals = fmap (fmap getParamVal)
+                      . L.sortBy (compare `on` fst)
+                      . expParamsMatch
+      -- expGrps are expectations grouped by having the same parameter names and
+      -- values (just the value, not the ParamMatch).
+      expGrps = L.groupBy ((==) `on` paramsAndVals)
+                $ L.sortBy (compare `on` paramsAndVals)
+                $ allExps
+
+  in
+    -- For each group of expectations that have the same values, find the best of
+    -- the group by ordering first on ParamMatch, and then resolving ties based
+    -- on the length of the expected filename.
+    concatMap (take 1
+               -- Resolve ties by taking the longest filename
+               . L.reverse
+               . L.sortBy (compare `on` (length . expectedFile))
+               -- Discard all but the best ParamMatch
+               . head
+               -- Group by equal ParamMatch (may be multiple files)
+               . L.groupBy ((==) `on` expParamsMatch)
+               -- Order this group by best ParamsMatch (Explicit) to worst
+               . L.reverse
+               . L.sortBy (compare `on` expParamsMatch)
+              ) expGrps
