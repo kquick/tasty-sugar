@@ -240,21 +240,31 @@ prettyParamPatterns = \case
 -- directory it came from.  The "file" portion is relative to the input
 -- directory.
 
-data CandidateFile = CandidateFile { candidateDir :: FilePath
-                                   , candidateSubdirs :: [ FilePath ]
-                                   , candidateFile :: FilePath
-                                     -- | Portions of the candidateFile (or
-                                     -- candidateSubdirs) that match parameters
-                                   , candidatePMatch :: [NamedParamMatch]
-                                     -- | If there are candidatePMatch, this is
-                                     -- the index of the first match.  This
-                                     -- therefore is also the end of the "root"
-                                     -- file match portion.  If no
-                                     -- candidatePMatch, this is the length of
-                                     -- the candidateFile.
-                                   , candidateMatchIdx :: Natural
-                                   }
-                     deriving (Eq, Show)  -- Show is for for debugging/tracing
+data CandidateFile = CandidateFile
+                     {
+                       -- | The 'candidateDir' is the top-level directory path
+                       -- for this candidate and is usually one of the CUBE
+                       -- inputDirs
+                       candidateDir :: FilePath
+                       -- | The 'candidateSubdirs' is the sequence of
+                       -- subdirectories beneath the 'candidateDir' where the
+                       -- 'candidateFile' is located.  These subdirectories may
+                       -- provide parameter matches.
+                     , candidateSubdirs :: [ FilePath ]
+                       -- | The 'candidateFile' is the filename portion (only) of
+                       -- the candidate file.  (Use 'candidateToPath' to get the
+                       -- full filepath from a CandidateFile).
+                     , candidateFile :: FilePath
+                       -- | Portions of the candidateFile (or candidateSubdirs)
+                       -- that match parameters
+                     , candidatePMatch :: [NamedParamMatch]
+                       -- | If there are candidatePMatch, this is the index of
+                       -- the first match.  This therefore is also the end of the
+                       -- "root" file match portion.  If no candidatePMatch, this
+                       -- is the length of the candidateFile.
+                     , candidateMatchIdx :: Natural
+                     }
+                   deriving (Eq, Show)  -- Show is for for debugging/tracing
 
 
 -- | Each identified test input set is represented as a 'Sweets'
