@@ -124,6 +124,7 @@ library tasty-sugar-internal
                    , logict
                    , microlens >= 0.4 && < 0.5
                    , mtl >= 2.2 && < 2.3
+                   , parallel >= 3.2 && < 3.3
                    , prettyprinter >= 1.7 && < 1.8
                    , text >= 1.2 && < 1.3
   hs-source-dirs:    src/internal
@@ -139,6 +140,7 @@ test-suite test-sugar
   hs-source-dirs:      test
   default-language:    Haskell2010
   GHC-options:         -fhide-source-paths
+                       -threaded -with-rtsopts=-N
   main-is:             TestMain.hs
   other-modules:       TestMultiAssoc
                        TestNoAssoc
@@ -168,6 +170,7 @@ test-suite test-passthru-ascii
   hs-source-dirs:   examples/example1
   default-language: Haskell2010
   GHC-options:      -fhide-source-paths
+                    -threaded -with-rtsopts=-N
   main-is:          test-passthru-ascii.hs
   other-modules:    NiftyText
   build-depends: base
@@ -180,6 +183,7 @@ test-suite test-params
   hs-source-dirs:   examples/params
   default-language: Haskell2010
   GHC-options:      -fhide-source-paths
+                    -threaded -with-rtsopts=-N
   main-is:          test-params.hs
   build-depends: base
                , pretty-show
@@ -192,6 +196,7 @@ test-suite test-internals
   hs-source-dirs:   test/internals
   default-language: Haskell2010
   GHC-options:      -fhide-source-paths
+                    -threaded -with-rtsopts=-N
   main-is:          test-internals.hs
   build-depends: base
                , pretty-show

@@ -9,6 +9,7 @@ module Test.Tasty.Sugar.Analysis
   )
 where
 
+import           Control.Parallel.Strategies
 import           Data.Bifunctor ( bimap )
 import           Data.Function ( on )
 import qualified Data.List as L
@@ -109,7 +110,7 @@ checkRoot pat allFiles rootF =
       (roots, stats) = observeIAll
                        $ rootMatch rootF (separators pat) params (rootName pat)
 
-      expAndStats = fmap (findExpectation pat params rootF allFiles) roots
+      expAndStats = parMap rpar (findExpectation pat params rootF allFiles) roots
 
       sumStats = foldr joinStats stats (snd <$> expAndStats)
       exps = foldr combineExpRes (mempty, mempty) $ mergeSweets
