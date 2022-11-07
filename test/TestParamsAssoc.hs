@@ -93,6 +93,14 @@ paramsAssocTests =
       mkEr p = mkE' [ ("rust-source", p "recursive.rs") ] Assumed Assumed p
       mkEc p f c = mkE' [ ("c-source", p "simple.c") ] Assumed Assumed p f (Explicit c)
       mkEo cs p f c ca = mkE' [] cs ca p f c NotSpecified
+      mkEq cs ca p f c = mkE' [] cs ca p f c
+      p = (testInpPath </>)
+      chkFld :: Eq a => Show a
+             => Maybe Sweets -> String -> (Sweets -> a) -> a -> TT.TestTree
+      chkFld s n f w = testCase n $ maybe (error "fail") f s @?= w
+      chkExp s g n f c o = testCase ("Exp #" <> show n)
+                           $ (safeElem n . expected =<< s)
+                           @?= Just (g f c o)
   in [ testCase "valid sample" $ 33 @=? length (sample sugarCube)
 
      , TT.testGroup "candidates"
@@ -137,180 +145,211 @@ paramsAssocTests =
        ]
 
      , sugarTestEq "correct found count" sugarCube sample 11 length
-     , testCase "results" $ compareBags "results" sugar1 $
-       let p = (testInpPath </>) in
-       [
-         Sweets
-         { rootMatchName = "recursive.fast.exe"
-         , rootBaseName = "recursive"
-         , rootFile = p "recursive.fast.exe"
-         , cubeParams = validParams sugarCube
-         , expected =
-             let mkE = mkEr p
-             in [ mkE "recursive.fast.expct" (Assumed "clang") (Explicit "fast")
-                , mkE "recursive.fast.expct" (Assumed "gcc")   (Explicit "fast")
-                ]
-         }
 
-         , Sweets
-           { rootMatchName = "simple.noopt.clang.exe"
-           , rootBaseName = "simple"
-           , rootFile = p "simple.noopt.clang.exe"
-           , cubeParams = validParams sugarCube
-           , expected =
-               let mkE = mkEc p
-               in
-                 -- Note that opt is an unconstrained parameter, so it can
-                 -- match "noopt" or it can match something else.
-                 [ mkE "simple-opt.expct" "clang" (Explicit "opt")
-                 , mkE "simple.expct"     "clang" NotSpecified
-                 , mkE "simple.expct"     "clang" (Explicit "noopt")
-                 ]
-           }
+     , let sweetNum = 5
+           sweet = safeElem sweetNum sugar1
+           chkF = chkFld sweet
+           chkP = chkFld sweet
+           chkE = chkExp sweet (mkEr p)
+       in TT.testGroup ("Sweet #" <> show sweetNum)
+          [
+            chkF "rootMatchName" rootMatchName "recursive.fast.exe"
+          , chkF "rootBaseName"  rootBaseName  "recursive"
+          , chkF "rootFile"      rootFile      $ p "recursive.fast.exe"
+          , chkP "cubeParams"    cubeParams    $ validParams sugarCube
+          , chkE 0 "recursive.fast.expct" (Assumed "clang") (Explicit "fast")
+          , chkE 1 "recursive.fast.expct" (Assumed "gcc")   (Explicit "fast")
+          ]
 
-       , Sweets
-         { rootMatchName = "simple.noopt.gcc.exe"
-         , rootBaseName = "simple"
-         , rootFile = p "simple.noopt.gcc.exe"
-         , cubeParams = validParams sugarCube
-         , expected =
-             let mkE = mkEc p
-             in
-               -- Note that opt is an unconstrained parameter, so it can
-               -- match "noopt" or it can match something else.
-               [ mkE "simple-opt.expct"       "gcc" (Explicit "opt")
-               , mkE "simple.noopt-gcc.expct" "gcc" NotSpecified
-               , mkE "simple.noopt-gcc.expct" "gcc" (Explicit "noopt")
-               ]
-         }
+     , let sweetNum = 8
+           sweet = safeElem sweetNum sugar1
+           chkF = chkFld sweet
+           chkP = chkFld sweet
+           chkE = chkExp sweet (mkEc p)
+       in TT.testGroup ("Sweet #" <> show sweetNum)
+          [
+            chkF "rootMatchName" rootMatchName "simple.noopt.clang.exe"
+          , chkF "rootBaseName"  rootBaseName  "simple"
+          , chkF "rootFile"      rootFile      $ p "simple.noopt.clang.exe"
+          , chkP "cubeParams"    cubeParams    $ validParams sugarCube
+            -- Note that opt is an unconstrained parameter, so it can
+            -- match "noopt" or it can match something else.
+          , chkE 0 "simple-opt.expct" "clang" (Explicit "opt")
+          , chkE 1 "simple.expct"     "clang" NotSpecified
+          , chkE 2 "simple.expct"     "clang" (Explicit "noopt")
+          ]
 
-       , Sweets { rootMatchName = "simple.opt-clang.exe"
-                , rootBaseName = "simple"
-                , rootFile = p "simple.opt-clang.exe"
-                , cubeParams = validParams sugarCube
-                , expected =
-                  let mkE = mkEc p
-                  in
-                    -- Note that opt is an unconstrained parameter, so it can
-                    -- match "noopt" or it can match something else.
-                    [ mkE "simple-opt.expct" "clang" (Explicit "opt")
-                    , mkE "simple.expct"     "clang" NotSpecified
-                    ]
-                }
+     , let sweetNum = 9
+           sweet = safeElem sweetNum sugar1
+           chkF = chkFld sweet
+           chkP = chkFld sweet
+           chkE = chkExp sweet (mkEc p)
+       in TT.testGroup ("Sweet #" <> show sweetNum)
+          [
+            chkF "rootMatchName" rootMatchName "simple.noopt.gcc.exe"
+          , chkF "rootBaseName"  rootBaseName  "simple"
+          , chkF "rootFile"      rootFile      $ p "simple.noopt.gcc.exe"
+          , chkP "cubeParams"    cubeParams    $ validParams sugarCube
+            -- Note that opt is an unconstrained parameter, so it can
+            -- match "noopt" or it can match something else.
+          , chkE 0 "simple-opt.expct"       "gcc" (Explicit "opt")
+          , chkE 1 "simple.noopt-gcc.expct" "gcc" NotSpecified
+          , chkE 2 "simple.noopt-gcc.expct" "gcc" (Explicit "noopt")
+          ]
+
+     , let sweetNum = 10
+           sweet = safeElem sweetNum sugar1
+           chkF = chkFld sweet
+           chkP = chkFld sweet
+           chkE = chkExp sweet (mkEc p)
+       in TT.testGroup ("Sweet #" <> show sweetNum)
+          [
+            chkF "rootMatchName" rootMatchName "simple.opt-clang.exe"
+          , chkF "rootBaseName"  rootBaseName  "simple"
+          , chkF "rootFile"      rootFile      $ p "simple.opt-clang.exe"
+          , chkP "cubeParams"    cubeParams    $ validParams sugarCube
+            -- Note that opt is an unconstrained parameter, so it can
+            -- match "noopt" or it can match something else.
+          , chkE 0 "simple-opt.expct" "clang" (Explicit "opt")
+          , chkE 1 "simple.expct"     "clang" NotSpecified
+          ]
 
          -- This repeats a parameter value and also matches with a different
          -- value.  The duplicate value should be ignored, but both values should
          -- result in different Expectations.
-       , Sweets
-         { rootMatchName = "simple.clang-noopt-clang.exe"
-         , rootBaseName = "simple"
-         , rootFile = p "simple.clang-noopt-clang.exe"
-         , cubeParams = validParams sugarCube
-         , expected =
-             let mkE = mkEc p
-             in
-               -- Note that opt is an unconstrained parameter, so it can
-               -- match "noopt" or it can match something else.
-               [ mkE "simple-opt.expct" "clang" (Explicit "opt")
-               , mkE "simple.expct"     "clang" NotSpecified
-               , mkE "simple.expct"     "clang" (Explicit "noopt")
-               ]
-         }
+     , let sweetNum = 7
+           sweet = safeElem sweetNum sugar1
+           chkF = chkFld sweet
+           chkP = chkFld sweet
+           chkE = chkExp sweet (mkEc p)
+       in TT.testGroup ("Sweet #" <> show sweetNum)
+          [
+            chkF "rootMatchName" rootMatchName "simple.clang-noopt-clang.exe"
+          , chkF "rootBaseName"  rootBaseName  "simple"
+          , chkF "rootFile"      rootFile      $ p "simple.clang-noopt-clang.exe"
+          , chkP "cubeParams"    cubeParams    $ validParams sugarCube
+            -- Note that opt is an unconstrained parameter, so it can
+            -- match "noopt" or it can match something else.
+          , chkE 0 "simple-opt.expct" "clang" (Explicit "opt")
+          , chkE 1 "simple.expct"     "clang" NotSpecified
+          , chkE 2 "simple.expct"     "clang" (Explicit "noopt")
+          ]
 
          -- This repeats a parameter with a different value, which causes a
          -- separate explicit match to be claimed for each value.  In addition,
          -- the optimization parameter has no value specified, so multiple values
          -- are found that could be tried, along with an expect file that doesn't
          -- supply a potential value for this parameter.
-       , Sweets { rootMatchName = "simple.clang-gcc.exe"
-                , rootBaseName = "simple"
-                , rootFile = p "simple.clang-gcc.exe"
-                , cubeParams = validParams sugarCube
-                , expected =
-                  let mkE = mkEc p
-                  in [ mkE "simple-opt.expct"       "clang" (Explicit "opt")
-                     , mkE "simple-opt.expct"       "gcc"   (Explicit "opt")
-                     , mkE "simple.expct"           "clang" NotSpecified
-                     , mkE "simple.noopt-gcc.expct" "gcc"   NotSpecified
-                     , mkE "simple.noopt-gcc.expct" "gcc"   (Explicit "noopt")
-                  ]
-                }
+     , let sweetNum = 6
+           sweet = safeElem sweetNum sugar1
+           chkF = chkFld sweet
+           chkP = chkFld sweet
+           chkE = chkExp sweet (mkEc p)
+       in TT.testGroup ("Sweet #" <> show sweetNum)
+          [
+            chkF "rootMatchName" rootMatchName "simple.clang-gcc.exe"
+          , chkF "rootBaseName"  rootBaseName  "simple"
+          , chkF "rootFile"      rootFile      $ p "simple.clang-gcc.exe"
+          , chkP "cubeParams"    cubeParams    $ validParams sugarCube
+          , chkE 0 "simple-opt.expct"       "clang" (Explicit "opt")
+          , chkE 1 "simple-opt.expct"       "gcc"   (Explicit "opt")
+          , chkE 2 "simple.expct"           "clang" NotSpecified
+          , chkE 3 "simple.noopt-gcc.expct" "gcc"   NotSpecified
+          , chkE 4 "simple.noopt-gcc.expct" "gcc"   (Explicit "noopt")
+          ]
 
          -- n.b. simple-opt.gcc-exe is *not* matched: the rootname is
          -- "*.exe" so the '.' separator is required.
 
        -- Verify that Expectations are selected based on better ParamMatches
        -- (sorted).
-       , Sweets { rootMatchName = "alpha.exe"
-                , rootBaseName = "alpha"
-                , rootFile = p "alpha.exe"
-                , cubeParams = validParams sugarCube
-                , expected =
-                  [
-                    mkEo Assumed  p "alpha.clang.expct" (Explicit "clang") Assumed
-                  , mkEo Explicit p "alpha.x.expct"     (Assumed "gcc")    Assumed
-                  ]
-                }
+     , let sweetNum = 0
+           sweet = safeElem sweetNum sugar1
+           chkF = chkFld sweet
+           chkP = chkFld sweet
+           chkE n cs ca f c = chkExp sweet (mkEq cs ca p) n f c NotSpecified
+       in TT.testGroup ("Sweet #" <> show sweetNum)
+          [
+            chkF "rootMatchName" rootMatchName "alpha.exe"
+          , chkF "rootBaseName"  rootBaseName  "alpha"
+          , chkF "rootFile"      rootFile      $ p "alpha.exe"
+          , chkP "cubeParams"    cubeParams    $ validParams sugarCube
+          , chkE 0 Assumed  Assumed "alpha.clang.expct" (Explicit "clang")
+          , chkE 1 Explicit Assumed "alpha.x.expct"     (Assumed "gcc")
+          ]
 
        -- Verify that lengthening the expected filename by adding separators will
        -- not change the parameter identification but will select the longer
        -- expected filename *if* the parameter is higher (sorted on parameter
        -- name).
-       , Sweets { rootMatchName = "beta.exe"
-                , rootBaseName = "beta"
-                , rootFile = p "beta.exe"
-                , cubeParams = validParams sugarCube
-                , expected =
-                  -- sorted: "c-compiler":"clang", "other":"x", so clang is
-                  -- preferred.
-                  [
-                    mkEo Explicit p "beta......x.expct" (Assumed "gcc")    Assumed
-                  , mkEo Assumed  p "beta.clang.expct"  (Explicit "clang") Assumed
-                  ]
-                }
+     , let sweetNum = 1
+           sweet = safeElem sweetNum sugar1
+           chkF = chkFld sweet
+           chkP = chkFld sweet
+           chkE n cs ca f c = chkExp sweet (mkEq cs ca p) n f c NotSpecified
+       in TT.testGroup ("Sweet #" <> show sweetNum)
+          [
+            chkF "rootMatchName" rootMatchName "beta.exe"
+          , chkF "rootBaseName"  rootBaseName  "beta"
+          , chkF "rootFile"      rootFile      $ p "beta.exe"
+          , chkP "cubeParams"    cubeParams    $ validParams sugarCube
+            -- sorted: "c-compiler":"clang", "other":"x", so clang is preferred.
+          , chkE 0 Explicit Assumed "beta......x.expct" (Assumed "gcc")
+          , chkE 1 Assumed  Assumed "beta.clang.expct"  (Explicit "clang")
+          ]
 
        -- This is the same as beta, but with the separator extensions on the
        -- other side.
-       , Sweets { rootMatchName = "gamma.exe"
-                , rootBaseName = "gamma"
-                , rootFile = p "gamma.exe"
-                , cubeParams = validParams sugarCube
-                , expected =
-                  -- sorted: "c-compiler":"clang", "other":"x", so clang is
-                  -- preferred.
-                  [
-                    mkEo Assumed  p "gamma.clang.expct" (Explicit "clang") Assumed
-                  , mkEo Explicit p "gamma.x......expct" (Assumed "gcc")   Assumed
-                  ]
-                }
+     , let sweetNum = 4
+           sweet = safeElem sweetNum sugar1
+           chkF = chkFld sweet
+           chkP = chkFld sweet
+           chkE n cs ca f c = chkExp sweet (mkEq cs ca p) n f c NotSpecified
+       in TT.testGroup ("Sweet #" <> show sweetNum)
+          [
+            chkF "rootMatchName" rootMatchName "gamma.exe"
+          , chkF "rootBaseName"  rootBaseName  "gamma"
+          , chkF "rootFile"      rootFile      $ p "gamma.exe"
+          , chkP "cubeParams"    cubeParams    $ validParams sugarCube
+            -- sorted: "c-compiler":"clang", "other":"x", so clang is preferred.
+          , chkE 0 Assumed  Assumed "gamma.clang.expct"  (Explicit "clang")
+          , chkE 1 Explicit Assumed "gamma.x......expct" (Assumed "gcc")
+          ]
 
        -- This is the same as beta, but with a higher-precedence parameter
-       , Sweets { rootMatchName = "delta.exe"
-                , rootBaseName = "delta"
-                , rootFile = p "delta.exe"
-                , cubeParams = validParams sugarCube
-                , expected =
-                  -- sorted: "a param":"y", "c-compiler":"clang" so "a param" is
-                  -- preferred.
-                  [
-                    mkEo Assumed p "delta......y.expct" (Assumed "clang") Explicit
-                  , mkEo Assumed p "delta......y.expct" (Assumed "gcc")   Explicit
-                  ]
-                }
+     , let sweetNum = 2
+           sweet = safeElem sweetNum sugar1
+           chkF = chkFld sweet
+           chkP = chkFld sweet
+           chkE n cs ca f c = chkExp sweet (mkEq cs ca p) n f c NotSpecified
+       in TT.testGroup ("Sweet #" <> show sweetNum)
+          [
+            chkF "rootMatchName" rootMatchName "delta.exe"
+          , chkF "rootBaseName"  rootBaseName  "delta"
+          , chkF "rootFile"      rootFile      $ p "delta.exe"
+          , chkP "cubeParams"    cubeParams    $ validParams sugarCube
+            -- sorted: "a param":"y", "c-compiler":"clang" so "a param" is
+            -- preferred.
+          , chkE 0 Assumed Explicit "delta......y.expct" (Assumed "clang")
+          , chkE 1 Assumed Explicit "delta......y.expct" (Assumed "gcc")
+          ]
 
        -- This is the same as beta, but with the separator extensions on the
        -- other side.
-       , Sweets { rootMatchName = "epsilon.exe"
-                , rootBaseName = "epsilon"
-                , rootFile = p "epsilon.exe"
-                , cubeParams = validParams sugarCube
-                , expected =
-                  -- sorted: "a param":"y", "c-compiler":"clang" so "a param" is
-                  -- preferred.
-                  [
-                    mkEo Assumed p "epsilon.y......expct" (Assumed "clang") Explicit
-                  , mkEo Assumed p "epsilon.y......expct" (Assumed "gcc")   Explicit
-                  ]
-                }
-       ]
+     , let sweetNum = 3
+           sweet = safeElem sweetNum sugar1
+           chkF = chkFld sweet
+           chkP = chkFld sweet
+           chkE n cs ca f c = chkExp sweet (mkEq cs ca p) n f c NotSpecified
+       in TT.testGroup ("Sweet #" <> show sweetNum)
+          [
+            chkF "rootMatchName" rootMatchName "epsilon.exe"
+          , chkF "rootBaseName"  rootBaseName  "epsilon"
+          , chkF "rootFile"      rootFile      $ p "epsilon.exe"
+          , chkP "cubeParams"    cubeParams    $ validParams sugarCube
+            -- sorted: "a param":"y", "c-compiler":"clang" so "a param" is
+            -- preferred.
+          , chkE 0 Assumed Explicit "epsilon.y......expct" (Assumed "clang")
+          , chkE 1 Assumed Explicit "epsilon.y......expct" (Assumed "gcc")
+          ]
      ]
