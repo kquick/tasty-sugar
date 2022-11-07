@@ -83,10 +83,10 @@ paramsAssocTests =
       chkCandidate = checkCandidate sugarCube sample testInpPath [] 0
       mkE' a cx cy p f c o = Expectation
                           { expectedFile = p f
-                          , expParamsMatch = [ ("c-compiler", c)
+                          , expParamsMatch = [ ("a param", cy "y")
+                                             , ("c-compiler", c)
                                              , ("optimization", o)
                                              , ("other", cx "x")
-                                             , ("a param", cy "y")
                                              ]
                           , associated = a
                           }
@@ -157,8 +157,8 @@ paramsAssocTests =
           , chkF "rootBaseName"  rootBaseName  "recursive"
           , chkF "rootFile"      rootFile      $ p "recursive.fast.exe"
           , chkP "cubeParams"    cubeParams    $ validParams sugarCube
-          , chkE 0 "recursive.fast.expct" (Assumed "clang") (Explicit "fast")
-          , chkE 1 "recursive.fast.expct" (Assumed "gcc")   (Explicit "fast")
+          , chkE 1 "recursive.fast.expct" (Assumed "clang") (Explicit "fast")
+          , chkE 0 "recursive.fast.expct" (Assumed "gcc")   (Explicit "fast")
           ]
 
      , let sweetNum = 8
@@ -251,8 +251,8 @@ paramsAssocTests =
           , chkF "rootBaseName"  rootBaseName  "simple"
           , chkF "rootFile"      rootFile      $ p "simple.clang-gcc.exe"
           , chkP "cubeParams"    cubeParams    $ validParams sugarCube
-          , chkE 0 "simple-opt.expct"       "clang" (Explicit "opt")
-          , chkE 1 "simple-opt.expct"       "gcc"   (Explicit "opt")
+          , chkE 1 "simple-opt.expct"       "clang" (Explicit "opt")
+          , chkE 0 "simple-opt.expct"       "gcc"   (Explicit "opt")
           , chkE 2 "simple.expct"           "clang" NotSpecified
           , chkE 3 "simple.noopt-gcc.expct" "gcc"   NotSpecified
           , chkE 4 "simple.noopt-gcc.expct" "gcc"   (Explicit "noopt")
@@ -330,8 +330,8 @@ paramsAssocTests =
           , chkP "cubeParams"    cubeParams    $ validParams sugarCube
             -- sorted: "a param":"y", "c-compiler":"clang" so "a param" is
             -- preferred.
-          , chkE 0 Assumed Explicit "delta......y.expct" (Assumed "clang")
-          , chkE 1 Assumed Explicit "delta......y.expct" (Assumed "gcc")
+          , chkE 1 Assumed Explicit "delta......y.expct" (Assumed "clang")
+          , chkE 0 Assumed Explicit "delta......y.expct" (Assumed "gcc")
           ]
 
        -- This is the same as beta, but with the separator extensions on the
@@ -349,7 +349,7 @@ paramsAssocTests =
           , chkP "cubeParams"    cubeParams    $ validParams sugarCube
             -- sorted: "a param":"y", "c-compiler":"clang" so "a param" is
             -- preferred.
-          , chkE 0 Assumed Explicit "epsilon.y......expct" (Assumed "clang")
-          , chkE 1 Assumed Explicit "epsilon.y......expct" (Assumed "gcc")
+          , chkE 1 Assumed Explicit "epsilon.y......expct" (Assumed "clang")
+          , chkE 0 Assumed Explicit "epsilon.y......expct" (Assumed "gcc")
           ]
      ]

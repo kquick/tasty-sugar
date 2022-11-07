@@ -8,7 +8,7 @@
 module Test.Tasty.Sugar.ExpectCheck
   (
     findExpectation
-  , removeNonExplicitMatchingExpectations
+  , collateExpectations
   )
   where
 
@@ -70,9 +70,7 @@ findExpectation pat params rootN allNames (rootPMatches, matchPrefix) =
       trimExpectations =
         -- If a parameter is Explicitly matched, discard any
         -- Expectation with the same Assumed matches.
-
-        removeNonExplicitMatchingExpectations
-
+        collateExpectations
         -- remove duplicates (uses the Eq instance for Expectation
         -- that ignores the order of the expParamsMatch and associated
         -- to ensure that different ordering with the same values
@@ -169,16 +167,62 @@ expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allName
 -- Explicit is preferred.  Expectations with more parameter matches are preferred
 -- over those with less.
 
-removeNonExplicitMatchingExpectations :: [Expectation] -> [Expectation]
-removeNonExplicitMatchingExpectations allExps =
+collateExpectations :: [Expectation] -> [Expectation]
+collateExpectations allExps =
   let paramsAndVals = fmap (fmap getParamVal)
                       . L.sortBy (compare `on` fst)
                       . expParamsMatch
+
+      -- The matching named parameters should have matching values; there could
+      -- be extra parameters in on or the other, but not both.  Give more weight
+      -- to Explicit matches, even those not present in the other match.  This
+      -- requires both a and b parameter lists to be sorted on parameter name.
+      pvMatch a b =
+        let pvCmp _ [] = True
+            pvCmp ((xn,xv):xs) y@((yn,yv):ys) =
+              if xn == yn
+              then xv == yv && pvCmp xs ys
+              else pvCmp xs y
+            pvCmp [] _ = error "first argument must be longest list for pvMatch"
+        in if length a > length b then pvCmp a b else pvCmp b a
+      pvCompare a b =
+        let pvCmpN n [] [] = (n, EQ)
+            pvCmpN n ((_,xv):xs) [] = const GT <$> pvCmpN (n + weight xv) xs []
+            pvCmpN n [] _ = (n, LT)
+            pvCmpN n ((xn,xv):xs) y@((yn,yv):ys) =
+              if xn == yn
+              then case compare (getParamVal xv) (getParamVal yv) of
+                     EQ -> pvCmpN (n + weight xv - weight yv) xs ys
+                     o -> (n, o)
+              else pvCmpN (n + weight xv) xs y
+            pvCmp x y = case pvCmpN (0::Int) x y of
+                          (n, EQ) -> if n > 0
+                                     then GT
+                                     else if n < 0 then LT
+                                          else compare x y
+                          (_, o) -> o
+            weight = \case
+              NotSpecified -> 0
+              Assumed _ -> 0
+              Explicit _ -> 1
+            invertCmp = \case
+              LT -> GT
+              GT -> LT
+              EQ -> EQ
+        in if length a > length b
+           then pvCmp a b
+           else invertCmp $ pvCmp b a
+
       -- expGrps are expectations grouped by having the same parameter names and
       -- values (just the value, not the ParamMatch).
-      expGrps = L.groupBy ((==) `on` paramsAndVals)
-                $ L.sortBy (compare `on` paramsAndVals)
+      expGrps = collectBy (pvMatch `on` paramsAndVals)
+                $ L.reverse
+                $ L.sortBy (compare `on` (length . expParamsMatch))
                 $ allExps
+
+      collectBy _ [] = []
+      collectBy f (e:es) = let (s,d) = L.partition (f e) es
+                           in (e : s) : collectBy f d
   in
     -- For each group of expectations that have the same values, find the best of
     -- the group by ordering first on ParamMatch, and then resolving ties based
@@ -188,10 +232,11 @@ removeNonExplicitMatchingExpectations allExps =
                . L.reverse
                . L.sortBy (compare `on` (length . expectedFile))
                -- Discard all but the best ParamMatch
+              . L.reverse
                . head
                -- Group by equal ParamMatch (may be multiple files)
                . L.groupBy ((==) `on` expParamsMatch)
                -- Order this group by best ParamsMatch (Explicit) to worst
                . L.reverse
-               . L.sortBy (compare `on` expParamsMatch)
+               . L.sortBy (pvCompare `on` expParamsMatch)
               ) expGrps

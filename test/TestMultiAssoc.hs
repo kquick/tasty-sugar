@@ -83,18 +83,18 @@ multiAssocTests =
                 , cubeParams = validParams sugarCube
                 , expected =
                   [
-                    exp2 "global-max-good.ppc.expected" (e "ppc") (a "base")
+                    exp2 "global-max-good.ppc.expected" (e "ppc") (a "refined")
                          "global-max-good.ppc.exe"
                          "global-max-good.ppc.o"
 
-                  , exp2 "global-max-good.ppc.expected" (e "ppc") (a "refined")
+                  , exp2 "global-max-good.ppc.expected" (e "ppc") (a "base")
                          "global-max-good.ppc.exe"
                          "global-max-good.ppc.o"
-
-                  , exp1 "global-max-good.x86.expected" (e "x86") (a "base")
-                         "global-max-good.x86.exe"
 
                   , exp1 "global-max-good.x86.expected" (e "x86") (a "refined")
+                         "global-max-good.x86.exe"
+
+                  , exp1 "global-max-good.x86.expected" (e "x86") (a "base")
                          "global-max-good.x86.exe"
                   ]
                 }
@@ -104,21 +104,21 @@ multiAssocTests =
                 , rootFile = p "jumpfar.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ exp3  "jumpfar.ppc.expected" (e "ppc") (a "base")
+                  [ exp3  "jumpfar.ppc.expected" (e "ppc") (a "refined")
                           "jumpfar.ppc.exe"
                           "jumpfar.ppc.o"
                           "jumpfar.h"
 
-                  , exp3  "jumpfar.ppc.expected" (e "ppc") (a "refined")
+                  , exp3  "jumpfar.ppc.expected" (e "ppc") (a "base")
                           "jumpfar.ppc.exe"
                           "jumpfar.ppc.o"
-                          "jumpfar.h"
-
-                  , exp2i "jumpfar.x86.expected" (e "x86") (a "base")
-                          "jumpfar.x86.exe"
                           "jumpfar.h"
 
                   , exp2i "jumpfar.x86.expected" (e "x86") (a "refined")
+                          "jumpfar.x86.exe"
+                          "jumpfar.h"
+
+                  , exp2i "jumpfar.x86.expected" (e "x86") (a "base")
                           "jumpfar.x86.exe"
                           "jumpfar.h"
                   ]
@@ -128,16 +128,16 @@ multiAssocTests =
                 , rootFile = p "looping.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ exp1 "looping.ppc.expected" (e "ppc") (a "base")
+                  [ exp1 "looping.ppc.expected" (e "ppc") (a "refined")
                          "looping.ppc.exe"
 
-                  , exp1 "looping.ppc.expected" (e "ppc") (a "refined")
+                  , exp1 "looping.ppc.expected" (e "ppc") (a "base")
                          "looping.ppc.exe"
-
-                  , exp1 "looping.x86.expected" (e "x86") (a "base")
-                         "looping.x86.exe"
 
                   , exp1 "looping.x86.expected" (e "x86") (a "refined")
+                         "looping.x86.exe"
+
+                  , exp1 "looping.x86.expected" (e "x86") (a "base")
                          "looping.x86.exe"
                   ]
                 }
@@ -146,16 +146,16 @@ multiAssocTests =
                 , rootFile = p "looping-around.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ exp1 "looping-around.expected" (a "x86") (a "base")
+                  [ exp1 "looping-around.expected" (a "x86") (a "refined")
                          "looping-around.x86.exe"
 
-                  , exp1 "looping-around.expected" (a "x86") (a "refined")
+                  , exp1 "looping-around.expected" (a "x86") (a "base")
                          "looping-around.x86.exe"
-
-                  , exp1 "looping-around.ppc.expected" (e "ppc") (a "base")
-                         "looping-around.ppc.exe"
 
                   , exp1 "looping-around.ppc.expected" (e "ppc") (a "refined")
+                         "looping-around.ppc.exe"
+
+                  , exp1 "looping-around.ppc.expected" (e "ppc") (a "base")
                          "looping-around.ppc.exe"
                   ]
                 }
@@ -197,16 +197,16 @@ multiAssocTests =
                 , rootFile = p "tailrecurse.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ exp1 "tailrecurse.expected"     (a "ppc") (a "base")
+                  [ exp1 "tailrecurse.expected"     (a "ppc") (a "refined")
                          "tailrecurse.ppc.exe"
 
-                  , exp1 "tailrecurse.expected"     (a "ppc") (a "refined")
+                  , exp1 "tailrecurse.expected"     (a "ppc") (a "base")
                          "tailrecurse.ppc.exe"
-
-                  , exp1 "tailrecurse.x86.expected" (e "x86") (a "base")
-                         "tailrecurse.x86.exe"
 
                   , exp1 "tailrecurse.x86.expected" (e "x86") (a "refined")
+                         "tailrecurse.x86.exe"
+
+                  , exp1 "tailrecurse.x86.expected" (e "x86") (a "base")
                          "tailrecurse.x86.exe"
                   ]
                 }

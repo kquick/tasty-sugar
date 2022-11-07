@@ -84,7 +84,7 @@ main = defaultMain $
   in testGroup "Expected trimming"
      [ testCase "non-explicit removals" $
        pCmpExp (init sample)
-       (removeNonExplicitMatchingExpectations sample)
+       (collateExpectations sample)
 
      , testCase "supermatch supercedes" $
        -- Normally the trimming occurs on Expectations which all have
@@ -94,6 +94,9 @@ main = defaultMain $
        -- supercede any Expectation that has the same set but fewer,
        -- as this test checks.  This test is not critical to overall
        -- functionality, but serves to capture behavior.
+       --
+       -- Here, "adding" replaces the first element of sample because it
+       -- otherwise matches sample but has more parameters.
        let adding = Expectation
                     { expectedFile = "test.file"
                     , expParamsMatch =
@@ -104,10 +107,12 @@ main = defaultMain $
                       ]
                     , associated = []
                     }
-           test l = pCmpExp (adding : (tail $ init sample))
-                    (removeNonExplicitMatchingExpectations l)
-       in mapM test (L.permutations $ adding : sample)
-          >> return ()
+           test l = pCmpExp ((take 2 $ tail $ init sample)
+                             <> [adding]
+                             <> (drop 3 $ init sample)
+                            )
+                    (collateExpectations l)
+       in mapM_ test (L.permutations $ adding : sample)
 
      , testCase "submatch removed" $
        -- This is the inverse of the supermatch: an entry is added
@@ -122,10 +127,8 @@ main = defaultMain $
                ]
              , associated = []
              }
-           test l = pCmpExp (init sample)
-                    (removeNonExplicitMatchingExpectations l)
-       in mapM test (L.permutations $ adding : sample)
-          >> return ()
+           test l = pCmpExp (init sample) (collateExpectations l)
+       in mapM_ test (L.permutations $ adding : sample)
 
      , testCase "superset and subset distinct" $
        -- As a variation of the supermatch and submatch tests, if an
@@ -149,15 +152,18 @@ main = defaultMain $
                           [ ("foo", Explicit "a")
                           , ("cow", Explicit "moo")
                             -- Explicit "moo" here against Assumed "moo" plus two
-                            -- more explicits... this gets removed
+                            -- more explicits above... this gets removed.  Note
+                            -- also that this matches the first element of
+                            -- sample, but that element and the adding element
+                            -- above are incompatible, so this will be associated
+                            -- with one or the other, but not both.
                           ]
                       , associated = []
                       }
                     ]
-           test l = pCmpExp (take 1 adding <> init sample)
-                    (removeNonExplicitMatchingExpectations l)
-       in mapM test (L.permutations $ adding <> sample)
-          >> return ()
+           test l = pCmpExp (take 1 adding <> init sample) (collateExpectations l)
+       in mapM_ test (L.permutations $ adding <> sample)
+
 
      , testCase "distinct if different" $
        let adding = [ Expectation
@@ -170,8 +176,7 @@ main = defaultMain $
                       , associated = []
                       }
                     ]
-           test l = pCmpExp (adding <> init sample)
-                    (removeNonExplicitMatchingExpectations l)
+           test l = pCmpExp (adding <> init sample) (collateExpectations l)
        in mapM test (L.permutations $ adding <> sample)
           >> return ()
 

@@ -124,10 +124,10 @@ noAssocTests =
                 , cubeParams = validParams sugarCube
                 , expected =
                   [
-                    exp0 "global-max-good.ppc.expected" (e "ppc") (a "base")
-                  , exp0 "global-max-good.ppc.expected" (e "ppc") (a "refined")
-                  , exp0 "global-max-good.x86.expected" (e "x86") (a "base")
+                    exp0 "global-max-good.ppc.expected" (e "ppc") (a "refined")
+                  , exp0 "global-max-good.ppc.expected" (e "ppc") (a "base")
                   , exp0 "global-max-good.x86.expected" (e "x86") (a "refined")
+                  , exp0 "global-max-good.x86.expected" (e "x86") (a "base")
                   ]
                 }
 
@@ -136,10 +136,10 @@ noAssocTests =
                 , rootFile = p "jumpfar.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ exp0 "jumpfar.ppc.expected" (e "ppc") (a "base")
-                  , exp0 "jumpfar.ppc.expected" (e "ppc") (a "refined")
-                  , exp0 "jumpfar.x86.expected" (e "x86") (a "base")
+                  [ exp0 "jumpfar.ppc.expected" (e "ppc") (a "refined")
+                  , exp0 "jumpfar.ppc.expected" (e "ppc") (a "base")
                   , exp0 "jumpfar.x86.expected" (e "x86") (a "refined")
+                  , exp0 "jumpfar.x86.expected" (e "x86") (a "base")
                   ]
                 }
        , Sweets { rootMatchName = "looping.c"
@@ -147,10 +147,10 @@ noAssocTests =
                 , rootFile = p "looping.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ exp0 "looping.ppc.expected" (e "ppc") (a "base")
-                  , exp0 "looping.ppc.expected" (e "ppc") (a "refined")
-                  , exp0 "looping.x86.expected" (e "x86") (a "base")
+                  [ exp0 "looping.ppc.expected" (e "ppc") (a "refined")
+                  , exp0 "looping.ppc.expected" (e "ppc") (a "base")
                   , exp0 "looping.x86.expected" (e "x86") (a "refined")
+                  , exp0 "looping.x86.expected" (e "x86") (a "base")
                   ]
                 }
        , Sweets { rootMatchName = "looping-around.c"
@@ -158,10 +158,10 @@ noAssocTests =
                 , rootFile = p "looping-around.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ exp0 "looping-around.expected"     (a "x86") (a "base")
-                  , exp0 "looping-around.expected"     (a "x86") (a "refined")
-                  , exp0 "looping-around.ppc.expected" (e "ppc") (a "base")
+                  [ exp0 "looping-around.expected"     (a "x86") (a "refined")
+                  , exp0 "looping-around.expected"     (a "x86") (a "base")
                   , exp0 "looping-around.ppc.expected" (e "ppc") (a "refined")
+                  , exp0 "looping-around.ppc.expected" (e "ppc") (a "base")
                   ]
                 }
        , Sweets { rootMatchName = "switching.c"
@@ -179,10 +179,10 @@ noAssocTests =
                 , rootFile = p "tailrecurse.c"
                 , cubeParams = validParams sugarCube
                 , expected =
-                  [ exp0 "tailrecurse.expected" (a "ppc") (a "base")
-                  , exp0 "tailrecurse.expected" (a "ppc") (a "refined")
-                  , exp0 "tailrecurse.x86.expected" (e "x86") (a "base")
+                  [ exp0 "tailrecurse.expected" (a "ppc") (a "refined")
+                  , exp0 "tailrecurse.expected" (a "ppc") (a "base")
                   , exp0 "tailrecurse.x86.expected" (e "x86") (a "refined")
+                  , exp0 "tailrecurse.x86.expected" (e "x86") (a "base")
                   ]
                 }
        ]
