@@ -1,5 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 -- | Functions for checking different parameter/value combinations.
 
@@ -44,12 +45,16 @@ singlePVals :: [NamedParamMatch] -> [ParameterPattern]
             -> LogicI [ParameterPattern]
 singlePVals sel = mapM eachVal
   where eachVal (pn,Nothing) =
-          return (pn, (:[]) <$> (lookup pn sel >>= getParamVal))
+          case filter ((pn ==) . fst) sel of
+            [] -> return (pn, Nothing)
+            pvsets -> (pn,) . (fmap (:[]))
+                      <$> eachFrom "assumed (non-root) undefined param value"
+                      (getParamVal . snd <$> pvsets)
         eachVal (pn,Just pvs) =
           do pv <- eachFrom "assumed (non-root) param value"
-                   $ case lookup pn sel >>= getParamVal of
-                       Nothing -> L.sort pvs
-                       Just v -> [v]
+                   $ case filter ((pn ==) . fst) sel of
+                       [] -> L.sort pvs
+                       pvsets -> catMaybes (getParamVal . snd <$> pvsets)
              return (pn, Just [pv])
 
 
