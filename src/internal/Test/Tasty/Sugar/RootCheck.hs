@@ -14,6 +14,7 @@ import           Control.Monad.Logic
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes, isNothing )
 
+import           Test.Tasty.Sugar.Iterations ( eachFrom )
 import           Test.Tasty.Sugar.ParamCheck
 import           Test.Tasty.Sugar.Types
 

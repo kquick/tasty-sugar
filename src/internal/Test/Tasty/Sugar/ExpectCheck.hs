@@ -16,6 +16,7 @@ import           Control.Monad.Logic
 import qualified Data.List as L
 
 import           Test.Tasty.Sugar.AssocCheck
+import           Test.Tasty.Sugar.Iterations ( eachFrom )
 import           Test.Tasty.Sugar.ParamCheck
 import           Test.Tasty.Sugar.Types
 

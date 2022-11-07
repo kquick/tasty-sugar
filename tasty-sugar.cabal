@@ -110,6 +110,7 @@ library tasty-sugar-internal
   exposed-modules:   Test.Tasty.Sugar.Analysis
                    , Test.Tasty.Sugar.AssocCheck
                    , Test.Tasty.Sugar.ExpectCheck
+                   , Test.Tasty.Sugar.Iterations
                    , Test.Tasty.Sugar.ParamCheck
                    , Test.Tasty.Sugar.Report
                    , Test.Tasty.Sugar.RootCheck

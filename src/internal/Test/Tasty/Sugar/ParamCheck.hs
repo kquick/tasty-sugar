@@ -4,8 +4,7 @@
 
 module Test.Tasty.Sugar.ParamCheck
   (
-    eachFrom
-  , getPVals
+    getPVals
   , singlePVals
   , pvalMatch
   , removePVals
@@ -26,12 +25,7 @@ import           Data.Bifunctor ( first )
 import           Data.Maybe ( fromMaybe )
 
 import           Test.Tasty.Sugar.Types
-
-
--- | Core Logic function to iteratively return elements of a list via
--- backtracking.
-eachFrom :: [a] -> Logic a
-eachFrom = foldr (mplus . return) mzero
+import           Test.Tasty.Sugar.Iterations ( eachFrom )
 
 
 -- | Returns various combinations of parameter value selections
