@@ -15,6 +15,7 @@ import           Data.Function ( on )
 import qualified Data.List as DL
 
 import           Test.Tasty.Sugar.Iterations
+import           Test.Tasty.Sugar.ParamCheck
 import           Test.Tasty.Sugar.Types
 
 
@@ -34,6 +35,7 @@ getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
     assocSet = concat <$> mapM fndBestAssoc assocNames
 
     fStart = candidateFile rootPrefix
+    fStartLen = length fStart
 
     fndBestAssoc :: (String, FileSuffix)
                  -> LogicI [(String, CandidateFile)] -- usually just one
@@ -44,61 +46,28 @@ getAssoc rootPrefix seps pmatch assocNames allNames = assocSet
       do let fEnd = snd assoc
          -- First, eliminate any files that don't start with rootPrefix or end in
          -- this assoc suffix (do this before trying any backtracking).
-         let sfxMatch f = and [ fStart `DL.isPrefixOf` f
-                              , null fEnd || fEnd `DL.isSuffixOf` f
-                              ]
-             assocNms = filter (sfxMatch . candidateFile) allNames
-         guard $ not $ null assocNms
-         -- Now try combinations of parameters based on what the rootPrefix
-         -- specified and variations of the others, with various separators.
-         pseq <- npseq (snd <$> pmatch)
-         (assocPfx, assocSfx) <- sepParams seps pseq
-         let possible =
-               if null assocSfx
-               then let justSep = null (snd assoc) && length assocPfx == 1
-                        assocFName = if justSep
-                                     then fStart
-                                     else fStart <> assocPfx <> (snd assoc)
-                    in (assocFName ==)
-               else let assocStart = candidateFile rootPrefix <> assocPfx
-                        assocEnd = assocSfx <> snd assoc
-                        aSL = length assocStart
-                        aEL = length assocEnd
-                        chk f =
-                          and [ assocStart `DL.isPrefixOf` f
-                              , assocEnd `DL.isSuffixOf` f
-                              , length f > (aSL + aEL)
-                              , let mid = drop aSL (take (length f - aEL) f)
-                                in and $ fmap (not . flip elem mid) seps
-                              ]
-                    in chk
-         f <- eachFrom "possible assoc file"
-              $ filter (possible . candidateFile) assocNms
-         return (fst assoc, f)
-
-    sepParams :: Separators -> [ParamMatch] -> LogicI (String, String)
-    sepParams sl = \case
-        [] -> if null sl
-              then return ([], [])
-              else do s <- eachFrom "sep param for arbitrary assoc" sl
-                      return ([s], [])
-        (NotSpecified:ps) -> sepParams sl ps
-        ((Explicit v):ps) -> do (l,r) <- sepParams sl ps
-                                if null sl
-                                  then return (v <> l, r)
-                                  else do s <- eachFrom "sep param for explicit assoc" sl
-                                          return ([s] <> v <> l, r)
-        ((Assumed  v):ps) -> do (l,r) <- sepParams sl ps
-                                if null sl
-                                  then return (v <> l, r)
-                                  else do s <- eachFrom "sep param for assumed assoc" sl
-                                          return ([s] <> v <> l, r)
-
-    npseq = eachFrom "assoc params permutations"
-            . reverse
-            . DL.sortBy (\a b -> case (compare `on` length) a b of
-                                   EQ -> (compare `on` matchStrength) a b
-                                   o -> o
-                        )
-            . reverse
-            . combosLongToShort
+         let sfxMatch cf =
+               let f = candidateFile cf
+                   pfxlen = let cl = candidateMatchIdx cf
+                            in if fromEnum cl == length f
+                               then if null seps then toEnum fStartLen else cl
+                               else cl - 1
+               in and [ fStart `DL.isPrefixOf` f
+                      , fStart == DL.take (fromEnum pfxlen) f
+                      , if null fEnd
+                        then f == DL.takeWhile (not . (`elem` seps)) f
+                        else and [ fEnd `DL.isSuffixOf` f
+                                   -- is char before fEnd a separator?
+                                 , if null seps then True
+                                   else maybe False ((`elem` seps) . fst)
+                                        $ DL.uncons
+                                        $ DL.drop (length fEnd)
+                                        $ reverse f
+                                 ]
+                      ]
+             assocNms = DL.reverse
+                        $ DL.sortBy (compare `on` (matchStrength . fmap snd . candidatePMatch))
+                        $ filter sfxMatch allNames
+         afile <- eachFrom "assoc candidate" assocNms
+         guard (isCompatible (fmap getParamVal <$> pmatch) afile)
+         return (fst assoc, afile)
