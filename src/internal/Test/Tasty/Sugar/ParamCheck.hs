@@ -234,19 +234,12 @@ inEachNothing mark into = do
 -- file is compatible with the provided parameters and chosen parameter values.
 -- One principle compatibility check is ensuring that there is no *other*
 -- parameter value in the filename that conflicts with a chosen parameter value.
-isCompatible :: Separators
-             -> [ParameterPattern]
-             -> [(String, Maybe String)]
+isCompatible :: [(String, Maybe String)]
              -> CandidateFile
              -> Bool
-isCompatible seps params pvals fname =
-  let splitFName n = let (p,r) = break (`elem` seps) n
-                     in p : if null r then [] else splitFName (tail r)
-      parts = let n' = splitFName $ candidateFile fname
-              in candidateSubdirs fname <> n'
-      noConflict _ (_,Nothing) = True
-      noConflict ps (pn,Just vs) = all (not . isConflict pn vs) ps
-      isConflict pn vs p = and [ p `elem` vs
-                               , maybe False (Just p /=) $ lookup pn pvals
-                               ]
-  in all (noConflict parts) params
+isCompatible pvals fname =
+  let isCompatParam (n,v) = case L.lookup n pvals of
+                              Nothing -> True
+                              Just Nothing -> True
+                              Just (Just cv) -> paramMatchVal cv v
+  in all isCompatParam $ candidatePMatch fname

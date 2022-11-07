@@ -101,7 +101,7 @@ expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allName
                 do pseq <- eachFrom "exp params permutations" $
                            combosLongToShort params'
                    pvals <- getPVals pseq
-                   let compatNames = filter (isCompatible seps params pvals) allNames
+                   let compatNames = filter (isCompatible pvals) allNames
                    guard (not $ null compatNames)
                    e <- getExp rootPrefix rootPVMatches seps params pvals
                         expSuffix compatNames
