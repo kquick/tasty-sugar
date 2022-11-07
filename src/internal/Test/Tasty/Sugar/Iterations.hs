@@ -33,6 +33,8 @@ addSubLogicStats (r, stats) = do modify $ joinStats stats
 observeIAll :: LogicI a -> ([a], IterStat)
 observeIAll op = runIdentity $ runStateT (observeAllT op) emptyStats
 
+observeIT :: LogicI a -> ([a], IterStat)
+observeIT op = runIdentity $ runStateT (observeManyT 1 op) emptyStats
 
 ----------------------------------------------------------------------
 

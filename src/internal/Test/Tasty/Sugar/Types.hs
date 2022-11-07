@@ -10,6 +10,7 @@ module Test.Tasty.Sugar.Types where
 import           Data.Function ( on )
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes )
+import           Numeric.Natural
 import           System.FilePath -- ( (</>) )
 import qualified System.FilePath.GlobPattern as FPGP
 #if MIN_VERSION_prettyprinter(1,7,0)
@@ -401,6 +402,17 @@ getParamVal :: ParamMatch -> Maybe String
 getParamVal (Explicit v) = Just v
 getParamVal (Assumed v) = Just v
 getParamVal _            = Nothing
+
+-- | Returns a value indicating how "strong" a set of ParamMatch values is.  This
+-- is used to compare between sets of ParamMatches to prefer stronger matches
+-- over weaker matches.
+matchStrength :: [ParamMatch] -> Natural
+matchStrength = \case
+  [] -> 0
+  (NotSpecified : ps) -> matchStrength ps
+  ((Explicit _) : ps) -> 1 + matchStrength ps
+  ((Assumed _) : ps) -> 1 + matchStrength ps
+
 
 ----------------------------------------------------------------------
 
