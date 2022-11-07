@@ -51,9 +51,7 @@ checkRoot :: CUBE
           -> CandidateFile  --  root path
           -> ([Sweets], [SweetExplanation])
 checkRoot pat allFiles rootF =
-  let seps = separators pat
-      params = validParams pat
-      combineExpRes (swts, expl) = bimap (swts :) (expl :)
+  let combineExpRes (swts, expl) = bimap (swts :) (expl :)
 
       mergeSweets swl =
         -- If multiple Sweets have the same rootMatchName this likely means that
@@ -106,4 +104,4 @@ checkRoot pat allFiles rootF =
      catMaybes $
      fmap (findExpectation pat rootF allFiles) $
      observeAll $
-     rootMatch rootF seps params (rootName pat)
+     rootMatch rootF (separators pat) (validParams pat) (rootName pat)
