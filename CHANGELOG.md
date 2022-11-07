@@ -1,5 +1,24 @@
 # Revision history for tasty-sugar
 
+## 2.0
+
+ * Performance improvements.  Now scales better when there are more parameters.
+
+ * Improved expected and associated file matching and Expected results parameter
+   identification.  This may result in different results than the 1.x version of
+   tasty-sugar!
+
+   * Parameter values explicit in the root match but not in the expected file are
+     now reported as Explicit in the expParamsMatch because they explicitly match
+     part of one of the filenames.  This also means that files which were
+     previously provided as expectations are no longer matched because the better
+     root parameter matches exclude them.
+
+   * Expectations are selected by best ParamMatch values, in order of parameter
+     name, with ties resolved in favor of the longest expected filename.
+
+ * The --showsearch can now also report internal stats for tasty-sugar.
+
 ## 1.3.0.2 -- 2022-09-06
 
  * Add test files to cabal's `extra-sources` so they are included in the package
