@@ -82,6 +82,10 @@ makeCandidate cube topDir subPath fName =
       isSep = (`elem` separators cube)
       firstSep = maybe fl (+1) $ DL.findIndex isSep fName
       fle = maybe fl (fl-) $ DL.findIndex isSep $ DL.reverse fName
+      -- pmatches is all known parameter values found in the name or directory of
+      -- the file.  Note that a single parameter with multiple values may result
+      -- in multiple pmatches if more than one of the values is present in a
+      -- single filename.
       pmatches = fst $ observeIAll
                  $ do p <- eachFrom "param for candidate" $ validParams cube
                       v <- eachFrom "value for param" (fromMaybe [] (snd p))
@@ -101,6 +105,8 @@ makeCandidate cube topDir subPath fName =
                          then return ((fst p, Explicit v), (toEnum vs, ve))
                         else do guard $ v `elem` subPath
                                 return ((fst p, Explicit v), (0, 0))
+      -- pmatchArbitrary will find a parameter with an unspecified value and
+      -- assigned otherwise unmatched portions of the filename to that parameter.
       pmatchArbitrary =
         case DL.find (isNothing . snd) $ validParams cube of
           Nothing -> []

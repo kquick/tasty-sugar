@@ -56,7 +56,11 @@ safeElem idx lst = case drop idx lst of
 compareBags name gotBag expBag =
   if gotBag `elem` L.permutations expBag
   then return ()
-  else let expCnt = length expBag
+  else mismatchedColl name gotBag expBag
+
+
+mismatchedColl name gotBag expBag =
+       let expCnt = length expBag
            gotCnt = length gotBag
            uGot = L.nub gotBag
            expUCnt = length $ L.nub expBag
@@ -136,8 +140,7 @@ checkCandidate cube files path subdirs sepSkip nm pm =
                           , candidateMatchIdx = toEnum
                             $ let isSep = (`elem` (separators cube))
                                   sepsAt = L.findIndices isSep nm
-                                  fstSep = case L.drop sepSkip
-                                                sepsAt of
+                                  fstSep = case L.drop sepSkip sepsAt of
                                              (l:_) -> Just l
                                              [] -> Nothing
                                   lstSep = case reverse sepsAt of
