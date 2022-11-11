@@ -1,6 +1,15 @@
 # Revision history for tasty-sugar
 
-## 2.0
+## 2.0.0.1 -- 2022-11-10
+
+ * Fixed arithmetic underflow exception.  This only happened when an
+   unconstrained parameter value was used and a subdirectory matched a
+   constrained parameter value.
+
+ * Fixed test group name for unconstrained parameters to use the actual parameter
+   value (if available).
+
+## 2.0 -- 2022-11-07
 
  * Performance improvements.  Now scales better when there are more parameters.
 
