@@ -102,7 +102,6 @@ paramsAssocTests =
       mkEr p = mkE' [ ("rust-source", p "recursive.rs") ] Assumed Assumed p
       mkEc p f c = mkE' [ ("c-source", p "simple.c") ] Assumed Assumed p f (Explicit c)
       mkEo cs p f c ca = mkE' [] cs ca p f c NotSpecified
-      mkEq cs ca p f c = mkE' [] cs ca p f c
       p = (testInpPath </>)
       chkFld :: Eq a => Show a
              => Maybe Sweets -> String -> (Sweets -> a) -> a -> TT.TestTree
@@ -154,9 +153,9 @@ paramsAssocTests =
        , chkCandidate "hole-here.exe" [("optimization", Explicit "here")]
        , chkCandidate "hole-here-gcc.expct" [("c-compiler", Explicit "gcc")
                                             ,("optimization", Explicit "here")]
-       , checkCandidate sugarCube sample testInpPath ["gcc"] 1 "hole-here.c"
+       , checkCandidate sugarCube sample testInpPath ["gcc"] 0 "hole-here.c"
          [("c-compiler", Explicit "gcc")
-         -- ,("optimization", Explicit "here")
+         ,("optimization", Explicit "here")
          ]
        ]
 
@@ -283,7 +282,7 @@ paramsAssocTests =
            sweet = safeElem sweetNum sugar1
            chkF = chkFld sweet
            chkP = chkFld sweet
-           chkE n cs ca f c = chkExp sweet (mkEq cs ca p) n f c NotSpecified
+           chkE n cs ca f c = chkExp sweet (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "alpha.exe"
@@ -302,7 +301,7 @@ paramsAssocTests =
            sweet = safeElem sweetNum sugar1
            chkF = chkFld sweet
            chkP = chkFld sweet
-           chkE n cs ca f c = chkExp sweet (mkEq cs ca p) n f c NotSpecified
+           chkE n cs ca f c = chkExp sweet (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "beta.exe"
@@ -320,7 +319,7 @@ paramsAssocTests =
            sweet = safeElem sweetNum sugar1
            chkF = chkFld sweet
            chkP = chkFld sweet
-           chkE n cs ca f c = chkExp sweet (mkEq cs ca p) n f c NotSpecified
+           chkE n cs ca f c = chkExp sweet (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "gamma.exe"
@@ -337,7 +336,7 @@ paramsAssocTests =
            sweet = safeElem sweetNum sugar1
            chkF = chkFld sweet
            chkP = chkFld sweet
-           chkE n cs ca f c = chkExp sweet (mkEq cs ca p) n f c NotSpecified
+           chkE n cs ca f c = chkExp sweet (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "delta.exe"
@@ -356,7 +355,7 @@ paramsAssocTests =
            sweet = safeElem sweetNum sugar1
            chkF = chkFld sweet
            chkP = chkFld sweet
-           chkE n cs ca f c = chkExp sweet (mkEq cs ca p) n f c NotSpecified
+           chkE n cs ca f c = chkExp sweet (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "epsilon.exe"
@@ -373,7 +372,7 @@ paramsAssocTests =
            sweet = safeElem sweetNum sugar1
            chkF = chkFld sweet
            chkP = chkFld sweet
-           chkE = chkExp sweet (mkEq Assumed Assumed p)
+           chkE = chkExp sweet (mkE' [("c-source", p "gcc/hole-here.c")] Assumed Assumed p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "hole-here.exe"

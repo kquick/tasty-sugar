@@ -171,7 +171,8 @@ holes chkRange present =
                        else (s, fromEnum ps) : rmvKnown (toEnum e, pe) rs
              else rmvKnown p rs
       r' = filter (\x -> fst x /= snd x) chkRange
-  in foldr rmvKnown (first toEnum <$> r') (DL.sort present)
+      p' = filter (\(x,y) -> not $ and [ x == 0, y == 0 ]) present
+  in foldr rmvKnown (first toEnum <$> r') (DL.sort p')
 
 
 -- | This converts a CandidatFile into a regular FilePath for access
