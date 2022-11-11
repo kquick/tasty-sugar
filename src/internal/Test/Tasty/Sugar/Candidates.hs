@@ -157,7 +157,7 @@ holes :: [(Int,Int)] -> [(Natural,Int)] -> [(Natural,Int)]
 holes chkRange present =
   let rmvKnown _ [] = []
       rmvKnown p@(ps,pe) ((s,e):rs) =
-        if abs(ps-s) <= 1
+        if abs(fromEnum ps - fromEnum s) <= 1
         then if pe > e
              then rmvKnown (toEnum e,pe) rs
              else if abs(pe-e) <= 1

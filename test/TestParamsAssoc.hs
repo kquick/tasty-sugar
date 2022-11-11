@@ -13,7 +13,9 @@ import           Text.RawString.QQ
 
 
 sample :: CUBE -> [CandidateFile]
-sample cube = fmap (makeCandidate cube testInpPath [])
+sample cube = d1 <> d2
+  where
+    d1 = fmap (makeCandidate cube testInpPath [])
          $ filter (not . null)
          $ lines [r|
 recursive.rs
@@ -49,6 +51,13 @@ epsilon.exe
 epsilon.expct
 epsilon.clang.expct
 epsilon.y......expct
+hole-here.exe
+hole-here-gcc.expct
+|]
+    d2 = fmap (makeCandidate cube testInpPath ["gcc"])
+         $ filter (not . null)
+         $ lines [r|
+hole-here.c
 |]
 
 
@@ -101,7 +110,7 @@ paramsAssocTests =
       chkExp s g n f c o = testCase ("Exp #" <> show n)
                            $ (safeElem n . expected =<< s)
                            @?= Just (g f c o)
-  in [ testCase "valid sample" $ 33 @=? length (sample sugarCube)
+  in [ testCase "valid sample" $ 36 @=? length (sample sugarCube)
 
      , TT.testGroup "candidates"
        [
@@ -142,11 +151,18 @@ paramsAssocTests =
        , chkCandidate "epsilon.expct" []
        , chkCandidate "epsilon.clang.expct" [("c-compiler", Explicit "clang")]
        , chkCandidate "epsilon.y......expct" [("a param", Explicit "y")]
+       , chkCandidate "hole-here.exe" [("optimization", Explicit "here")]
+       , chkCandidate "hole-here-gcc.expct" [("c-compiler", Explicit "gcc")
+                                            ,("optimization", Explicit "here")]
+       , checkCandidate sugarCube sample testInpPath ["gcc"] 1 "hole-here.c"
+         [("c-compiler", Explicit "gcc")
+         -- ,("optimization", Explicit "here")
+         ]
        ]
 
-     , sugarTestEq "correct found count" sugarCube sample 11 length
+     , sugarTestEq "correct found count" sugarCube sample 12 length
 
-     , let sweetNum = 5
+     , let sweetNum = 6
            sweet = safeElem sweetNum sugar1
            chkF = chkFld sweet
            chkP = chkFld sweet
@@ -161,7 +177,7 @@ paramsAssocTests =
           , chkE 0 "recursive.fast.expct" (Assumed "gcc")   (Explicit "fast")
           ]
 
-     , let sweetNum = 8
+     , let sweetNum = 9
            sweet = safeElem sweetNum sugar1
            chkF = chkFld sweet
            chkP = chkFld sweet
@@ -179,7 +195,7 @@ paramsAssocTests =
           , chkE 2 "simple.expct"     "clang" (Explicit "noopt")
           ]
 
-     , let sweetNum = 9
+     , let sweetNum = 10
            sweet = safeElem sweetNum sugar1
            chkF = chkFld sweet
            chkP = chkFld sweet
@@ -197,7 +213,7 @@ paramsAssocTests =
           , chkE 2 "simple.noopt-gcc.expct" "gcc" (Explicit "noopt")
           ]
 
-     , let sweetNum = 10
+     , let sweetNum = 11
            sweet = safeElem sweetNum sugar1
            chkF = chkFld sweet
            chkP = chkFld sweet
@@ -217,7 +233,7 @@ paramsAssocTests =
          -- This repeats a parameter value and also matches with a different
          -- value.  The duplicate value should be ignored, but both values should
          -- result in different Expectations.
-     , let sweetNum = 7
+     , let sweetNum = 8
            sweet = safeElem sweetNum sugar1
            chkF = chkFld sweet
            chkP = chkFld sweet
@@ -240,7 +256,7 @@ paramsAssocTests =
          -- the optimization parameter has no value specified, so multiple values
          -- are found that could be tried, along with an expect file that doesn't
          -- supply a potential value for this parameter.
-     , let sweetNum = 6
+     , let sweetNum = 7
            sweet = safeElem sweetNum sugar1
            chkF = chkFld sweet
            chkP = chkFld sweet
@@ -352,4 +368,19 @@ paramsAssocTests =
           , chkE 1 Assumed Explicit "epsilon.y......expct" (Assumed "clang")
           , chkE 0 Assumed Explicit "epsilon.y......expct" (Assumed "gcc")
           ]
+
+     , let sweetNum = 5
+           sweet = safeElem sweetNum sugar1
+           chkF = chkFld sweet
+           chkP = chkFld sweet
+           chkE = chkExp sweet (mkEq Assumed Assumed p)
+       in TT.testGroup ("Sweet #" <> show sweetNum)
+          [
+            chkF "rootMatchName" rootMatchName "hole-here.exe"
+          , chkF "rootBaseName"  rootBaseName  "hole"
+          , chkF "rootFile"      rootFile      $ p "hole-here.exe"
+          , chkP "cubeParams"    cubeParams    $ validParams sugarCube
+          , chkE 0 "hole-here-gcc.expct" (Explicit "gcc") (Explicit "here")
+          ]
+
      ]
