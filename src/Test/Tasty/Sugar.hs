@@ -99,7 +99,7 @@ import qualified Data.Foldable as F
 import           Data.Function
 import qualified Data.List as L
 import qualified Data.Map as Map
-import           Data.Maybe ( isJust, isNothing, fromJust )
+import           Data.Maybe ( isJust, isNothing, fromJust, fromMaybe )
 import           Data.Proxy
 import qualified Data.Text as T
 import           Data.Typeable ( Typeable )
@@ -350,8 +350,17 @@ withSugarGroups sweets mkGroup mkLeaf =
       mkParams sweet exp [] = concat <$> (mapM (uncurry $ mkLeaf sweet) $ zip [1..] exp)
       mkParams sweet exp ((name,vspec):ps) =
         case vspec of
-          Nothing -> do ts <- mkParams sweet exp ps
-                        return [mkGroup name ts]
+          Nothing ->
+            let pVal = lookup name . expParamsMatch
+                expSrt = L.sortBy (compare `on` pVal) exp
+                expGrps = L.groupBy ((==) `on` pVal) expSrt
+                f es =
+                  let gn = fromMaybe (name <> " not specified")
+                           $ (getParamVal =<<
+                              (lookup name $ expParamsMatch $ head es)
+                             )
+                  in mkGroup gn <$> mkParams sweet es ps
+            in sequence $ f <$> expGrps
           Just vs -> let f v = mkGroup v <$> mkParams sweet (subExp v) ps
                          subExp v = expMatching name v exp
                      in sequence $ f <$> L.sort vs
