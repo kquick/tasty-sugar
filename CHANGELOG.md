@@ -1,5 +1,9 @@
 # Revision history for tasty-sugar
 
+## 2.0.1.0 -- 2023-01-09
+
+ * Support for GHC 9.4.
+
 ## 2.0.0.1 -- 2022-11-10
 
  * Fixed arithmetic underflow exception.  This only happened when an
