@@ -18,6 +18,7 @@ import           Prettyprinter
 import           Data.Text.Prettyprint.Doc
 #endif
 
+import           TestFileSys
 import           TestGCD
 import           TestMultiAssoc
 import           TestNoAssoc
@@ -26,7 +27,6 @@ import           TestSingleAssoc
 import           TestStrlen2
 import           TestUtils
 import           TestWildcard
-import           TestFileSys
 
 
 main :: IO ()
