@@ -74,7 +74,7 @@ wildcardAssocTests =
                                , cubeParams = []
                                , expected = e
                                }
-       in [ sugarTestEq "correct found count" sugarCube sample1 5 length
+       in [ sugarTestEq "correct found count" sugarCube sample1 9 length
 
             -- foo.ex is an associated name for foo, but removing its
             -- extension makes it a sibling for the expected file and
@@ -98,6 +98,22 @@ wildcardAssocTests =
           , testCase "full results" $
             compareBags "default result"
             (fst $ findSugarIn sugarCube (sample1 sugarCube)) $
+            let p = (testInpPath </>) in
+              [ sw "foo"      "foo"      "foo"      [ expE "foo.exp" "foo.ex" ]
+              , sw "foo.ex"   "foo"      "foo.ex"   [ exp "foo.exp" ]
+              , sw "bar."     "bar"      "bar."     [ expE "bar.exp" "bar-ex" ]
+              , sw "bar-ex"   "bar"      "bar-ex"   [ exp "bar.exp" ]
+              , sw "dog.bark" "dog.bark" "dog.bark" [ exp "dog.bark-exp" ]
+              -- rootName is a wildcard, so the expected can match the root:
+              , sw "bar.exp"  "bar"      "bar.exp"  [ expE "bar.exp" "bar-ex" ]
+              , let r = "dog.bark-exp" in sw r "dog.bark" r [ exp r ]
+              , sw "foo.exp"  "foo"      "foo.exp"  [ expE "foo.exp" "foo.ex" ]
+              , let r = "foo.right.exp" in sw r "foo.right" r [ exp r ]
+              ]
+
+          , testCase "full distinct results" $
+            compareBags "default result"
+            (distinctResults $ fst $ findSugarIn sugarCube (sample1 sugarCube)) $
             let p = (testInpPath </>) in
               [ sw "foo"      "foo"      "foo"      [ expE "foo.exp" "foo.ex" ]
               , sw "foo.ex"   "foo"      "foo.ex"   [ exp "foo.exp" ]
@@ -168,7 +184,7 @@ wildcardAssocTests =
                                , cubeParams = []
                                , expected = e
                                }
-       in  [ sugarTestEq "correct found count" sugarCube sample1 4 length
+       in  [ sugarTestEq "correct found count" sugarCube sample1 7 length
 
              -- see notes for default seps tests above
 
@@ -195,6 +211,11 @@ wildcardAssocTests =
               , sw "foo.ex" "foo" "foo.ex" [ exp "foo.exp" ]
               , sw "bar."   "bar" "bar."   [ expE "bar.exp" "bar-ex" ]
               , sw "bar-ex" "bar" "bar-ex" [ exp "bar.exp" ]
+
+              -- rootName is a wildcard, so the expected can match the root:
+              , sw "bar.exp" "bar" "bar.exp" [ expE "bar.exp" "bar-ex" ]
+              , sw "foo.exp" "foo" "foo.exp" [ expE "foo.exp" "foo.ex" ]
+              , let r = "foo.right.exp" in sw r "foo.right" r [ exp r ]
               ]
            ]
 

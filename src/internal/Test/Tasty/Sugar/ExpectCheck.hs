@@ -109,7 +109,6 @@ expectedSearch rootN rootPrefix rootPVMatches seps params expSuffix
                assocNames allNames =
   do let expMatch cf = and [ candidateMatchPrefix seps rootPrefix cf
                            , candidateMatchSuffix seps expSuffix rootPrefix cf
-                           , rootN /= cf
                            ]
 
      let unconstrained = fst <$> L.filter (isNothing . snd) params
