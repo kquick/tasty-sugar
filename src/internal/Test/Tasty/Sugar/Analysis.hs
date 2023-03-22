@@ -60,16 +60,16 @@ checkRoot pat allFiles rootF =
   let params = L.sort $ validParams pat
       combineExpRes (swts, expl) = bimap (swts :) (expl :)
 
-      roots = [( candidatePMatch rootF
-              , rootF { candidateFile =
-                        -- truncate the candidateFile to the first separator
-                        -- point preceeding parameter matches.
-                        let i = fromEnum $ candidateMatchIdx rootF
-                            l = length $ candidateFile rootF
-                            e = l > 0 && last (candidateFile rootF) `elem` (separators pat)
-                            t = if i == l && not e then i else i - 1
-                        in take t (candidateFile rootF) }
-              )
+      roots = [ ( candidatePMatch rootF
+                , rootF { candidateFile =
+                          -- truncate the candidateFile to the first separator
+                          -- point preceeding parameter matches.
+                          let i = fromEnum $ candidateMatchIdx rootF
+                              l = length $ candidateFile rootF
+                              e = l > 0 && last (candidateFile rootF) `elem` (separators pat)
+                              t = if i == l && not e then i else i - 1
+                          in take t (candidateFile rootF) }
+                )
               , (candidatePMatch rootF, rootF)
               ]
 
