@@ -65,6 +65,7 @@ module Test.Tasty.Sugar
     -- * Test Generation Functions
   , findSugar
   , findSugarIn
+  , distinctResults
   , withSugarGroups
 
     -- * Types
@@ -298,6 +299,22 @@ findSugarIn pat allFiles =
                         i2 <- choose [0..ll-1]
                         guard (i1 /= i2)
                         return (lst !! i1, lst !! i2)
+
+
+-- | Removes any sweets results where the expected file matches the rootFile.
+-- This is expected to be used as a wrapper to the 'findSugar' or 'findSugarIn'
+-- functions.
+--
+-- This is a convenience function for client code that wants to ensure that the
+-- rootFile is distinct from the expected file, which could not happen prior to
+-- release 2.1.0.0 but can happen from that release onward when a rootName allows
+-- the expectedSuffix.
+
+distinctResults :: [Sweets] -> [Sweets]
+distinctResults sweets =
+  let isDistinct s e = rootFile s /= expectedFile e
+      removeRootExp s = s { expected = filter (isDistinct s) (expected s) }
+  in filter (not . null . expected) $ fmap removeRootExp sweets
 
 
 -- | The 'withSugarGroups' is the primary function used to run tests.
