@@ -39,6 +39,7 @@ findExpectation pat params rootN allNames (rootPMatches, matchPrefix) =
           $ observeIAll
           $ do guard (not $ null candidates)
                expectedSearch
+                 rootN
                  matchPrefix
                  rootPMatches
                  seps params expSuffix o
@@ -50,9 +51,8 @@ findExpectation pat params rootN allNames (rootPMatches, matchPrefix) =
       expSuffix = expectedSuffix pat
       sfxMatch = if null expSuffix then const True else (expSuffix `L.isSuffixOf`)
       candidates = filter possible allNames
-      possible f = and [ candidateFile matchPrefix `L.isPrefixOf` candidateFile f
-                       , rootN /= f
-                       ]
+      possible f = candidateFile matchPrefix `L.isPrefixOf` candidateFile f
+
       mkSweet e = Just
                   $ Sweets { rootMatchName = candidateFile rootN
                            , rootBaseName = candidateFile matchPrefix
@@ -96,7 +96,8 @@ findExpectation pat params rootN allNames (rootPMatches, matchPrefix) =
 -- Note that rootPVMatches may contain multiple entries for the same parameter
 -- value: the root file name may contain these duplications.  The code here
 -- should be careful to check against each value instead of assuming just one.
-expectedSearch :: CandidateFile
+expectedSearch :: CandidateFile -- ^ actual root file
+               -> CandidateFile -- ^ prefix of root file to consider
                -> [NamedParamMatch]
                -> Separators
                -> [ParameterPattern]
@@ -104,9 +105,11 @@ expectedSearch :: CandidateFile
                -> [ (String, FileSuffix) ]
                -> [CandidateFile]
                -> LogicI Expectation
-expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allNames =
+expectedSearch rootN rootPrefix rootPVMatches seps params expSuffix
+               assocNames allNames =
   do let expMatch cf = and [ candidateMatchPrefix seps rootPrefix cf
                            , candidateMatchSuffix seps expSuffix rootPrefix cf
+                           , rootN /= cf
                            ]
 
      let unconstrained = fst <$> L.filter (isNothing . snd) params
@@ -153,7 +156,8 @@ expectedSearch rootPrefix rootPVMatches seps params expSuffix assocNames allName
      let pmatch = namedPMatches rAndeMatches pvals
      assocFiles <- getAssoc rootPrefix seps
                    pmatch
-                   assocNames allNames
+                   assocNames
+                   $ filter (rootN /=) allNames
      return $ Expectation { expectedFile = candidateToPath efile
                           , associated = fmap candidateToPath <$> assocFiles
                           , expParamsMatch = L.sort pmatch
