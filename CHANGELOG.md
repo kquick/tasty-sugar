@@ -1,5 +1,14 @@
 # Revision history for tasty-sugar
 
+## 2.1.0.0 -- 2023-03-20
+
+ * Now supports the ability for the expected file to have the same name as the
+   root file.  This is a trivial match, but still allows for capture of
+   parameters and associated files.  Major version bump because this may result
+   in additional, unexpected matches; to get the original behavior use the (new)
+   `distinctResults` modifier on the `findSugar` results.
+ * Support for GHC 9.6
+
 ## 2.0.1.0 -- 2023-01-09
 
  * Support for GHC 9.4.

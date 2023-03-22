@@ -1,7 +1,7 @@
 cabal-version:       2.0
 
 name:                tasty-sugar
-version:             2.0.1.0
+version:             2.1.0.0
 synopsis:            Tests defined by Search Using Golden Answer References
 description:
   .
@@ -25,7 +25,13 @@ copyright:           Kevin Quick, 2019-2022
 category:            Testing
 build-type:          Simple
 
-tested-with: GHC ==8.6.5 GHC ==8.8.4 GHC ==8.10.7 GHC ==9.0.1 GHC ==9.2.3
+tested-with: GHC == 8.6.5
+           , GHC == 8.8.4
+           , GHC == 8.10.7
+           , GHC == 9.0.1
+           , GHC == 9.2.3
+           , GHC == 9.4.4
+           , GHC == 9.6.1
 
 extra-source-files:  CHANGELOG.md
                      README.org
