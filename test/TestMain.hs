@@ -22,6 +22,7 @@ import           TestFileSys
 import           TestGCD
 import           TestMultiAssoc
 import           TestNoAssoc
+import           TestParams
 import           TestParamsAssoc
 import           TestSingleAssoc
 import           TestStrlen2
@@ -140,6 +141,7 @@ main =
        , testGroup "single associated file" $ singleAssocTests
        , testGroup "multiple associated files" $ multiAssocTests
        , testGroup "params association" $ paramsAssocTests
+       , testGroup "params" $ paramTests
        , testGroup "wildcard tests" $ wildcardAssocTests
        , testGroup "gcd sample tests" $ gcdSampleTests
        , testGroup "strlen2 sample tests" $ strlen2SampleTests

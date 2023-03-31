@@ -155,6 +155,7 @@ test-suite test-sugar
                        TestGCD
                        TestSingleAssoc
                        TestStrlen2
+                       TestParams
                        TestParamsAssoc
                        TestUtils
                        TestWildcard
