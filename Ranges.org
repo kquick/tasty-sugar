@@ -1,5 +1,8 @@
-Might be looking for a range of values relative to an external tool version
-(here, the actual version of clang that is available).
+Sometimes a particular configuration might be looking for a range of parameter
+values relative to an external tool version rather than just exact matches to the
+parameter.  This can still be done with ~tasty-sugar~ but requires some extra
+handling.  Here is an example, based the actual version of clang that is
+available to test against.
 
 #+begin_example
 CUBE {
@@ -7,8 +10,9 @@ CUBE {
 }
 #+end_example
 
-Here, if the tool version is clang-10, it's desireable to only run one test for
-an un-parameterized good file and not one for each assumed parameter value.
+In this example, if the tool version is clang-10, it's desireable to only run one
+test for an un-parameterized good file and not one for each assumed parameter
+value.
 
 For specifying upper bounds, we will consider the "supremum" to be the maximum
 upper bound (here, ~"pre-clang13"~).
@@ -143,6 +147,6 @@ supremum.
    Here, there is no invocation with the weakest expectation (~test_4.good~)
    because all the parameters are explicitly matched, although there are multiple
    invocations for tool versions that are less than multiple upper bounds.
-   Presumably, the tester intended t o use the lowest upper bound that would
+   Presumably, the tester intended to use the lowest upper bound that would
    satisfy, so as with Case 3a, a *check* that verified against all known ranges
    rather than just the supremum could be used to handle this.
