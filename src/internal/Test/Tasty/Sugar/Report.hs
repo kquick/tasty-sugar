@@ -44,7 +44,7 @@ sweetsKVITable sweets =
   in t & valueColName .~ "Expected File"
 
 -- | Converts a set of discovered Sweets directly into a text-based table for
--- shoing to the user.
+-- showing to the user.
 sweetsTextTable :: [CUBE] -> [Sweets] -> Text
 sweetsTextTable [] _ = "No CUBE provided for report"
 sweetsTextTable _ [] = "No Sweets provided for report"
