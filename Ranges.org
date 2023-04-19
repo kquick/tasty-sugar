@@ -109,20 +109,25 @@ supremum.
 
   Files: ~test_3.pre-clang12.good~, ~test_3.pre-clang100.good~
 
-   | tasty-sugar call | expfile                  | "llvm-ver" param       | filter         | clang | check            | result        |
-   |------------------+--------------------------+------------------------+----------------+-------+------------------+---------------|
-   |                1 | test_3.pre-clang12.good  | Explicit "pre-clang12" | always OK      |    10 | 10 < 12          | generate_test |
-   |                  |                          |                        |                |    12 | ! 12 < 12        | skip          |
-   |                  |                          |                        |                |    13 | ! 13 < 12        | skip          |
-   |                  |                          |                        |                |    15 | ! 15 < 12        | skip          |
-   |------------------+--------------------------+------------------------+----------------+-------+------------------+---------------|
-   |                2 | test_3.pre-clang13.good  | Assumed "pre-clang13"  | always skipped |       | [12 <= x < 13]   | skip          |
-   |------------------+--------------------------+------------------------+----------------+-------+------------------+---------------|
-   |                3 | test_3.pre-clang100.good | Explicit "pre-clang13" | always OK      |    10 | ! 13 <= 10 < 100 | skip          |
-   |                  |                          |                        |                |    12 | ! 13 <= 12 < 100 | skip          |
-   |                  |                          |                        |                |    13 | 13 <= 13 < 100   | generate_test |
-   |                  |                          |                        |                |    15 | 13 <= 15 < 100   | generate_test |
+   | tasty-sugar call | expfile                  | "llvm-ver" param        | filter         | clang | check            | result        |
+   |------------------+--------------------------+-------------------------+----------------+-------+------------------+---------------|
+   |                1 | test_3.pre-clang12.good  | Explicit "pre-clang12"  | always OK      |    10 | 10 < 12          | generate_test |
+   |                  |                          |                         |                |    12 | ! 12 < 12        | skip          |
+   |                  |                          |                         |                |    13 | ! 13 < 12        | skip          |
+   |                  |                          |                         |                |    15 | ! 15 < 12        | skip          |
+   |------------------+--------------------------+-------------------------+----------------+-------+------------------+---------------|
+   |                2 | test_3.pre-clang100.good | Explicit "pre-clang100" | always OK      |    10 | ! 13 <= 10 < 100 | skip          |
+   |                  |                          |                         |                |    12 | ! 13 <= 12 < 100 | skip          |
+   |                  |                          |                         |                |    13 | 13 <= 13 < 100   | generate_test |
+   |                  |                          |                         |                |    15 | 13 <= 15 < 100   | generate_test |
 
+   Note that there is no call with the ~pre-clang13~ parameter value because
+   there is no expected file that will match that value (either explicitly or via
+   a weaker match where no ~llvm-ver~ parameter is specified.  If there was a
+   weaker match, then there would be a call with ~Assumed "pre-clang13"~, but
+   this call would be ignored as described above (all ~Assumed~ matches are
+   ignored).
+   
    The use of a super-supremum rather than a realistic supremum is to allow for
    future increasing values of the parameter without requiring a rename of
    existing matching files.  The super-supremum match becomes the default match
