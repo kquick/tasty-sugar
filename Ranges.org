@@ -124,7 +124,7 @@ supremum.
    Note that there is no call with the ~pre-clang13~ parameter value because
    there is no expected file that will match that value (either explicitly or via
    a weaker match where no ~llvm-ver~ parameter is specified.  If there was a
-   weaker match, then there would be a call with ~Assumed "pre-clang13"~, but
+   weaker match, then there would be a call with ~Assumed "pre-clang13"~ , but
    this call would be ignored as described above (all ~Assumed~ matches are
    ignored).
    
