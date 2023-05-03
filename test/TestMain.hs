@@ -20,6 +20,7 @@ import           Data.Text.Prettyprint.Doc
 
 import           TestFileSys
 import           TestGCD
+import           TestIssue3
 import           TestMultiAssoc
 import           TestNoAssoc
 import           TestParams
@@ -37,6 +38,7 @@ main =
   in
   do generatedTests <- namedGenGroup "no association" <$> mkNoAssocTests
      fsTests <- fileSysTests
+     issueTests <- issue3Tests
      defaultMain $
        testGroup "tasty-sweet tests" $
        [
@@ -148,6 +150,7 @@ main =
        ]
        <> generatedTests
        <> fsTests
+       <> issueTests
 
 
 runTestOrErr :: CUBE -> IO (Either String String)

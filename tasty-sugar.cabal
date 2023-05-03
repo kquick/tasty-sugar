@@ -159,6 +159,7 @@ test-suite test-sugar
                        TestParamsAssoc
                        TestUtils
                        TestWildcard
+                       TestIssue3
                        Sample1
   build-depends: base >= 4
                , filepath
