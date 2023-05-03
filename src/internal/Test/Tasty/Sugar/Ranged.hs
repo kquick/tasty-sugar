@@ -49,12 +49,12 @@ import           Test.Tasty.Sugar.Types
 --  > foo-pre_clang11.good ==> Explicit "pre_clang11"
 --  > foo.good             ==> Assumed  "pre_clang13"
 --
--- The 'withSugarGroups' callback would then be invoked with these two
--- expectations.  The callback might check the actual version of clang available
--- to run in the environment.  If it detected clang version 10 was available, the
--- best file would be the @foo-pre_clang11.good@, even though the parameters
--- didn't mention @clang9@ and the @foo.good@ would be the usual match to pick
--- when there was no explicit match.
+-- The 'Test.Tasty.Sugar.withSugarGroups' callback would then be invoked with
+-- these two expectations.  The callback might check the actual version of clang
+-- available to run in the environment.  If it detected clang version 10 was
+-- available, the best file would be the @foo-pre_clang11.good@, even though the
+-- parameters didn't mention @clang9@ and the @foo.good@ would be the usual match
+-- to pick when there was no explicit match.
 --
 -- To handle this case, the 'rangedParam' function is used to filter the sweets,
 -- and is also given the version of clang locally available:

@@ -262,6 +262,8 @@ prettyParamPatterns = \case
                               map pretty vl
             in indent 1 $ vsep $ map pp prms)
 
+----------------------------------------------------------------------
+
 -- | Internally, this keeps the association between a possible file and the input
 -- directory it came from.  The "file" portion is relative to the input
 -- directory.
@@ -278,8 +280,9 @@ data CandidateFile = CandidateFile
                        -- provide parameter matches.
                      , candidateSubdirs :: [ FilePath ]
                        -- | The 'candidateFile' is the filename portion (only) of
-                       -- the candidate file.  (Use 'candidateToPath' to get the
-                       -- full filepath from a CandidateFile).
+                       -- the candidate file.  (Use
+                       -- 'Test.Tasty.Sugar.candidateToPath' to get the full
+                       -- filepath from a 'CandidateFile').
                      , candidateFile :: FilePath
                        -- | Portions of the candidateFile (or candidateSubdirs)
                        -- that match parameters
@@ -292,6 +295,8 @@ data CandidateFile = CandidateFile
                      }
                    deriving (Eq, Show)  -- Show is for for debugging/tracing
 
+
+----------------------------------------------------------------------
 
 -- | Each identified test input set is represented as a 'Sweets'
 -- object.. a Specifications With Existing Expected Testing Samples.
@@ -329,6 +334,8 @@ instance Pretty Sweets where
                  , Just $ vsep $ map pretty $ expected inp
                  ])
 
+----------------------------------------------------------------------
+
 -- | The 'Association' specifies the name of the associated file entry
 -- and the actual filepath of that associated file.
 
@@ -341,6 +348,8 @@ type Association = (String, FilePath)
 -- list format for easy utilization by the invoked test target.
 
 type NamedParamMatch = (String, ParamMatch)
+
+----------------------------------------------------------------------
 
 -- | The 'Expectation' represents a valid test configuration based on
 -- the set of provided files.  The 'Expectation' consists of an
@@ -392,6 +401,8 @@ instance Pretty Expectation where
        , pp
        , pa
        ]
+
+----------------------------------------------------------------------
 
 -- | Indicates the matching parameter value for this identified
 -- expected test.  If the parameter value is explicitly specified in

@@ -5,6 +5,15 @@ import qualified Test.Tasty as TT
 import           Test.Tasty.HUnit
 import           Test.Tasty.Sugar
 
+-- This test is in relation to https://github.com/kquick/tasty-sugar/issues/3 and
+-- provides validation against that issue report.
+--
+-- Note that for Issue #3, the observed behavior is the desired behavior for
+-- finding expectations (which is verified below).  The related need behind the
+-- issue report was the ability to do ranged parameter matching and have the root
+-- and expected file been the same (c.f. llvm-pretty-bc-parser:disasm-test),
+-- which has been addressed in version 2.2.0.0 via the rangedParamAdjuster helper
+-- function and and the Cube.sweetAdjuster field.
 
 issue3Tests :: IO [TT.TestTree]
 issue3Tests = do tsts <- sequence [ issue3Test1 ]

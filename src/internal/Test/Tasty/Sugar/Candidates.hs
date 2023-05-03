@@ -2,6 +2,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
+-- | This module provides management for tracking candidate files that might be a
+-- root file, an expected file, or an associated file.
+
 module Test.Tasty.Sugar.Candidates
   (
     candidateToPath
@@ -25,6 +28,10 @@ import           System.FilePath ( (</>), isRelative, makeRelative
 import           Test.Tasty.Sugar.Iterations
 import           Test.Tasty.Sugar.Types
 
+
+-- | Given a CUBE and a target directory, find all files in that directory and
+-- subdirectories that could be candidates for processing with tasty-sugar. Each
+-- file is turned into a candidate via the 'makeCandidate' function.
 
 findCandidates :: CUBE -> FilePath -> IO ([Either String CandidateFile])
 findCandidates cube inDir =
@@ -75,7 +82,7 @@ findCandidates cube inDir =
 --
 -- * All possible filename portions and sub-paths will be suggested for non-value
 -- * parameters (validParams with Nothing).
---
+
 makeCandidate :: CUBE -> FilePath -> [String] -> FilePath -> CandidateFile
 makeCandidate cube topDir subPath fName =
   let fl = DL.length fName
@@ -175,7 +182,9 @@ holes chkRange present =
   in foldr rmvKnown (first toEnum <$> r') (DL.sort p')
 
 
--- | This converts a CandidatFile into a regular FilePath for access
+-- | This converts a CandidateFile into a regular FilePath for access by standard
+-- IO operations.
+
 candidateToPath :: CandidateFile -> FilePath
 candidateToPath c =
   candidateDir c </> foldr (</>) (candidateFile c) (candidateSubdirs c)
@@ -196,6 +205,13 @@ candidateMatchPrefix seps mf cf =
                   else cl - 1
   in mStart == DL.take (fromEnum pfxlen) f
 
+
+-- | Determines if the second candidate file matches the first by virtue of
+-- having the same identified suffix.  If a non-null suffix is specified then
+-- verify the second file is the conjunction of the first file with a separator
+-- and the specified suffix with appropriate considerations for any separator in
+-- the supplied suffix.  If no suffix is provided, then simply ensure that the
+-- second file has no suffix.
 
 candidateMatchSuffix :: Separators -> FileSuffix -> CandidateFile
                      -> CandidateFile -> Bool
