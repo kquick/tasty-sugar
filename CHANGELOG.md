@@ -1,5 +1,17 @@
 # Revision history for tasty-sugar
 
+## 2.2.0.0 -- 2023-05-03
+
+ * Added `rangedParamAdjuster` helper function.
+ * Added `sweetAdjuster` field to `CUBE`.
+ * The `findSugarIn` function is now monadic with a MonadIO constraint (ato
+   support sweetAdjuster functionality).
+ * Exports `candidateToPath`, which was added in a previous version but not made
+   publicly available.
+ * The `--showsearch` output is switched to sorted order and provides a (correct)
+   total count.
+ * Parameter names are included in the test names along with the value.
+
 ## 2.1.0.0 -- 2023-03-20
 
  * Now supports the ability for the expected file to have the same name as the
