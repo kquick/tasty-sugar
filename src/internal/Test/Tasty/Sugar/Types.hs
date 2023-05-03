@@ -343,6 +343,13 @@ instance Eq Expectation where
                     , (bagCmp `on` associated) e1 e2
                     ]
 
+-- | Ordering comparisons of two 'Expectation' objects ignores the
+-- order of the 'expParamsMatch' and 'associated' fields.
+instance Ord Expectation where
+  e1 `compare` e2 = expectedFile e1 `compare` expectedFile e2
+                    <> (compare `on` L.sort . expParamsMatch) e1 e2
+                    <> (compare `on` L.sort . associated) e1 e2
+
 instance Pretty Expectation where
   pretty exp =
     let p = expParamsMatch exp

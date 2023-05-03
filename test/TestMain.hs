@@ -21,6 +21,7 @@ import           Data.Text.Prettyprint.Doc
 import           TestFileSys
 import           TestGCD
 import           TestIssue3
+import           TestLLVMRange
 import           TestMultiAssoc
 import           TestNoAssoc
 import           TestParams
@@ -39,6 +40,7 @@ main =
   do generatedTests <- namedGenGroup "no association" <$> mkNoAssocTests
      fsTests <- fileSysTests
      issueTests <- issue3Tests
+     llvmTests <- llvmRangeTests
      defaultMain $
        testGroup "tasty-sweet tests" $
        [
@@ -151,6 +153,7 @@ main =
        <> generatedTests
        <> fsTests
        <> issueTests
+       <> llvmTests
 
 
 runTestOrErr :: CUBE -> IO (Either String String)

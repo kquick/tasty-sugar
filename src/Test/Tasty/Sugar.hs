@@ -52,7 +52,6 @@
 --
 -- See the README for more information.
 
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-deprecations #-}
 
@@ -65,7 +64,6 @@ module Test.Tasty.Sugar
     -- * Test Generation Functions
   , findSugar
   , findSugarIn
-  , distinctResults
   , withSugarGroups
 
     -- * Types
@@ -86,7 +84,12 @@ module Test.Tasty.Sugar
   , ParamMatch(..)
   , paramMatchVal
   , getParamVal
-    -- ** Reporting
+
+    -- * Helper and Optional functions
+  , distinctResults
+  , rangedParam
+
+    -- * Reporting
   , sweetsKVITable
   , sweetsTextTable
   )
@@ -113,6 +116,7 @@ import           Test.Tasty.Options
 
 import Test.Tasty.Sugar.Analysis
 import Test.Tasty.Sugar.Candidates
+import Test.Tasty.Sugar.Ranged ( rangedParam )
 import Test.Tasty.Sugar.Report
 import Test.Tasty.Sugar.Types
 
@@ -366,7 +370,9 @@ withSugarGroups sweets mkGroup mkLeaf =
       -- mkParams iterates through the declared expected values to
       -- create a group for each actual value per expectation, calling
       -- the user-supplied mkLeaf at the leaf of each path.
-      mkParams sweet exp [] = concat <$> (mapM (uncurry $ mkLeaf sweet) $ zip [1..] exp)
+
+      mkParams sweet exp [] = concat <$> (mapM (uncurry $ mkLeaf sweet)
+                                          $ zip [1..] exp)
       mkParams sweet exp ((name,vspec):ps) =
         case vspec of
           Nothing ->

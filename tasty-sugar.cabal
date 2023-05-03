@@ -123,6 +123,7 @@ library tasty-sugar-internal
                    , Test.Tasty.Sugar.ExpectCheck
                    , Test.Tasty.Sugar.Iterations
                    , Test.Tasty.Sugar.ParamCheck
+                   , Test.Tasty.Sugar.Ranged
                    , Test.Tasty.Sugar.Report
                    , Test.Tasty.Sugar.Types
   build-depends:     base
@@ -163,6 +164,7 @@ test-suite test-sugar
                        TestUtils
                        TestWildcard
                        TestIssue3
+                       TestLLVMRange
                        Sample1
   build-depends: base >= 4
                , filepath
@@ -176,6 +178,7 @@ test-suite test-sugar
                , tasty-hunit >= 0.10 && < 0.11
                , tasty-sugar
                , text
+               , transformers
 
 test-suite test-passthru-ascii
   type:             exitcode-stdio-1.0
