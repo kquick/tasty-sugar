@@ -378,7 +378,8 @@ withSugarGroups sweets mkGroup mkLeaf =
                              )
                   in mkGroup gn <$> mkParams sweet es ps
             in sequence $ f <$> expGrps
-          Just vs -> let f v = mkGroup v <$> mkParams sweet (subExp v) ps
+          Just vs -> let f v = mkGroup (name <> "=" <> v)
+                               <$> mkParams sweet (subExp v) ps
                          subExp v = expMatching name v exp
                      in sequence $ f <$> L.sort vs
 
