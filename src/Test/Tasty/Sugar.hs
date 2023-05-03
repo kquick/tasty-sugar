@@ -156,13 +156,14 @@ searchResultsSugarReport pats = TestManager [] $ \opts _tests ->
                  putStrLn ""
                  mapM_ (putStrLn . show . snd) searchinfo
                  putStrLn ""
-                 putStrLn ("Final set of tests [" ++
-                           show (sum $ fmap (length . fst) searchinfo) ++
-                           "]:")
+                 let ttlNum = sum $ join
+                              $ fmap (fmap (length . expected) . fst) searchinfo
+                 putStrLn ("Final set of tests [" ++ show ttlNum ++ "]:")
                  putStrLn $ show $ vsep $ concatMap (map (("•" <+>) . align . pretty) . fst) searchinfo
                  putStrLn ""
-                 putStrLn $ T.unpack $ sweetsTextTable pats $
+                 putStrLn $ T.unpack $ sweetsTextTable pats $ reverse $
                    F.fold (fst <$> searchinfo)
+                 putStrLn $ "Total: " <> show ttlNum <> " tests"
                  return True
   else Nothing
 
