@@ -360,6 +360,38 @@
   leaving the ~sample.expected~ to be used only for the
   ~simple.opt-clang.exe~ file.
 
+** Parameter ranges
+
+  In some cases, there are a large number of possible parameter values, but the
+  expected files change for only some of the parameter variations.  While this
+  could normally be handled by an expected file with no corresponding parameter
+  value in its name to represent the default case, this is somewhat more
+  difficult when there are multiple "defaults".  This is handled by _parameter
+  ranges_.
+
+  As an example parameter range, consider a situation that might test the output
+  of the llvm assembler.  The llvm assembler output tends to be unchanged over a
+  couple of versions, but then there will be a change (e.g. adding a new LLVM
+  assembly instruction in llvm version 14) that will change the output, but the
+  new format will become the default output.
+
+  Conventionally, having a ~target.ll~ assembly file as the original default
+  expected file means that for every version starting at 14, there will be a
+  specific expected file (e.g. ~target-llvm14.ll~, ~target-llvm15.ll~,
+  ~target-llvm16.ll~, ...) even though all of those files are identical.
+
+  To address this, the parameter values can specify an upper or lower range limit
+  and use the ~rangedParamAdjuster~ to adjust the Expectations generated.  Using
+  this, the expected files could be something like ~target-llvm_pre12.ll~,
+  ~target-llvm_pre14.ll~, ~target.ll~, along with an indication that the
+  parameter value of ~llvm_preN~ formed an upper limit.  When used this way, the
+  ~target-llvm_pre12.ll~ file will be chosen for versions 10 and 11 of llvm, the
+  ~target-llvm_pre14.ll~ file would be chosen for versions 12 and 13 of llvm, and
+  the ~target.ll~ file would be chosen for llvm version 14 or higher.
+
+  For more information, see the documentation for the ~rangedParamAdjuster~
+  helper function, and the corresponding tests.
+
 # ** Multiple Inputs with different parameters producing different outputs
 # 
 #     KWQ...
