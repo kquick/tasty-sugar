@@ -33,9 +33,10 @@ tested-with: GHC == 8.6.5
            , GHC == 9.4.4
            , GHC == 9.6.1
 
-extra-source-files:  CHANGELOG.md
-                     README.org
-                     examples/example1/NiftyText.hs
+extra-doc-files: CHANGELOG.md
+                 README.org
+
+extra-source-files:  examples/example1/NiftyText.hs
                      examples/example1/README.org
                      examples/example1/test-passthru-ascii.hs
                      examples/example1/testdata/counting
@@ -85,6 +86,8 @@ extra-source-files:  CHANGELOG.md
                      test/data/single/foo.llvm199.exp
                      test/data/single/foo.llvm9.exe
                      test/data/single/foo.llvm9.exp
+                     test/data/issue3/test.c
+                     test/data/issue3/test.42.c
 
 source-repository head
   type: git
