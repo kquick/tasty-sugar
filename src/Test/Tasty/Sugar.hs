@@ -87,7 +87,7 @@ module Test.Tasty.Sugar
 
     -- * Helper and Optional functions
   , distinctResults
-  , rangedParam
+  , rangedParamAdjuster
 
     -- * Reporting
   , sweetsKVITable
@@ -116,7 +116,7 @@ import           Test.Tasty.Options
 
 import Test.Tasty.Sugar.Analysis
 import Test.Tasty.Sugar.Candidates
-import Test.Tasty.Sugar.Ranged ( rangedParam )
+import Test.Tasty.Sugar.Ranged ( rangedParamAdjuster )
 import Test.Tasty.Sugar.Report
 import Test.Tasty.Sugar.Types
 
@@ -191,7 +191,7 @@ findSugar' pat = do
                              $ L.nub
                              $ inputDir pat : inputDirs pat))
   mapM_ (liftIO . hPutStrLn stderr . ("WARNING: " <>)) $ lefts candidates
-  return $ findSugarIn pat $ rights candidates
+  findSugarIn pat $ rights candidates
 
 
 -- | Given a list of filepaths and a CUBE, returns the list of matching
@@ -199,11 +199,17 @@ findSugar' pat = do
 -- process (describing unmatched possibilities as well as valid test
 -- configurations).
 --
--- This is a low-level function; the findSugar and withSugarGroups are
--- the recommended interface functions to use for writing tests.
+-- This is a low-level function; the findSugar and withSugarGroups are the
+-- recommended interface functions to use for writing tests.
 
-findSugarIn :: CUBE -> [CandidateFile] -> ([Sweets], Doc ann)
-findSugarIn pat allFiles =
+findSugarIn :: MonadIO m => CUBE -> [CandidateFile] -> m ([Sweets], Doc ann)
+findSugarIn pat allFiles = do
+  let (swts, info) = findSugarIn' pat allFiles
+  sweets <- sweetAdjuster pat pat swts
+  return (sweets, info)
+
+findSugarIn' :: CUBE -> [CandidateFile] -> ([Sweets], Doc ann)
+findSugarIn' pat allFiles =
   let (nCandidates, sres, stats) = checkRoots pat allFiles
       inps = concat $ fst <$> sres
       expl = vsep $
@@ -308,8 +314,8 @@ findSugarIn pat allFiles =
 
 
 -- | Removes any sweets results where the expected file matches the rootFile.
--- This is expected to be used as a wrapper to the 'findSugar' or 'findSugarIn'
--- functions.
+-- This is expected to be registered in the 'sweetAdjuster' field of the 'CUBE'
+-- if it is used.
 --
 -- This is a convenience function for client code that wants to ensure that the
 -- rootFile is distinct from the expected file, which could not happen prior to

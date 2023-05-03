@@ -34,25 +34,32 @@ paramTests =
       exptwo = testInpPath <> "/first-two.exp"
       expthree = testInpPath <> "/first-three.exp"
 
-      checkTheStandardThings res =
+      checkTheStandardThings op =
         [
-          testCase "valid # results" $ length res @?= 1
+          testCase "valid # results" $ do
+            (res, _) <- op
+            length res @?= 1
 
-        , testCase "rootMatchName" $
-          rootMatchName <$> (safeElem 0 res) @?= Just "first.inp"
+        , testCase "rootMatchName" $ do
+            (res, _) <- op
+            rootMatchName <$> (safeElem 0 res) @?= Just "first.inp"
 
-        , testCase "rootBaseName" $
-          rootBaseName <$> (safeElem 0 res) @?= Just "first"
+        , testCase "rootBaseName" $ do
+            (res, _) <- op
+            rootBaseName <$> (safeElem 0 res) @?= Just "first"
 
-        , testCase "rootFile" $
-          rootFile <$> (safeElem 0 res) @?= Just "/test/data/first.inp"
+        , testCase "rootFile" $ do
+            (res, _) <- op
+            rootFile <$> (safeElem 0 res) @?= Just "/test/data/first.inp"
 
-        , testCase "cubeParams" $
-          cubeParams <$> (safeElem 0 res) @?=
-          Just [ ("p1", Just [ "one", "two", "three" ]) ]
+        , testCase "cubeParams" $ do
+            (res, _) <- op
+            cubeParams <$> (safeElem 0 res) @?=
+              Just [ ("p1", Just [ "one", "two", "three" ]) ]
 
-        , testCase "num expecteds" $
-          length . expected <$> safeElem 0 res @?= Just 3
+        , testCase "num expecteds" $ do
+            (res, _) <- op
+            length . expected <$> safeElem 0 res @?= Just 3
         ]
 
   in [ TT.testGroup "no matching params" $
@@ -61,15 +68,19 @@ paramTests =
                     [ "first.inp"
                     , "first.exp"
                     ]
-
-           (sugar, _desc) = findSugarIn cube sample
-
-       in checkTheStandardThings sugar
+       in do
+         checkTheStandardThings (findSugarIn cube sample)
           -- No parameters match, all expectations are against the base file and
           -- all parameter values are assumed.
-          <> [ testCase "expected 2" $ chkExp sugar 0 2 expbase (Assumed "one")
-             , testCase "expected 0" $ chkExp sugar 0 0 expbase (Assumed "two")
-             , testCase "expected 1" $ chkExp sugar 0 1 expbase (Assumed "three")
+          <> [ testCase "expected 2" $ do
+                 ( sugar, _desc ) <- findSugarIn cube sample
+                 chkExp sugar 0 2 expbase (Assumed "one")
+             , testCase "expected 0" $ do
+                 ( sugar, _desc ) <- findSugarIn cube sample
+                 chkExp sugar 0 0 expbase (Assumed "two")
+             , testCase "expected 1" $ do
+                 ( sugar, _desc ) <- findSugarIn cube sample
+                 chkExp sugar 0 1 expbase (Assumed "three")
              ]
 
        ----------------------------------------------------------------------
@@ -81,16 +92,20 @@ paramTests =
                     , "first.exp"
                     , "first-one.exp"
                     ]
-
-           (sugar, _desc) = findSugarIn cube sample
-
-       in checkTheStandardThings sugar
+       in do
+         checkTheStandardThings (findSugarIn cube sample)
           -- One parameter matches a specific file which is therefore explicit,
           -- all other expectations are against the base file and their parameter
           -- values are assumed.
-          <> [ testCase "expected 0" $ chkExp sugar 0 0 expone (Explicit "one")
-             , testCase "expected 1" $ chkExp sugar 0 1 expbase (Assumed "two")
-             , testCase "expected 2" $ chkExp sugar 0 2 expbase (Assumed "three")
+          <> [ testCase "expected 0" $ do
+                 ( sugar, _desc ) <- findSugarIn cube sample
+                 chkExp sugar 0 0 expone (Explicit "one")
+             , testCase "expected 1" $ do
+                 ( sugar, _desc ) <- findSugarIn cube sample
+                 chkExp sugar 0 1 expbase (Assumed "two")
+             , testCase "expected 2" $ do
+                 ( sugar, _desc ) <- findSugarIn cube sample
+                 chkExp sugar 0 2 expbase (Assumed "three")
              ]
 
        ----------------------------------------------------------------------
@@ -104,16 +119,20 @@ paramTests =
                     , "first-two.exp"
                     , "first-three.exp"
                     ]
-
-           (sugar, _desc) = findSugarIn cube sample
-
-       in checkTheStandardThings sugar
+       in do
+         checkTheStandardThings (findSugarIn cube sample)
           -- All parameters match a specific expected file and are explicit.  The
           -- base expected file is never matched because the explicit matches are
           -- more precise.
-          <> [ testCase "expected 0" $ chkExp sugar 0 0 expone (Explicit "one")
-             , testCase "expected 2" $ chkExp sugar 0 2 exptwo (Explicit "two")
-             , testCase "expected 1" $ chkExp sugar 0 1 expthree (Explicit "three")
+          <> [ testCase "expected 0" $ do
+                 ( sugar, _desc ) <- findSugarIn cube sample
+                 chkExp sugar 0 0 expone (Explicit "one")
+             , testCase "expected 2" $ do
+                 ( sugar, _desc ) <- findSugarIn cube sample
+                 chkExp sugar 0 2 exptwo (Explicit "two")
+             , testCase "expected 1" $ do
+                 ( sugar, _desc ) <- findSugarIn cube sample
+                 chkExp sugar 0 1 expthree (Explicit "three")
              ]
 
      ]

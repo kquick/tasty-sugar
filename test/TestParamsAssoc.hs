@@ -88,8 +88,7 @@ sugarCube = mkCUBE { inputDirs = [ testInpPath ]
 
 paramsAssocTests :: [TT.TestTree]
 paramsAssocTests =
-  let (sugar1,_s1desc) = findSugarIn sugarCube (sample sugarCube)
-      chkCandidate = checkCandidate sugarCube sample testInpPath [] 0
+  let chkCandidate = checkCandidate sugarCube sample testInpPath [] 0
       mkE' a cx cy p f c o = Expectation
                           { expectedFile = p f
                           , expParamsMatch = [ ("a param", cy "y")
@@ -104,11 +103,15 @@ paramsAssocTests =
       mkEo cs p f c ca = mkE' [] cs ca p f c NotSpecified
       p = (testInpPath </>)
       chkFld :: Eq a => Show a
-             => Maybe Sweets -> String -> (Sweets -> a) -> a -> TT.TestTree
-      chkFld s n f w = testCase n $ maybe (error "fail") f s @?= w
-      chkExp s g n f c o = testCase ("Exp #" <> show n)
-                           $ (safeElem n . expected =<< s)
-                           @?= Just (g f c o)
+             => Int -> String -> (Sweets -> a) -> a -> TT.TestTree
+      chkFld sn n f w = testCase n
+                        $ do (ss, _desc) <- findSugarIn sugarCube (sample sugarCube)
+                             let s = safeElem sn ss
+                             maybe (error "fail") f s @?= w
+      chkExp sn g n f c o = testCase ("Exp #" <> show n)
+                            $ do (ss, _desc) <- findSugarIn sugarCube (sample sugarCube)
+                                 let s = safeElem sn ss
+                                 (safeElem n . expected =<< s) @?= Just (g f c o)
   in [ testCase "valid sample" $ 36 @=? length (sample sugarCube)
 
      , TT.testGroup "candidates"
@@ -162,10 +165,9 @@ paramsAssocTests =
      , sugarTestEq "correct found count" sugarCube sample 12 length
 
      , let sweetNum = 6
-           sweet = safeElem sweetNum sugar1
-           chkF = chkFld sweet
-           chkP = chkFld sweet
-           chkE = chkExp sweet (mkEr p)
+           chkF = chkFld sweetNum
+           chkP = chkFld sweetNum
+           chkE = chkExp sweetNum (mkEr p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "recursive.fast.exe"
@@ -177,10 +179,9 @@ paramsAssocTests =
           ]
 
      , let sweetNum = 9
-           sweet = safeElem sweetNum sugar1
-           chkF = chkFld sweet
-           chkP = chkFld sweet
-           chkE = chkExp sweet (mkEc p)
+           chkF = chkFld sweetNum
+           chkP = chkFld sweetNum
+           chkE = chkExp sweetNum (mkEc p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "simple.noopt.clang.exe"
@@ -195,10 +196,9 @@ paramsAssocTests =
           ]
 
      , let sweetNum = 10
-           sweet = safeElem sweetNum sugar1
-           chkF = chkFld sweet
-           chkP = chkFld sweet
-           chkE = chkExp sweet (mkEc p)
+           chkF = chkFld sweetNum
+           chkP = chkFld sweetNum
+           chkE = chkExp sweetNum (mkEc p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "simple.noopt.gcc.exe"
@@ -213,10 +213,9 @@ paramsAssocTests =
           ]
 
      , let sweetNum = 11
-           sweet = safeElem sweetNum sugar1
-           chkF = chkFld sweet
-           chkP = chkFld sweet
-           chkE = chkExp sweet (mkEc p)
+           chkF = chkFld sweetNum
+           chkP = chkFld sweetNum
+           chkE = chkExp sweetNum (mkEc p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "simple.opt-clang.exe"
@@ -233,10 +232,9 @@ paramsAssocTests =
          -- value.  The duplicate value should be ignored, but both values should
          -- result in different Expectations.
      , let sweetNum = 8
-           sweet = safeElem sweetNum sugar1
-           chkF = chkFld sweet
-           chkP = chkFld sweet
-           chkE = chkExp sweet (mkEc p)
+           chkF = chkFld sweetNum
+           chkP = chkFld sweetNum
+           chkE = chkExp sweetNum (mkEc p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "simple.clang-noopt-clang.exe"
@@ -256,10 +254,9 @@ paramsAssocTests =
          -- are found that could be tried, along with an expect file that doesn't
          -- supply a potential value for this parameter.
      , let sweetNum = 7
-           sweet = safeElem sweetNum sugar1
-           chkF = chkFld sweet
-           chkP = chkFld sweet
-           chkE = chkExp sweet (mkEc p)
+           chkF = chkFld sweetNum
+           chkP = chkFld sweetNum
+           chkE = chkExp sweetNum (mkEc p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "simple.clang-gcc.exe"
@@ -279,10 +276,9 @@ paramsAssocTests =
        -- Verify that Expectations are selected based on better ParamMatches
        -- (sorted).
      , let sweetNum = 0
-           sweet = safeElem sweetNum sugar1
-           chkF = chkFld sweet
-           chkP = chkFld sweet
-           chkE n cs ca f c = chkExp sweet (mkE' [] cs ca p) n f c NotSpecified
+           chkF = chkFld sweetNum
+           chkP = chkFld sweetNum
+           chkE n cs ca f c = chkExp sweetNum (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "alpha.exe"
@@ -298,10 +294,9 @@ paramsAssocTests =
        -- expected filename *if* the parameter is higher (sorted on parameter
        -- name).
      , let sweetNum = 1
-           sweet = safeElem sweetNum sugar1
-           chkF = chkFld sweet
-           chkP = chkFld sweet
-           chkE n cs ca f c = chkExp sweet (mkE' [] cs ca p) n f c NotSpecified
+           chkF = chkFld sweetNum
+           chkP = chkFld sweetNum
+           chkE n cs ca f c = chkExp sweetNum (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "beta.exe"
@@ -316,10 +311,9 @@ paramsAssocTests =
        -- This is the same as beta, but with the separator extensions on the
        -- other side.
      , let sweetNum = 4
-           sweet = safeElem sweetNum sugar1
-           chkF = chkFld sweet
-           chkP = chkFld sweet
-           chkE n cs ca f c = chkExp sweet (mkE' [] cs ca p) n f c NotSpecified
+           chkF = chkFld sweetNum
+           chkP = chkFld sweetNum
+           chkE n cs ca f c = chkExp sweetNum (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "gamma.exe"
@@ -333,10 +327,9 @@ paramsAssocTests =
 
        -- This is the same as beta, but with a higher-precedence parameter
      , let sweetNum = 2
-           sweet = safeElem sweetNum sugar1
-           chkF = chkFld sweet
-           chkP = chkFld sweet
-           chkE n cs ca f c = chkExp sweet (mkE' [] cs ca p) n f c NotSpecified
+           chkF = chkFld sweetNum
+           chkP = chkFld sweetNum
+           chkE n cs ca f c = chkExp sweetNum (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "delta.exe"
@@ -352,10 +345,9 @@ paramsAssocTests =
        -- This is the same as beta, but with the separator extensions on the
        -- other side.
      , let sweetNum = 3
-           sweet = safeElem sweetNum sugar1
-           chkF = chkFld sweet
-           chkP = chkFld sweet
-           chkE n cs ca f c = chkExp sweet (mkE' [] cs ca p) n f c NotSpecified
+           chkF = chkFld sweetNum
+           chkP = chkFld sweetNum
+           chkE n cs ca f c = chkExp sweetNum (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "epsilon.exe"
@@ -369,10 +361,9 @@ paramsAssocTests =
           ]
 
      , let sweetNum = 5
-           sweet = safeElem sweetNum sugar1
-           chkF = chkFld sweet
-           chkP = chkFld sweet
-           chkE = chkExp sweet (mkE' [("c-source", p "gcc/hole-here.c")] Assumed Assumed p)
+           chkF = chkFld sweetNum
+           chkP = chkFld sweetNum
+           chkE = chkExp sweetNum (mkE' [("c-source", p "gcc/hole-here.c")] Assumed Assumed p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
             chkF "rootMatchName" rootMatchName "hole-here.exe"

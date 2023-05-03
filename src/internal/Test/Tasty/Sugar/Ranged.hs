@@ -1,13 +1,15 @@
--- | Provides the rangedParam helper function.
+-- | Provides the rangedParam and rangedParamAdjuster helper functions.
 
 {-# LANGUAGE LambdaCase #-}
 
 module Test.Tasty.Sugar.Ranged
   ( rangedParam
+  , rangedParamAdjuster
   )
 where
 
 import           Control.Applicative ( liftA2 )
+import           Control.Monad.IO.Class ( MonadIO )
 import           Data.Function ( on )
 import qualified Data.List as L
 import           Data.Maybe ( isNothing )
@@ -19,6 +21,10 @@ import           Test.Tasty.Sugar.Types
 -- | Given a Parameter Name and a boolean that indicates valid/not-valid for a
 -- Parameter Value, update the expectations in the Sweets to treat the parameter
 -- as a ranged value.
+--
+-- [This is the pure internals version; the recommended usage is via the
+-- 'rangedParamAdjuster' wrapper specification in the 'sweetAdjuster' field of
+-- the 'CUBE' structure.]
 --
 -- Normal sweets results expect a 1:1 match between parameter value and the
 -- expected file markup, but this function modifies the sweets results to
@@ -81,10 +87,10 @@ import           Test.Tasty.Sugar.Types
 -- ranged match is applicable.
 
 rangedParam :: Enum a => Ord a
-            => CUBE -> String -> (String -> Maybe a) -> (a -> a -> Bool)
+            => String -> (String -> Maybe a) -> (a -> a -> Bool)
             -> Maybe a
-            -> [Sweets] -> [Sweets]
-rangedParam cube pname extractVal cmpVal targetVal sweets =
+            -> CUBE -> [Sweets] -> [Sweets]
+rangedParam pname extractVal cmpVal targetVal cube sweets =
   let adj sweet = let exps = expected sweet
                   in sweet { expected = adjustExp exps }
 
@@ -232,3 +238,18 @@ rangedParam cube pname extractVal cmpVal targetVal sweets =
                            else expl
             in bestsBy pval cmpVal $ exps'
   in adj <$> sweets
+
+
+-- | Given a Parameter Name and a boolean that indicates valid/not-valid for a
+-- Parameter Value, update the expectations in the Sweets to treat the parameter
+-- as a ranged value.  This provides the functionality described by the
+-- 'rangedParam' function and is intended for use via the 'sweetAdjuster' field
+-- of the 'CUBE' structure.
+
+rangedParamAdjuster :: Enum a => Ord a
+                    => MonadIO m
+                    => String -> (String -> Maybe a) -> (a -> a -> Bool)
+                    -> Maybe a
+                    -> CUBE -> [Sweets] -> m [Sweets]
+rangedParamAdjuster pname extractVal cmpVal targetVal cube =
+  return . rangedParam pname extractVal cmpVal targetVal cube

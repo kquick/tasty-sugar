@@ -21,84 +21,87 @@ testParams = [ ("solver", Just ["z3", "yices", "boolector", "cvc4"])
              ]
 
 sugarCube = mkCUBE
-              { rootName = "*.c"
-              , expectedSuffix = "good"
-              , inputDirs = [ testInpPath ]
-              , associatedNames = [ ("config", "config")
-                                  , ("stdio", "print")
-                                  , ("haskell", "hs")
-                                  ]
-              , validParams = testParams
-              }
+            { rootName = "*.c"
+            , expectedSuffix = "good"
+            , inputDirs = [ testInpPath ]
+            , associatedNames = [ ("config", "config")
+                                , ("stdio", "print")
+                                , ("haskell", "hs")
+                                ]
+            , validParams = testParams
+            }
 
 gcdSampleTests :: [TT.TestTree]
 gcdSampleTests =
-  let (sugar,sdesc) = findSugarIn sugarCube (gcdSamples sugarCube)
-  in [ testCase "valid sample" $ 19 @=? length (gcdSamples sugarCube)
-     , sugarTestEq "correct found count" sugarCube gcdSamples 1 length
+  [ testCase "valid sample" $ 19 @=? length (gcdSamples sugarCube)
+  , sugarTestEq "correct found count" sugarCube gcdSamples 1 length
 
-     , testCase "sweets rendering" $
-       let actual = sweetsTextTable [sugarCube] sugar
-       in do putStrLn "Table" -- try to start table on its own line
-             putStrLn $ T.unpack actual
-             T.length actual > 0 @? "change this to see the table"
+  , testCase "sweets rendering" $ do
+      (sugar,_sdesc) <- findSugarIn sugarCube (gcdSamples sugarCube)
+      let actual = sweetsTextTable [sugarCube] sugar
+      -- putStrLn "Table" -- try to start table on its own line
+      -- putStrLn $ T.unpack actual
+      T.length actual > 0 @? "change this to see the table"
 
-     , testCaseSteps "sweets info" $ \step -> do
-         step "rootMatchName"
-         (rootMatchName <$> sugar) @?= ["gcd-test.c"]
-         step "rootBaseName"
-         (rootBaseName <$> sugar) @?= ["gcd-test"]
-         step "rootFile"
-         (rootFile <$> sugar) @?= [ testInpPath </> "gcd-test.c" ]
-         step "cubeParams"
-         (cubeParams <$> sugar) @?= [ validParams sugarCube ]
+  , testCaseSteps "sweets info" $ \step -> do
+      (sugar,_sdesc) <- findSugarIn sugarCube (gcdSamples sugarCube)
+      step "rootMatchName"
+      (rootMatchName <$> sugar) @?= ["gcd-test.c"]
+      step "rootBaseName"
+      (rootBaseName <$> sugar) @?= ["gcd-test"]
+      step "rootFile"
+      (rootFile <$> sugar) @?= [ testInpPath </> "gcd-test.c" ]
+      step "cubeParams"
+      (cubeParams <$> sugar) @?= [ validParams sugarCube ]
 
-     , testCase "Expectations" $ compareBags "expected" (expected $ head sugar) $
-       let p = (testInpPath </>) in
-       let exp e s l c o =
-             Expectation
-             { expectedFile = p e
-             , expParamsMatch = [("solver", s), ("loop-merging", l)]
-             , associated = [ ("config", p c), ("stdio", p o)]
-             }
-           e = Explicit
-           a = Assumed
-       in
-         [
-           exp "gcd-test.boolector.good" (e "boolector") (a "loopmerge")
-               "gcd-test.loopmerge.config"
-               "gcd-test.boolector.print"
+  , testCase "Expectations" $ do
+      (sugar,_sdesc) <- findSugarIn sugarCube (gcdSamples sugarCube)
+      compareBags "expected" (expected $ head sugar) $
+        let p = (testInpPath </>)
+            exp e s l c o =
+              Expectation
+              { expectedFile = p e
+              , expParamsMatch = [("solver", s), ("loop-merging", l)]
+              , associated = [ ("config", p c), ("stdio", p o)]
+              }
+            e = Explicit
+            a = Assumed
+        in
+          [
+            exp "gcd-test.boolector.good" (e "boolector") (a "loopmerge")
+                "gcd-test.loopmerge.config"
+                "gcd-test.boolector.print"
 
-         , exp "gcd-test.boolector.good" (e "boolector") (a "loop")
-               "gcd-test.config"
-               "gcd-test.boolector.print"
+          , exp "gcd-test.boolector.good" (e "boolector") (a "loop")
+                "gcd-test.config"
+                "gcd-test.boolector.print"
 
-         , exp "gcd-test.good"           (a "cvc4")      (a "loopmerge")
-               "gcd-test.loopmerge.config"
-               "gcd-test.print"
+          , exp "gcd-test.good"           (a "cvc4")      (a "loopmerge")
+                "gcd-test.loopmerge.config"
+                "gcd-test.print"
 
-         , exp "gcd-test.good"           (a "cvc4")      (a "loop")
-               "gcd-test.config"
-               "gcd-test.print"
+          , exp "gcd-test.good"           (a "cvc4")      (a "loop")
+                "gcd-test.config"
+                "gcd-test.print"
 
-         , exp "gcd-test.good"           (a "yices")     (a "loopmerge")
-               "gcd-test.loopmerge.config"
-               "gcd-test.print"
+          , exp "gcd-test.good"           (a "yices")     (a "loopmerge")
+                "gcd-test.loopmerge.config"
+                "gcd-test.print"
 
-         , exp "gcd-test.good"           (a "yices")     (a "loop")
-               "gcd-test.config"
-               "gcd-test.print"
+          , exp "gcd-test.good"           (a "yices")     (a "loop")
+                "gcd-test.config"
+                "gcd-test.print"
 
-         , exp "gcd-test.good"           (a "z3")        (a "loopmerge")
-               "gcd-test.loopmerge.config"
-               "gcd-test.print"
+          , exp "gcd-test.good"           (a "z3")        (a "loopmerge")
+                "gcd-test.loopmerge.config"
+                "gcd-test.print"
 
-         , exp "gcd-test.good"           (a "z3")        (a "loop")
-               "gcd-test.config"
-               "gcd-test.print"
+          , exp "gcd-test.good"           (a "z3")        (a "loop")
+                "gcd-test.config"
+                "gcd-test.print"
 
-         ]
-     ]
+          ]
+  ]
 
 gcdSamples cube = fmap (makeCandidate cube testInpPath [])
                   $ filter (not . null)

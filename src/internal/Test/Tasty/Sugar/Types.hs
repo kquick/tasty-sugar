@@ -4,9 +4,11 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Test.Tasty.Sugar.Types where
 
+import           Control.Monad.IO.Class ( MonadIO )
 import           Data.Function ( on )
 import qualified Data.List as L
 import           Data.Maybe ( catMaybes )
@@ -162,8 +164,31 @@ data CUBE = CUBE
      -- (the lack of a parameter is handled automatically rather than
      -- an explicit blank value).
    , validParams :: [ParameterPattern]
+
+     -- | The 'sweetAdjuster' is used to post-process the Sweets found.  This can
+     -- be used to provide additional filtering or handle relations between the
+     -- sweets.  While this could be performed manually, it is much better to use
+     -- this entry to ensure that the results are the same as reported with the
+     -- --showsearch output or other handling that might not be aware of other
+     -- modifications of the found results.
+   , sweetAdjuster :: forall m . MonadIO m => CUBE -> [Sweets] -> m [Sweets]
    }
-   deriving Show
+
+instance Show CUBE where
+  show c = mconcat $ catMaybes
+    [ Just "CUBE { "
+    , let i = inputDir c in if null i then Nothing
+      else Just $ "inputDir=" <> show i <> " {# DEPRECATED #}, "
+    , if not (null $ inputDir c) && null (inputDirs c) then Nothing
+      else Just $ "inputDirs=" <> show (inputDirs c) <> ", "
+    , Just $ "rootName=" <> show (rootName c)
+    , Just $ "expectedSuffix=" <> show (expectedSuffix c)
+    , Just $ "separators=" <> show (separators c)
+    , Just $ "associatedNames=" <> show (associatedNames c)
+    , Just $ "validParams=" <> show (validParams c)
+    , Just "}"
+    ]
+
 
 {-# DEPRECATED inputDir "Use inputDirs instead" #-}
 
@@ -199,6 +224,7 @@ mkCUBE = CUBE { inputDirs = ["test/samples"]
               , associatedNames = []
               , expectedSuffix = "exp"
               , validParams = []
+              , sweetAdjuster = const return
               }
 
 

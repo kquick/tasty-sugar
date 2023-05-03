@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -5,6 +6,7 @@
 module Main where
 
 import           Control.Exception ( SomeException, try )
+import           Control.Monad
 import           Data.Bifunctor ( bimap )
 import qualified Hedgehog as HH
 import           Test.Tasty
@@ -51,7 +53,8 @@ main =
 #endif
          HH.withTests 10000 $ HH.property $ do
            cube <- HH.forAll $ genCube
-           HH.assert $ null $ fst $ findSugarIn cube []
+           (sweets, _desc) <- findSugarIn cube []
+           HH.assert $ null sweets
 
        , testGroup "invalid separators" $
          [
@@ -158,5 +161,12 @@ main =
 
 runTestOrErr :: CUBE -> IO (Either String String)
 runTestOrErr c = bimap (head . lines . show) show <$>
-                 (try (return $! findSugarIn c []) ::
-                     IO (Either SomeException ([Sweets], Doc ann)))
+                 (try (do !r <- findSugarIn c []
+                          -- the following is to force the evaluation of
+                          -- findSugarIn within the try context.  If this isn't
+                          -- done, the tests will fail with "error" calls.
+                          if null (fst r)
+                            then error "never reached"
+                            else return r
+                      )
+                   :: IO (Either SomeException ([Sweets], Doc ann)))

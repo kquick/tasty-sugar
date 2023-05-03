@@ -101,32 +101,35 @@ llvmRangeTests = do tsts1 <- sequence [ llvmRange1 ("direct", Nothing)
 
 llvmRange1 :: (String, Maybe Int) -> IO [TT.TestTree]
 llvmRange1 (mode, matchClang) = do
-  let cube = mkCUBE { inputDirs = [ testInpPath ]
-                    , rootName = "*.c"
-                    , expectedSuffix = "good"
-                    , separators = "."
-                    , validParams = [ ("solver", Just [ "z3", "cvc5" ])
-                                    , ("clang-range", Just [ "recent-clang"
-                                                           , "pre-clang11"
-                                                           , "pre-clang12"
-                                                           , "pre-clang13"
-                                                           , "pre-clang14"
-                                                           ])
-                                    ]
-                    }
-  let (sweets',_) = findSugarIn cube (files cube)
+  let cube =
+        let c = mkCUBE { inputDirs = [ testInpPath ]
+                       , rootName = "*.c"
+                       , expectedSuffix = "good"
+                       , separators = "."
+                       , validParams = [ ("solver", Just [ "z3", "cvc5" ])
+                                       , ("clang-range", Just [ "recent-clang"
+                                                              , "pre-clang11"
+                                                              , "pre-clang12"
+                                                              , "pre-clang13"
+                                                              , "pre-clang14"
+                                                              ])
+                                       ]
+                       }
+                in case mode of
+                     "direct" -> c
+                     "ranged" ->
+                       let extract pval =
+                             if "pre-clang" `L.isPrefixOf` pval
+                             then readMaybe (drop (length "pre-clang") pval)
+                             else if "recent-clang" == pval
+                                  then Nothing :: Maybe Int
+                                  else error $ "Unknown parameter value for range testing: " <> pval
+                       in c { sweetAdjuster =
+                                rangedParamAdjuster "clang-range" extract
+                                (<) matchClang
+                            }
+  (sweets, _) <- findSugarIn cube (files cube)
   -- putStrLn $ show sweets
-
-  let sweets = case mode of
-        "direct" -> sweets'
-        "ranged" ->
-          let extract paramVal =
-                if "pre-clang" `L.isPrefixOf` paramVal
-                then readMaybe (drop (length "pre-clang") paramVal)
-                else if "recent-clang" == paramVal
-                     then Nothing :: Maybe Int
-                     else error $ "Unknown parameter value for range testing: " <> paramVal
-          in rangedParam cube "clang-range" extract (<) matchClang sweets'
 
   (tests, calls) <-
     runWriterT
@@ -173,21 +176,20 @@ llvmRange2 (mode, matchClang) = do
                                                            , "pre-clang14"
                                                            ])
                                     ]
+                    , sweetAdjuster =
+                        if mode == "ranged"
+                        then
+                          let extract paramVal =
+                                if "pre-clang" `L.isPrefixOf` paramVal
+                                then readMaybe (drop (length "pre-clang") paramVal)
+                                else if "recent-clang" == paramVal
+                                     then Nothing :: Maybe Int
+                                     else error $ "Unknown parameter value for range testing: " <> paramVal
+                          in rangedParamAdjuster "clang-range" extract (<) matchClang
+                        else const return
                     }
-  let (sweets',_) = findSugarIn cube (files cube)
+  (sweets,_) <- findSugarIn cube (files cube)
   -- putStrLn $ show sweets
-
-  let sweets = case mode of
-        "direct" -> sweets'
-        "ranged" ->
-          let extract paramVal =
-                if "pre-clang" `L.isPrefixOf` paramVal
-                then readMaybe (drop (length "pre-clang") paramVal)
-                else if "recent-clang" == paramVal
-                     then Nothing :: Maybe Int
-                     else error $ "Unknown parameter value for range testing: " <> paramVal
-          in rangedParam cube "clang-range" extract (<) matchClang sweets'
-
 
   (tests, calls) <-
     runWriterT
@@ -245,7 +247,7 @@ llvmRange2 (mode, matchClang) = do
 
 llvmRange3 :: (String, Maybe Int) -> IO [TT.TestTree]
 llvmRange3 (mode, matchClang) = do
-  let cube = mkCUBE { inputDirs = [ testInpPath ]
+  let cube0 = mkCUBE { inputDirs = [ testInpPath ]
                     , rootName = "*.c"
                     , expectedSuffix = "good"
                     , separators = "."
@@ -258,14 +260,16 @@ llvmRange3 (mode, matchClang) = do
                                                            ])
                                     ]
                     }
-  let (sweets',_) = findSugarIn cube (files2 cube)
+  let cube = if mode == "ranged"
+             then let e = readMaybe . drop (length "clang") . init
+                  in cube0
+                     {
+                       sweetAdjuster =
+                         rangedParamAdjuster "clang-range" e (>=) matchClang
+                     }
+             else cube0
+  (sweets,_) <- findSugarIn cube (files2 cube)
   -- putStrLn $ show sweets
-
-  let sweets = case mode of
-        "direct" -> sweets'
-        "ranged" ->
-          let extract = readMaybe . drop (length "clang") . init
-          in rangedParam cube "clang-range" extract (>=) matchClang sweets'
 
   (tests, calls) <-
     runWriterT

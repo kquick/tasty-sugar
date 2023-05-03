@@ -119,13 +119,13 @@ mismatchedColl name gotBag expBag =
               else map (showEnt "ACTUAL") gotUnique)
 
 sugarTest name cube sample test =
-  let (r,d) = findSugarIn cube sample
-  in testCase name $ testWithFailInfo d test r
+  testCase name $ do (r,d) <- findSugarIn cube sample
+                     testWithFailInfo d test r
 
 
 sugarTestEq name cube sample expVal test =
-  let (r,d) = findSugarIn cube (sample cube)
-  in testCase name $ eqTestWithFailInfo d expVal $ test r
+  testCase name $ do (r,d) <- findSugarIn cube (sample cube)
+                     eqTestWithFailInfo d expVal $ test r
 
 
 checkCandidate cube files path subdirs sepSkip nm pm =
