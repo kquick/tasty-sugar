@@ -77,6 +77,7 @@ module Test.Tasty.Sugar
   , CandidateFile(..)
   , makeCandidate
   , findCandidates
+  , candidateToPath
     -- ** Output
   , Sweets(..)
   , Expectation(..)
