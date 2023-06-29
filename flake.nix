@@ -53,10 +53,6 @@
      in
      rec
       {
-        devShell = levers.eachSystem (s:
-          let pkgs = import nixpkgs { system=s; };
-          in shellWith pkgs shellPkgs packages.${s}.default.env);
-
         devShells =
           let oneshell = s: n:
                 let pkgs = import nixpkgs { system=s; };
@@ -64,15 +60,20 @@
                   { ghcver = levers.validGHCVersions pkgs.haskell.compiler; }
                   ( { ghcver, ... } @ vargs:
                     shellWith pkgs shellPkgs
-                      (self.packages.${s}.${n}.${ghcver}.env)
-                  );
-          in
-            levers.eachSystem
-                (s:
-                  let pkgs = import nixpkgs { system=s; };
-                      names = builtins.attrNames (self.packages.${s});
-                  in pkgs.lib.genAttrs names (oneshell s)
-                ) ;
+                      (self.packages.${s}.${n}.${ghcver}.env.overrideAttrs (a:
+                        {
+                          # Set envvars here
+                        }
+                      )));
+          in levers.eachSystem
+            (s:
+              let pkgs = import nixpkgs { system=s; };
+                  names = builtins.attrNames (self.packages.${s});
+                  outs = builtins.removeAttrs (pkgs.lib.genAttrs names (oneshell s))
+                    [ "ghc" ];
+                  shells = pkgs.lib.attrsets.mapAttrs (n: v: v.default) outs;
+              in shells
+            ) ;
 
         packages = levers.eachSystem (system:
           let mkHaskell = levers.mkHaskellPkg {
