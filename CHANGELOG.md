@@ -1,5 +1,9 @@
 # Revision history for tasty-sugar
 
+## 2.2.1.0 -- 2023-06-28
+
+ * Allow optparse-applicative 0.18, tasty 1.5, and hedgehog 1.4 packages.
+
 ## 2.2.0.0 -- 2023-05-03
 
  * Added `rangedParamAdjuster` helper function.
