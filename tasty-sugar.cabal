@@ -101,9 +101,9 @@ library
                      , filepath
                      , filemanip >= 0.3 && < 0.4
                      , logict >= 0.7.0.3 && < 0.9
-                     , optparse-applicative >= 0.15 && < 0.18
+                     , optparse-applicative >= 0.15 && < 0.19
                      , prettyprinter >= 1.7.0 && < 1.8
-                     , tasty >= 1.2 && < 1.5
+                     , tasty >= 1.2 && < 1.6
                      , tasty-sugar-internal
                      , text
   hs-source-dirs:      src
@@ -168,7 +168,7 @@ test-suite test-sugar
                        Sample1
   build-depends: base >= 4
                , filepath
-               , hedgehog >= 1.1 && < 1.3
+               , hedgehog >= 1.1 && < 1.4
                , logict
                , pretty-show >= 1.9 && < 1.11
                , prettyprinter
