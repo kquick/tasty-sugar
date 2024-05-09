@@ -168,7 +168,7 @@ test-suite test-sugar
                        Sample1
   build-depends: base >= 4
                , filepath
-               , hedgehog >= 1.1 && < 1.4
+               , hedgehog >= 1.1 && < 1.5
                , logict
                , pretty-show >= 1.9 && < 1.11
                , prettyprinter
