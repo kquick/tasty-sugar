@@ -22,7 +22,7 @@
       flake = false;
     };
     kvitable = {
-      url = "github:kquick/kvitable";
+      url = "github:kquick/kvitable/6b7269e";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.levers.follows = "levers";
     };
