@@ -43,11 +43,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1688014254,
-        "narHash": "sha256-H1kxX3JagFR58xSIvlO/C3jJXwL1CPWkTg5gJ8qc05w=",
+        "lastModified": 1714149245,
         "owner": "kquick",
         "repo": "kvitable",
-        "rev": "5635b827fc705dc58b771a3112892e88889aaa0b",
+        "rev": "6b7269ed47a303290b1cf268c1089593d7efffdd",
         "type": "github"
       },
       "original": {
