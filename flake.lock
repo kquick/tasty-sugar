@@ -116,14 +116,17 @@
         "sayable8": "sayable8"
       },
       "locked": {
-        "lastModified": 1715919118,
-        "narHash": "sha256-vhJHGB/E6R07ARr8c0fVG6EveC5XwQfBroZBksgxDRc=",
-        "path": "/home/kquick/work/DFAMS/taphos-project-240503/sources/kvitable",
-        "type": "path"
+        "lastModified": 1715925011,
+        "narHash": "sha256-B2O0SLWF4ZBXTFBv4Row7ZDaRKt73lSjsojDaJhcR1k=",
+        "owner": "kquick",
+        "repo": "kvitable",
+        "rev": "b16b76d6b1b2b245c3fb791719bcba484c53fa2c",
+        "type": "github"
       },
       "original": {
-        "path": "/home/kquick/work/DFAMS/taphos-project-240503/sources/kvitable",
-        "type": "path"
+        "owner": "kquick",
+        "repo": "kvitable",
+        "type": "github"
       }
     },
     "levers": {
