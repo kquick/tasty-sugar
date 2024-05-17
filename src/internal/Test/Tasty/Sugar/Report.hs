@@ -15,7 +15,6 @@ import           Data.KVITable.Render.ASCII ( render
                                             , RenderConfig(..) )
 import           Data.String ( fromString )
 import           Data.Text ( Text )
-import qualified Data.Text as T
 import           Lens.Micro ( (&), (.~) )
 import qualified Prettyprinter as PP
 import           System.FilePath ( takeFileName )
@@ -31,11 +30,11 @@ sweetsKVITable sweets =
   let t = fromList $ concatMap
           (\s ->
               [
-                ( ("base", T.pack $ rootBaseName s)
-                  : ("rootFile", T.pack $ rootFile s)
-                  : [ (fromString pn, T.pack $ show $ PP.pretty pv)
+                ( ("base", fromString $ rootBaseName s)
+                  : ("rootFile", fromString $ rootFile s)
+                  : [ (fromString pn, fromString $ show $ PP.pretty pv)
                     | (pn,pv) <- expParamsMatch e ]
-                  <> [ (fromString an, T.pack $ takeFileName af)
+                  <> [ (fromString an, fromString $ takeFileName af)
                      | (an,af) <- associated e ]
                 , takeFileName (expectedFile e)
                 )
