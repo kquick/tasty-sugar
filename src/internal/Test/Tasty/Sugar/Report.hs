@@ -13,6 +13,7 @@ import           Data.KVITable
 import           Data.KVITable.Render.ASCII ( render
                                             , defaultRenderConfig
                                             , RenderConfig(..) )
+import           Data.String ( fromString )
 import           Data.Text ( Text )
 import qualified Data.Text as T
 import           Lens.Micro ( (&), (.~) )
@@ -32,9 +33,9 @@ sweetsKVITable sweets =
               [
                 ( ("base", T.pack $ rootBaseName s)
                   : ("rootFile", T.pack $ rootFile s)
-                  : [ (T.pack pn, T.pack $ show $ PP.pretty pv)
+                  : [ (fromString pn, T.pack $ show $ PP.pretty pv)
                     | (pn,pv) <- expParamsMatch e ]
-                  <> [ (T.pack an, T.pack $ takeFileName af)
+                  <> [ (fromString an, T.pack $ takeFileName af)
                      | (an,af) <- associated e ]
                 , takeFileName (expectedFile e)
                 )
@@ -52,7 +53,7 @@ sweetsTextTable c s =
   let cfg = defaultRenderConfig
             { rowGroup = "base"
                          : "rootFile"
-                         : (T.pack . fst <$> take 1 (validParams $ head c))
+                         : (fromString . fst <$> take 1 (validParams $ head c))
             , rowRepeat = False
             }
   in render cfg $ sweetsKVITable s
