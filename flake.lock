@@ -116,10 +116,10 @@
         "sayable8": "sayable8"
       },
       "locked": {
-        "lastModified": 1716594762,
+        "lastModified": 1722376523,
         "owner": "kquick",
         "repo": "kvitable",
-        "rev": "e74bd355ff3d0d212005c7f6989f5a9a8fb86c55",
+        "rev": "689a49ce6f89f44257837a538413c61f28d64aab",
         "type": "github"
       },
       "original": {
@@ -169,10 +169,10 @@
         "tasty-hedgehog-src": "tasty-hedgehog-src"
       },
       "locked": {
-        "lastModified": 1715921619,
+        "lastModified": 1721797021,
         "owner": "kquick",
         "repo": "named-text",
-        "rev": "10ee0ec576ef61d4f15f111d03430e356a381e85",
+        "rev": "b62d0bdb9f145b2255263fab3256f736fd9c575e",
         "type": "github"
       },
       "original": {
