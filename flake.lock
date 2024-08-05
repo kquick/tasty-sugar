@@ -112,11 +112,15 @@
           "nixpkgs"
         ],
         "nixpkgs8": "nixpkgs8",
+        "parameterized-utils-src": [
+          "parameterized-utils-src"
+        ],
         "sayable": "sayable",
         "sayable8": "sayable8"
       },
       "locked": {
         "lastModified": 1722376523,
+        "narHash": "sha256-j6FiLDlyoeZXj8bzzq2V2n0pqlxYDRlBRrd9ODMoNi0=",
         "owner": "kquick",
         "repo": "kvitable",
         "rev": "689a49ce6f89f44257837a538413c61f28d64aab",
@@ -160,7 +164,10 @@
           "kvitable",
           "nixpkgs"
         ],
-        "parameterized-utils-src": "parameterized-utils-src",
+        "parameterized-utils-src": [
+          "kvitable",
+          "parameterized-utils-src"
+        ],
         "sayable": [
           "kvitable",
           "sayable"
@@ -170,6 +177,7 @@
       },
       "locked": {
         "lastModified": 1721797021,
+        "narHash": "sha256-3FJop9iRi3zcFHFqxVfazxHoqW+xQI3hRjMWBJXQwAA=",
         "owner": "kquick",
         "repo": "named-text",
         "rev": "b62d0bdb9f145b2255263fab3256f736fd9c575e",
@@ -193,7 +201,10 @@
           "kvitable",
           "nixpkgs8"
         ],
-        "parameterized-utils-src": "parameterized-utils-src_2",
+        "parameterized-utils-src": [
+          "kvitable",
+          "parameterized-utils-src"
+        ],
         "sayable": [
           "kvitable",
           "sayable8"
@@ -267,31 +278,15 @@
     "parameterized-utils-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1684943202,
-        "narHash": "sha256-v3qww1qyqgwcD67PQotinNiaqTBitnAVhDDflCwkrK0=",
-        "owner": "galoisinc",
+        "lastModified": 1720449721,
+        "narHash": "sha256-m5COh07WEqXovjzOmt0P0bM/BSH205hFsjXwg4XVVg0=",
+        "owner": "GaloisInc",
         "repo": "parameterized-utils",
-        "rev": "77e065a3e90e91e336838dc6591ca42ab9c7d887",
+        "rev": "4178731f7c0b26da30402b9a4d505c63765f4fa4",
         "type": "github"
       },
       "original": {
-        "owner": "galoisinc",
-        "repo": "parameterized-utils",
-        "type": "github"
-      }
-    },
-    "parameterized-utils-src_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1684943202,
-        "narHash": "sha256-v3qww1qyqgwcD67PQotinNiaqTBitnAVhDDflCwkrK0=",
-        "owner": "galoisinc",
-        "repo": "parameterized-utils",
-        "rev": "77e065a3e90e91e336838dc6591ca42ab9c7d887",
-        "type": "github"
-      },
-      "original": {
-        "owner": "galoisinc",
+        "owner": "GaloisInc",
         "repo": "parameterized-utils",
         "type": "github"
       }
@@ -303,6 +298,7 @@
         "levers": "levers",
         "nixpkgs": "nixpkgs",
         "optparse-applicative-src": "optparse-applicative-src",
+        "parameterized-utils-src": "parameterized-utils-src",
         "tasty-hedgehog-src": "tasty-hedgehog-src_3",
         "tasty-src": "tasty-src"
       }

@@ -25,9 +25,14 @@
       url = "github:kquick/kvitable";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.levers.follows = "levers";
+      inputs.parameterized-utils-src.follows = "parameterized-utils-src";
     };
     optparse-applicative-src = {
       url = "github:pcapriotti/optparse-applicative/0.18.1";
+      flake = false;
+    };
+    parameterized-utils-src = {
+      url = "github:GaloisInc/parameterized-utils";
       flake = false;
     };
     tasty-src = {
@@ -43,6 +48,7 @@
   outputs = { self, nixpkgs, levers
             , hedgehog-src
             , optparse-applicative-src
+            , parameterized-utils-src
             , kvitable
             , tasty-src
             , tasty-hedgehog-src
