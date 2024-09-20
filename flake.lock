@@ -119,11 +119,11 @@
         "sayable8": "sayable8"
       },
       "locked": {
-        "lastModified": 1722376523,
-        "narHash": "sha256-j6FiLDlyoeZXj8bzzq2V2n0pqlxYDRlBRrd9ODMoNi0=",
+        "lastModified": 1726865282,
+        "narHash": "sha256-Plka3MV6RDSbPvGBEm1DybvUf3Dhq8mbk84zSSysqWY=",
         "owner": "kquick",
         "repo": "kvitable",
-        "rev": "689a49ce6f89f44257837a538413c61f28d64aab",
+        "rev": "5aa3e316ce956a8f5c777139d60d8a0e3cb78df0",
         "type": "github"
       },
       "original": {
