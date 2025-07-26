@@ -1,5 +1,9 @@
 # Revision history for tasty-sugar
 
+## 2.2.2.1 -- 2025-07-26
+
+ * Bump constraints to allow optparse-applicative 0.19.
+
 ## 2.2.2.0 -- 2024-09-20
 
  * Bump constraints to use kvitable 1.1.

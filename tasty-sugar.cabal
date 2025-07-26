@@ -1,7 +1,7 @@
 cabal-version:       2.0
 
 name:                tasty-sugar
-version:             2.2.2.0
+version:             2.2.2.1
 synopsis:            Tests defined by Search Using Golden Answer References
 description:
   .
@@ -101,7 +101,7 @@ library
                      , filepath
                      , filemanip >= 0.3 && < 0.4
                      , logict >= 0.7.0.3 && < 0.9
-                     , optparse-applicative >= 0.15 && < 0.19
+                     , optparse-applicative >= 0.15 && < 0.20
                      , prettyprinter >= 1.7.0 && < 1.8
                      , tasty >= 1.2 && < 1.6
                      , tasty-sugar-internal
