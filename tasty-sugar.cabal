@@ -126,7 +126,7 @@ library tasty-sugar-internal
                    , Test.Tasty.Sugar.Ranged
                    , Test.Tasty.Sugar.Report
                    , Test.Tasty.Sugar.Types
-  build-depends:     base
+  build-depends:     base < 5
                    , containers
                    , directory
                    , filepath
@@ -166,7 +166,7 @@ test-suite test-sugar
                        TestIssue3
                        TestLLVMRange
                        Sample1
-  build-depends: base >= 4
+  build-depends: base >= 4 && < 5
                , filepath
                , hedgehog >= 1.1 && < 1.5
                , logict
@@ -188,7 +188,7 @@ test-suite test-passthru-ascii
                     -threaded -with-rtsopts=-N
   main-is:          test-passthru-ascii.hs
   other-modules:    NiftyText
-  build-depends: base
+  build-depends: base < 5
                , tasty
                , tasty-hunit
                , tasty-sugar
@@ -200,7 +200,7 @@ test-suite test-params
   GHC-options:      -fhide-source-paths
                     -threaded -with-rtsopts=-N
   main-is:          test-params.hs
-  build-depends: base
+  build-depends: base < 5
                , pretty-show
                , tasty
                , tasty-hunit
@@ -213,7 +213,7 @@ test-suite test-internals
   GHC-options:      -fhide-source-paths
                     -threaded -with-rtsopts=-N
   main-is:          test-internals.hs
-  build-depends: base
+  build-depends: base < 5
                , pretty-show
                , tasty
                , tasty-hunit
