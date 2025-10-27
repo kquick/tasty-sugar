@@ -1,0 +1,33 @@
+dev
+ subcmd
+   build
+     Builds the tasty-sugar library
+       exec = cabal build tasty-sugar
+   test
+     testcase
+       test-sugar
+         type = EXE
+         runner = cabal_test
+       test-passthru-ascii
+         type = EXE
+         runner = cabal_test
+       test-params
+         type = EXE
+         runner = cabal_test
+       test-internals
+         type = EXE
+         runner = cabal_test
+     testrunner
+       cabal_test
+         exec = cabal test {TestName}
+   nixbuild_all
+     Uses nix to build versions 8.10 through 9.12
+       exec =
+         for X in 810 90 92 ; do
+           echo :::: ghc$X
+           nix build --no-link .#tasty-sugar.ghc$X --override-input nixpkgs github:nixos/nixpkgs/25.05
+         done
+         for X in 94 96 98 910 912 ; do
+           echo :::: ghc$X
+           nix build --no-link .#tasty-sugar.ghc$X
+         done

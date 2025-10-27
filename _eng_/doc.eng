@@ -1,0 +1,6 @@
+doc
+  README
+    type = Overview
+    title = README
+    abstract = Description of the tasty-sugar library
+    location = ./README.org
