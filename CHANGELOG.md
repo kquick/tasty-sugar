@@ -1,5 +1,9 @@
 # Revision history for tasty-sugar
 
+## 2.2.3.0 -- 2025-10-26
+
+ * Support GHC 8.10 through GHC 9.12.
+
 ## 2.2.2.1 -- 2025-07-26
 
  * Bump constraints to allow optparse-applicative 0.19.

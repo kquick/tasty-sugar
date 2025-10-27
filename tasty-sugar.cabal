@@ -1,7 +1,7 @@
 cabal-version:       2.0
 
 name:                tasty-sugar
-version:             2.2.2.1
+version:             2.2.3.0
 synopsis:            Tests defined by Search Using Golden Answer References
 description:
   .
@@ -32,6 +32,9 @@ tested-with: GHC == 8.6.5
            , GHC == 9.2.3
            , GHC == 9.4.4
            , GHC == 9.6.1
+           , GHC == 9.8
+           , GHC == 9.10
+           , GHC == 9.12
 
 extra-doc-files: CHANGELOG.md
                  README.org
@@ -168,7 +171,7 @@ test-suite test-sugar
                        Sample1
   build-depends: base >= 4 && < 5
                , filepath
-               , hedgehog >= 1.1 && < 1.5
+               , hedgehog >= 1.1 && < 1.8
                , logict
                , pretty-show >= 1.9 && < 1.11
                , prettyprinter
