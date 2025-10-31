@@ -138,7 +138,7 @@ library tasty-sugar-internal
                    , logict
                    , microlens >= 0.4 && < 0.5
                    , mtl
-                   , parallel >= 3.2 && < 3.3
+                   , parallel >= 3.2 && < 3.4
                    , prettyprinter >= 1.7 && < 1.8
                    , text
   hs-source-dirs:    src/internal
