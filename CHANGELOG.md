@@ -1,5 +1,10 @@
 # Revision history for tasty-sugar
 
+## 2.2.3.1 -- 2025-11-01
+
+ * Bump constraints for parallel to allow 3.4.* [from Vekhir].
+ * Bump constraints for microlens to allow 0.5.*.
+
 ## 2.2.3.0 -- 2025-10-26
 
  * Support GHC 8.10 through GHC 9.12.
