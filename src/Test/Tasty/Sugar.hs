@@ -385,13 +385,14 @@ withSugarGroups sweets mkGroup mkLeaf =
             let pVal = lookup name . expParamsMatch
                 expSrt = L.sortBy (compare `on` pVal) exp
                 expGrps = L.groupBy ((==) `on` pVal) expSrt
-                f es =
+                f es@(eh:_) =
                   let gn = fromMaybe (name <> " not specified")
                            $ (getParamVal =<<
-                              (lookup name $ expParamsMatch $ head es)
+                              (lookup name $ expParamsMatch eh)
                              )
                   in mkGroup gn <$> mkParams sweet es ps
-            in sequence $ f <$> expGrps
+                f [] = mkGroup (name <> " not specified") <$> mkParams sweet [] ps
+            in sequence (f <$> expGrps)
           Just vs -> let f v = mkGroup (name <> "=" <> v)
                                <$> mkParams sweet (subExp v) ps
                          subExp v = expMatching name v exp

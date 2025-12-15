@@ -48,11 +48,11 @@ sweetsKVITable sweets =
 sweetsTextTable :: [CUBE] -> [Sweets] -> Text
 sweetsTextTable [] _ = "No CUBE provided for report"
 sweetsTextTable _ [] = "No Sweets provided for report"
-sweetsTextTable c s =
+sweetsTextTable (c:_) s =
   let cfg = defaultRenderConfig
             { rowGroup = "base"
                          : "rootFile"
-                         : (fromString . fst <$> take 1 (validParams $ head c))
+                         : (fromString . fst <$> take 1 (validParams c))
             , rowRepeat = False
             }
   in render cfg $ sweetsKVITable s

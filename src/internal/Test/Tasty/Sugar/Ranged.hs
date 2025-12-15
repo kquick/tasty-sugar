@@ -218,7 +218,9 @@ rangedParam pname extractVal cmpVal targetVal cube sweets =
                                 -- don't match e and should therefore just be
                                 -- passed through.  Note that due to adjustExp
                                 -- this should usually be a null list.
-                              yv = getVal $ head yes
+                              yv = case yes of
+                                     (yh:_) -> getVal yh
+                                     [] -> error "yes nullity is checked before getting yv"
                           in case () of
                                _ | null yes -> e:bests
                                _ | ev == yv -> e:bests

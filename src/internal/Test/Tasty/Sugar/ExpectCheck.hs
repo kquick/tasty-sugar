@@ -236,7 +236,7 @@ collateExpectations allExps =
                . L.sortBy (compare `on` (length . expectedFile))
                -- Discard all but the best ParamMatch
               . L.reverse
-               . head
+               . (concat . take 1) -- safe version of head
                -- Group by equal ParamMatch (may be multiple files)
                . L.groupBy ((==) `on` expParamsMatch)
                -- Order this group by best ParamsMatch (Explicit) to worst

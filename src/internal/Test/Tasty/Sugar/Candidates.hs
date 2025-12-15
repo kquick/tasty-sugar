@@ -105,13 +105,17 @@ makeCandidate cube topDir subPath fName =
                            $ DL.findIndices (`elem` (separators cube)) fName
                       let vs = i + 1
                       let ve = vs + vl
+                      let chkStart = do guard $ v `elem` subPath
+                                        return ((fst p, Explicit v), (0, 0))
                       if and [ ve + 1 < fl  -- v fits in fName[i..]
                              , v == DL.take vl (DL.drop vs fName)
-                             , head (DL.drop ve fName) `elem` (separators cube)
                              ]
-                         then return ((fst p, Explicit v), (toEnum vs, ve))
-                        else do guard $ v `elem` subPath
-                                return ((fst p, Explicit v), (0, 0))
+                         then case DL.drop ve fName of
+                                (fnc:_) -> if fnc `elem` (separators cube)
+                                           then return ((fst p, Explicit v), (toEnum vs, ve))
+                                           else chkStart
+                                [] -> chkStart
+                         else chkStart
       -- pmatchArbitrary will find a parameter with an unspecified value and
       -- assigned otherwise unmatched portions of the filename to that parameter.
       pmatchArbitrary =
@@ -142,9 +146,11 @@ makeCandidate cube topDir subPath fName =
       pAll = pmatches <> pmatchArbitrary
       dropSeps i =
         let lst = last $ DL.group $ DL.take (fromEnum i) fName
-        in if isSep $ head lst
-           then i - (toEnum (length lst) - 1)
-           else i
+        in case lst of
+             (lh:_) -> if isSep lh
+                       then i - (toEnum (length lst) - 1)
+                       else i
+             _ -> i
       mtchIdx = dropSeps
                 $ minimum
                 $ toEnum fle
@@ -217,7 +223,9 @@ candidateMatchSuffix :: Separators -> FileSuffix -> CandidateFile
                      -> CandidateFile -> Bool
 candidateMatchSuffix seps sfx rootf cf =
   let f = candidateFile cf
-      sfxsep = not (null sfx) && head sfx `elem` seps
+      sfxsep = case sfx of
+                 (sfxHead:_) -> sfxHead `elem` seps
+                 _ -> False
   in if null sfx
      then f == DL.takeWhile (not . (`elem` seps)) f
      else and [ length f >= (length (candidateFile rootf) + length sfx)
