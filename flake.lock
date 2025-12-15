@@ -1,7 +1,24 @@
 {
   "nodes": {
+    "html-parse-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1744939271,
+        "narHash": "sha256-GelrzfOjFyRCqoGbxra6R+2INsIPpoL/YlyOg2jL4Gc=",
+        "owner": "bgamari",
+        "repo": "html-parse",
+        "rev": "bd354c36586406efbedf67650dbf17b57bec53ef",
+        "type": "github"
+      },
+      "original": {
+        "owner": "bgamari",
+        "repo": "html-parse",
+        "type": "github"
+      }
+    },
     "kvitable": {
       "inputs": {
+        "html-parse-src": "html-parse-src",
         "levers": [
           "levers"
         ],
@@ -15,11 +32,11 @@
         "sayable": "sayable"
       },
       "locked": {
-        "lastModified": 1762020605,
-        "narHash": "sha256-WW7hI7yeHpnCXHJXbhJYzK4FxeKITGOZ2YyXRRoEsv4=",
+        "lastModified": 1765765598,
+        "narHash": "sha256-yqoro6ik5YUsX2TRXvo1baWqzerlhULo31wXQZD0Uiw=",
         "owner": "kquick",
         "repo": "kvitable",
-        "rev": "a0f4a32aa0043c3e3acc30e064ebf8f1539dfc6f",
+        "rev": "e396c726bbc97dd26856ee0241f068192dbdfd22",
         "type": "github"
       },
       "original": {
@@ -35,11 +52,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1761565563,
-        "narHash": "sha256-zDY31Ux4MTtPT2DrnAybo3SUhMjvlYbB74Diy5mi6J8=",
+        "lastModified": 1765117877,
+        "narHash": "sha256-Fzy3US4MdP/gAre2N0Dn4Dz+RirWVPfPO8VPNbsIjj0=",
         "owner": "kquick",
         "repo": "nix-levers",
-        "rev": "7917e3da83956b8b525957f9c4ff643903880c61",
+        "rev": "d4ffbdf56387ee5ffb6ae3aed176f37f56769948",
         "type": "github"
       },
       "original": {
