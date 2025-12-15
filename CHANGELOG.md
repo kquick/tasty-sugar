@@ -1,5 +1,10 @@
 # Revision history for tasty-sugar
 
+## 2.2.3.2 -- 2025-12-15
+
+ * Widen tasty-hedgehog constraints to allow earlier v1.3.
+ * Internally replace uses of head to assure completeness.
+
 ## 2.2.3.1 -- 2025-11-01
 
  * Bump constraints for parallel to allow 3.4.* [from Vekhir].
