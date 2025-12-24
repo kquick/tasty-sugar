@@ -43,4 +43,4 @@ jobs:
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: nixbuild_all
         shell: bash
-        run: nix run github:galoisinc/eng dev nixbuild_all
+        run: nix run github:galoisinc/eng dev nixbuild:all
