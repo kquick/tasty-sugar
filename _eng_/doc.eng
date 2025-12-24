@@ -4,3 +4,9 @@ doc
     title = README
     abstract = Description of the tasty-sugar library
     location = ./README.org
+
+  Example1
+    type = User Guide
+    title = Example1 Guide
+    abstract = Description of a Tasty Sugar example
+    location = examples/example1/README.org
