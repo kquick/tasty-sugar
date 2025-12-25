@@ -39,3 +39,29 @@ dev
        in dir = {TopDir}
        needs = nixbuild nixbuild:old nixbuild:recent
        exec = echo All nix builds completed
+
+   ci-build =
+     Build target for CI
+       in dir = {TopDir}
+       notes =
+
+         This uses "nix run" instead of "nix build" for Github CI support.  This
+         is less efficient in that there is no parallelism, but more efficient
+         because a nix build will fetch all dependencies (from
+         github:nixos/nixpkgs or cachix) even if there is no actual build needed
+         and a nix run will only fetch the runtime closure but *will* perform a
+         nix build if needed.
+
+       env vars =
+         CI_TEST_LEVEL = 1
+       exec =
+         echo :::: GHC 8.10
+         nix run --override-input nixpkgs github:nixos/nixpkgs/25.05 .#tasty-sugar.ghc810
+         echo :::: GHC 9.0
+         nix run --override-input nixpkgs github:nixos/nixpkgs/25.05 .#tasty-sugar.ghc90
+         echo :::: GHC 9.2
+         nix run --override-input nixpkgs github:nixos/nixpkgs/25.05 .#tasty-sugar.ghc92
+         for V in 9.4 9.6 9.8 9.10 9.12 ; do
+           echo :::: GHC $V
+           nix run .#tasty-sugar.ghc$(echo $V | sed -e s/\\.//)
+         done

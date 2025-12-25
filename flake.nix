@@ -34,6 +34,16 @@
             }:
     rec
       {
+        apps = levers.eachSystem (s:
+          rec
+          {
+            test-passthru-ascii = {
+              type = "app";
+              program = "${self.packages.${s}.tasty-sugar}/bin/test-passthru-ascii";
+            };
+            default = test-passthru-ascii;
+          });
+
         devShells = levers.haskellShells
           { inherit nixpkgs;
             flake = self;

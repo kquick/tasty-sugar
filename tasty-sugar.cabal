@@ -183,8 +183,7 @@ test-suite test-sugar
                , text
                , transformers
 
-test-suite test-passthru-ascii
-  type:             exitcode-stdio-1.0
+executable test-passthru-ascii
   hs-source-dirs:   examples/example1
   default-language: Haskell2010
   GHC-options:      -fhide-source-paths
