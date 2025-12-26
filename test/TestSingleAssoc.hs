@@ -19,8 +19,8 @@ sugarCube = mkCUBE
             , expectedSuffix = "expected"
             , inputDirs = [ testInpPath ]
             , associatedNames = [ ("exe", "exe") ]
-            , validParams = [ ("arch", Just ["x86", "ppc"])
-                            , ("form", Just ["base", "refined"])
+            , validParams = [ ("arch", SpecificValues ["x86", "ppc"])
+                            , ("form", SpecificValues ["base", "refined"])
                             ]
             }
 

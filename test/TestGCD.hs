@@ -16,8 +16,8 @@ import           Prelude hiding ( exp )
 
 testInpPath = "test-data/samples"
 
-testParams = [ ("solver", Just ["z3", "yices", "boolector", "cvc4"])
-             , ("loop-merging", Just ["loopmerge", "loop"])
+testParams = [ ("solver", SpecificValues ["z3", "yices", "boolector", "cvc4"])
+             , ("loop-merging", SpecificValues ["loopmerge", "loop"])
              ]
 
 sugarCube = mkCUBE

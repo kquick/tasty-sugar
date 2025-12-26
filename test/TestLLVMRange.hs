@@ -105,14 +105,15 @@ llvmRange1 (mode, matchClang) = do
                        , rootName = "*.c"
                        , expectedSuffix = "good"
                        , separators = "."
-                       , validParams = [ ("solver", Just [ "z3", "cvc5" ])
-                                       , ("clang-range", Just [ "recent-clang"
-                                                              , "pre-clang11"
-                                                              , "pre-clang12"
-                                                              , "pre-clang13"
-                                                              , "pre-clang14"
-                                                              ])
-                                       ]
+                       , validParams = [
+                           ("solver", SpecificValues [ "z3", "cvc5" ])
+                           , ("clang-range", SpecificValues [ "recent-clang"
+                                                            , "pre-clang11"
+                                                            , "pre-clang12"
+                                                            , "pre-clang13"
+                                                            , "pre-clang14"
+                                                            ])
+                           ]
                        }
                 in case mode of
                      "direct" -> c
@@ -168,13 +169,14 @@ llvmRange2 (mode, matchClang) = do
                     , rootName = "*.c"
                     , expectedSuffix = "good"
                     , separators = "."
-                    , validParams = [ ("solver", Just [ "z3", "cvc5" ])
-                                    , ("clang-range", Just [ "pre-clang11"
-                                                           , "pre-clang12"
-                                                           , "pre-clang13"
-                                                           , "pre-clang14"
-                                                           ])
-                                    ]
+                    , validParams = [
+                        ("solver", SpecificValues [ "z3", "cvc5" ])
+                        , ("clang-range", SpecificValues [ "pre-clang11"
+                                                         , "pre-clang12"
+                                                         , "pre-clang13"
+                                                         , "pre-clang14"
+                                                         ])
+                        ]
                     , sweetAdjuster =
                         if mode == "ranged"
                         then
@@ -250,14 +252,15 @@ llvmRange3 (mode, matchClang) = do
                     , rootName = "*.c"
                     , expectedSuffix = "good"
                     , separators = "."
-                    , validParams = [ ("solver", Just [ "z3", "cvc5" ])
-                                    , ("clang-range", Just [ "older-clang"
-                                                           , "clang11+"
-                                                           , "clang12+"
-                                                           , "clang13+"
-                                                           , "clang14+"
-                                                           ])
-                                    ]
+                    , validParams = [
+                        ("solver", SpecificValues [ "z3", "cvc5" ])
+                        , ("clang-range", SpecificValues [ "older-clang"
+                                                         , "clang11+"
+                                                         , "clang12+"
+                                                         , "clang13+"
+                                                         , "clang14+"
+                                                         ])
+                        ]
                     }
   let cube = if mode == "ranged"
              then let e = readMaybe . drop (length "clang") . init

@@ -17,7 +17,6 @@ import           Control.Monad
 import           Data.Bifunctor ( first )
 import           Data.Function ( on )
 import qualified Data.List as L
-import           Data.Maybe ( isNothing )
 
 import           Test.Tasty.Sugar.AssocCheck
 import           Test.Tasty.Sugar.Candidates
@@ -111,7 +110,7 @@ expectedSearch rootN rootPrefix rootPVMatches seps params expSuffix
                            , candidateMatchSuffix seps expSuffix rootPrefix cf
                            ]
 
-     let unconstrained = fst <$> L.filter (isNothing . snd) params
+     let unconstrained = fst <$> L.filter (isWildcardValue . snd) params
 
      -- Get the parameters matched by the root, and suggested values for the
      -- other parameters.  This will backtrack through alternative values for

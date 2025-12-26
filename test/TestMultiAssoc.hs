@@ -27,8 +27,8 @@ sugarCube = mkCUBE
                                   , ("c++-include", "hh")
                                   , ("plain", "")
                                   ]
-              , validParams = [ ("arch", Just ["x86", "ppc"])
-                              , ("form", Just ["base", "refined"])
+              , validParams = [ ("arch", SpecificValues ["x86", "ppc"])
+                              , ("form", SpecificValues ["base", "refined"])
                               ]
               }
 

@@ -71,6 +71,7 @@ module Test.Tasty.Sugar
   , CUBE(..)
   , Separators
   , ParameterPattern
+  , ParameterValues(..)
   , mkCUBE
   , CandidateFile(..)
   , makeCandidate
@@ -104,7 +105,7 @@ import qualified Data.Foldable as F
 import           Data.Function
 import qualified Data.List as L
 import qualified Data.Map as Map
-import           Data.Maybe ( isJust, isNothing, fromJust, fromMaybe )
+import           Data.Maybe ( fromMaybe )
 import           Data.Proxy
 import qualified Data.Text as T
 import           Data.Typeable ( Typeable )
@@ -223,7 +224,8 @@ findSugarIn' pat allFiles =
                         pretty nCandidates
                       , "# valid roots" <+> equals <+>
                         pretty (length sres)
-                      , "parameters = " <+> pretty (validParams pat)
+                      , fromMaybe "no parameters"
+                        $ prettyParamPatterns $ validParams pat
                       ] <> ((("--?" <+>) . pretty) <$> (concatMap snd sres))
                       <> if null stats
                          then []
@@ -258,28 +260,29 @@ findSugarIn' pat allFiles =
                    -> [ParameterPattern]
                    -> Either String [ParameterPattern]
     paramsAreValid seps p =
-      let existential = filter (isNothing . snd) p
-          blankVals = filter (or . (fmap null) . snd) p
-          emptyVal = filter (or . maybe [] (fmap null) . snd) $ filter (isJust . snd) p
+      let existential = filter (isWildcardValue . snd) p
+          blankVals = filter (null . valuesFromParam . snd)
+                      $ filter (not . isWildcardValue . snd) p
+          emptyVal = filter (or . fmap null . valuesFromParam . snd) p
           dupVals = rmvOrderSwapped $ observeAll duplicatedValues
           duplicatedValues =
             do p1 <- choose p
                p2 <- choose p
-               guard (isJust $ snd p1)
-               guard (isJust $ snd p2)
+               guard (not $ isWildcardValue $ snd p1)
+               guard (not $ isWildcardValue $ snd p2)
                pv <- if (fst p1 == fst p2)
-                     then do (p1v, p2v) <- choose2 $ fromJust $ snd p1
+                     then do (p1v, p2v) <- choose2 $ valuesFromParam $ snd p1
                              guard (p1v == p2v)
                              return p1v
-                     else do p1v <- choose $ fromJust $ snd p1
-                             p2v <- choose $ fromJust $ snd p2
+                     else do p1v <- choose $ valuesFromParam $ snd p1
+                             p2v <- choose $ valuesFromParam $ snd p2
                              guard (p1v == p2v)
                              return p1v
                return ((fst p1, fst p2), pv)
           sepVals = observeAll $
                     do (n,vl) <- choose p
-                       guard (isJust vl)
-                       v <- choose $ maybe [] id vl
+                       guard (vl /= AnyValue)
+                       v <- choose $ valuesFromParam vl
                        s <- choose seps
                        guard (s `elem` v)
                        return n
@@ -381,7 +384,7 @@ withSugarGroups sweets mkGroup mkLeaf =
                                           $ zip [1..] exp)
       mkParams sweet exp ((name,vspec):ps) =
         case vspec of
-          Nothing ->
+          AnyValue ->
             let pVal = lookup name . expParamsMatch
                 expSrt = L.sortBy (compare `on` pVal) exp
                 expGrps = L.groupBy ((==) `on` pVal) expSrt
@@ -393,10 +396,10 @@ withSugarGroups sweets mkGroup mkLeaf =
                   in mkGroup gn <$> mkParams sweet es ps
                 f [] = mkGroup (name <> " not specified") <$> mkParams sweet [] ps
             in sequence (f <$> expGrps)
-          Just vs -> let f v = mkGroup (name <> "=" <> v)
-                               <$> mkParams sweet (subExp v) ps
-                         subExp v = expMatching name v exp
-                     in sequence $ f <$> L.sort vs
+          SpecificValues vs -> let f v = mkGroup (name <> "=" <> v)
+                                         <$> mkParams sweet (subExp v) ps
+                                   subExp v = expMatching name v exp
+                               in sequence $ f <$> L.sort vs
 
       expMatching :: String -> String -> [Expectation] -> [Expectation]
       expMatching p v exp =

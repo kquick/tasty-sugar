@@ -143,14 +143,14 @@ rangedParam pname extractVal cmpVal targetVal cube sweets =
                 -- a parameter name that is not an actual parameter.  In this
                 -- case, just return the inputs.
                 id
-              Just Nothing ->
+              Just AnyValue ->
                 -- Cannot support ranges on existentials (parameters whose value
                 -- can be *anything*).  This can happen if the user specifies a
                 -- parameter name of this type.  In this case, there is no
                 -- meaningful range that can be predicted, so just return the
                 -- inputs
                 id
-              Just (Just vals) -> \exps ->
+              Just (SpecificValues vals) -> \exps ->
                 -- Iterate through the possible values to extract the
                 -- corresponding parameter value.  This may be a subset of the
                 -- actual values that could be encountered, but it at least

@@ -21,7 +21,7 @@ paramTests =
                       , rootName = "*.inp"
                       , separators = "-."
                       , expectedSuffix = "exp"
-                      , validParams = [ ("p1", Just [ "one", "two", "three" ]) ]
+                      , validParams = [ ("p1", SpecificValues [ "one", "two", "three" ]) ]
                       }
       chkExp res swNum expNum expF p1Match =
         safeElem expNum .expected <$> safeElem swNum res @?=
@@ -55,7 +55,7 @@ paramTests =
         , testCase "cubeParams" $ do
             (res, _) <- op
             cubeParams <$> (safeElem 0 res) @?=
-              Just [ ("p1", Just [ "one", "two", "three" ]) ]
+              Just [ ("p1", SpecificValues [ "one", "two", "three" ]) ]
 
         , testCase "num expecteds" $ do
             (res, _) <- op

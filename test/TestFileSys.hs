@@ -17,9 +17,9 @@ testInpPath = "test/data/single"
 testInpPath2 = "test/data/second"
 testInpPath3 = "test/builds/*"
 
-testParams = [ ("llvm", Just [ "llvm9", "llvm10", "llvm13" ])
-             , ("debug", Just [ "yes", "no" ])
-             , ("opt", Nothing )
+testParams = [ ("llvm", SpecificValues [ "llvm9", "llvm10", "llvm13" ])
+             , ("debug", SpecificValues [ "yes", "no" ])
+             , ("opt", AnyValue )
              ]
 
 sugarCube1 = mkCUBE

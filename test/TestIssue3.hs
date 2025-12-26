@@ -25,7 +25,7 @@ issue3Test1 = do
   let cube = mkCUBE { inputDirs = [testInpPath]
                     , rootName = "*.c"
                     , expectedSuffix = "c"
-                    , validParams = [ ("ver", Just ["42", "43"]) ]
+                    , validParams = [ ("ver", SpecificValues ["42", "43"]) ]
                     }
   sweets <- findSugar cube
   -- putStrLn $ show sweets

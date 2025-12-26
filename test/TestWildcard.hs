@@ -258,7 +258,7 @@ wildcardAssocTests =
                     { rootName = "*.ex"
                     , expectedSuffix = ".exp"
                     , inputDirs = [ testInpPath ]
-                    , validParams = [ ("dir", Just [ "right", "left" ]) ]
+                    , validParams = [ ("dir", SpecificValues [ "right", "left" ]) ]
                     , associatedNames = [ ("extern", "ex") ]
                     }
         p = (testInpPath </>)
@@ -269,7 +269,7 @@ wildcardAssocTests =
         sw m b f e = Sweets { rootBaseName = b
                             , rootMatchName = m
                             , rootFile = p f
-                            , cubeParams = [("dir", Just ["right", "left"])]
+                            , cubeParams = [("dir", SpecificValues ["right", "left"])]
                             , expected = e
                             }
     in [ sugarTestEq "correct found count" sugarCube sample1 1 length

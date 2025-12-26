@@ -32,12 +32,12 @@ import           Test.Tasty.Sugar.Iterations ( LogicI, eachFrom )
 getSinglePVals :: [NamedParamMatch] -> [ParameterPattern]
                -> LogicI ([NamedParamMatch], [(String, Maybe String)])
 getSinglePVals sel = fmap (fmap DL.sort) . foldM eachVal (mempty, mempty)
-  where eachVal (an,av) (pn, Nothing) =
+  where eachVal (an,av) (pn, AnyValue) =
           case filter ((pn ==) . fst) sel of
             [] -> return (an, (pn, Nothing) : av)
             pvsets -> do npv <- snd <$> eachFrom "assigned param value" pvsets
                          return ((pn, npv) : an, (pn, getParamVal npv) : av)
-        eachVal (an,av) (pn, Just pvs) =
+        eachVal (an,av) (pn, SpecificValues pvs) =
           case filter ((pn ==) . fst) sel of
             [] -> do pv <- eachFrom "assumed (non-root) param value" $ DL.sort pvs
                      return (an, (pn, Just pv) : av)

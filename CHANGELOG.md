@@ -1,5 +1,12 @@
 # Revision history for tasty-sugar
 
+## 2.3 -- 2026-01-03
+
+ * API change: the second field of the `ParameterPattern` field changed from
+   `Maybe [String]` to `ParameterValues`, which has constructors `AnyValue` or
+   `SpecificValues [String]`.
+   - To convert: `Nothing` -> `AnyValue` and `Just [..]` -> `SpecificValues [..]`
+
 ## 2.2.3.3 -- 2026-01-03
 
  * Fix to support matching multiple parameter values in a single candidate file.

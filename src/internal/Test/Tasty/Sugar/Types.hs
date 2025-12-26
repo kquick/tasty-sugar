@@ -155,14 +155,13 @@ data CUBE = CUBE
      -- each 'rootName' file: the test generator will be called for
      -- each set of parameters.
      --
-     -- Each entry in the 'validParams' specifies the name of the
-     -- parameter and the set of values; one (and only one) parameter
-     -- may have existential values rather than pre-determined values,
-     -- as indicated by a Nothing for the parameter value set.  Valid
-     -- parameter values are *not* matched with file globbing (they
-     -- must be explicit and precise matches) and they cannot be blank
-     -- (the lack of a parameter is handled automatically rather than
-     -- an explicit blank value).
+     -- Each entry in the 'validParams' specifies the name of the parameter and
+     -- the set of values or prefixes.  One (and only one) parameter may have
+     -- wildcard values rather than pre-determined values, as indicated by a
+     -- Nothing for the parameter value set.  Valid parameter values are *not*
+     -- matched with file globbing (they must be explicit and precise matches or
+     -- prefixes) and they cannot be blank (the lack of a parameter is handled
+     -- automatically rather than an explicit blank value).
    , validParams :: [ParameterPattern]
 
      -- | The 'sweetAdjuster' is used to post-process the Sweets found.  This can
@@ -197,7 +196,18 @@ instance Show CUBE where
 -- accepted for that parameter position.  Parameters are listed in the
 -- order that they should appear in the filenames to be matched.
 
-type ParameterPattern = (String, Maybe [String])
+type ParameterPattern = (String, ParameterValues)
+
+data ParameterValues = AnyValue | SpecificValues [String]
+  deriving (Show, Eq, Ord)
+
+isWildcardValue :: ParameterValues -> Bool
+isWildcardValue = (AnyValue ==)
+
+valuesFromParam :: ParameterValues -> [String]
+valuesFromParam = \case
+  AnyValue -> []
+  SpecificValues vs -> vs
 
 -- | Separators for the path and suffix specifications.  Any separator
 -- is accepted in any position between parameters and prior to the
@@ -256,10 +266,9 @@ prettyParamPatterns = \case
           (let pp (pn,mpv) =
                  pretty pn <+> equals <+>
                  case mpv of
-                   Nothing -> "*"
-                   Just vl -> hsep $
-                              L.intersperse pipe $
-                              map pretty vl
+                   AnyValue -> "*"
+                   SpecificValues vl ->
+                     hsep $ L.intersperse pipe $ map pretty vl
             in indent 1 $ vsep $ map pp prms)
 
 ----------------------------------------------------------------------

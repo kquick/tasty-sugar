@@ -86,29 +86,31 @@ main =
                          , expectedSuffix = "e"
                          , separators = "."
                          , associatedNames = []
-                         , validParams = [("a", Nothing)
-                                         ,("b", Nothing)
+                         , validParams = [("a", AnyValue)
+                                         ,("b", AnyValue)
                                          ]
                          }
              msg1 = "Only one parameter can have unconstrained values (i.e. Nothing)"
-             c2 = c1 { validParams = [("a", Just [])] }
+
+             c2 = c1 { validParams = [("a", SpecificValues [])] }
              msg2 = "Blank validParams values are not allowed (a)"
-             c3 = c1 { validParams = [("a", Just ["hi", ""])
-                                     ,("b", Just ["one", "two"])
-                                     ,("c", Just [""])]
+
+             c3 = c1 { validParams = [("a", SpecificValues ["hi", ""])
+                                     ,("b", SpecificValues ["one", "two"])
+                                     ,("c", SpecificValues [""])]
                      }
              msg3 = "Parameter values cannot be blank (a, c)"
 
-             c4 = c1 { validParams = [("a", Just ["hi", "two"])
-                                     ,("b", Just ["one", "two"])
-                                     ,("c", Just ["end"])]
+             c4 = c1 { validParams = [("a", SpecificValues ["hi", "two"])
+                                     ,("b", SpecificValues ["one", "two"])
+                                     ,("c", SpecificValues ["end"])]
                      }
              msg4 = "Parameter values cannot be duplicated " <>
                     show [(("a","b"), "two")]
 
-             c5 = c1 { validParams = [("a", Just ["two", "two"])
-                                     ,("b", Just ["one", "hi"])
-                                     ,("c", Just ["one"])]
+             c5 = c1 { validParams = [("a", SpecificValues ["two", "two"])
+                                     ,("b", SpecificValues ["one", "hi"])
+                                     ,("c", SpecificValues ["one"])]
                      }
              msg5 = "Parameter values cannot be duplicated " <>
                     show [ (("a","a"), "two")
@@ -116,9 +118,9 @@ main =
                          ]
 
              c6 = c1 { separators = ".-o"
-                     , validParams = [("a", Just ["two", "t"])
-                                     ,("b", Just [".1", "one", "hi.u"])
-                                     ,("c", Just ["o"])]
+                     , validParams = [("a", SpecificValues ["two", "t"])
+                                     ,("b", SpecificValues [".1", "one", "hi.u"])
+                                     ,("c", SpecificValues ["o"])]
                      }
              msg6 = "Parameter values cannot contain separators " <>
                     show ["a", "b", "b", "b", "c"]

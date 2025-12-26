@@ -16,8 +16,8 @@ cube = mkCUBE { inputDirs = [ "examples/params/samples" ]
                                   , ("haskell", "hs")
 ]
               , validParams = [
-                  ("optimization", Nothing)
-                  ,("c-compiler", Just ["gcc", "clang"])
+                  ("optimization", AnyValue)
+                  ,("c-compiler", SpecificValues ["gcc", "clang"])
                   ]
               }
 

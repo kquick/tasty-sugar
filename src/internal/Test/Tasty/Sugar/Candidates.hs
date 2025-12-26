@@ -18,7 +18,6 @@ where
 import           Control.Monad ( filterM, guard )
 import           Data.Bifunctor ( first )
 import qualified Data.List as DL
-import           Data.Maybe ( fromMaybe, isNothing )
 import           Numeric.Natural
 import           System.Directory ( doesDirectoryExist, getCurrentDirectory
                                   , listDirectory, doesDirectoryExist )
@@ -95,7 +94,7 @@ makeCandidate cube topDir subPath fName =
       -- single filename.
       pmatches = fst $ observeIAll
                  $ do p <- eachFrom "param for candidate" $ validParams cube
-                      v <- eachFrom "value for param" (fromMaybe [] (snd p))
+                      v <- eachFrom "value for param" $ valuesFromParam $ snd p
                       -- Note: there maybe multiple v values for a single p that
                       -- are matched in the name.  This is accepted here (and
                       -- this file presumably satisfies either with an Explicit
@@ -119,7 +118,7 @@ makeCandidate cube topDir subPath fName =
       -- pmatchArbitrary will find a parameter with an unspecified value and
       -- assigned otherwise unmatched portions of the filename to that parameter.
       pmatchArbitrary =
-        case DL.find (isNothing . snd) $ validParams cube of
+        case DL.find (isWildcardValue . snd) $ validParams cube of
           Nothing -> []
           Just (p,_) ->
             let chkRange = [(firstSep, fle)]

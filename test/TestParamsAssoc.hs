@@ -79,10 +79,10 @@ sugarCube = mkCUBE { inputDirs = [ testInpPath ]
                                        , ("haskell", "hs")
                                        ]
                    , validParams = [
-                       ("optimization", Nothing)
-                       ,("c-compiler", Just ["gcc", "clang"])
-                       ,("other", Just ["x"]) -- follows c-compiler
-                       ,("a param", Just ["y"]) -- preceeds c-compiler
+                       ("optimization", AnyValue)
+                       ,("c-compiler", SpecificValues ["gcc", "clang"])
+                       ,("other", SpecificValues ["x"]) -- follows c-compiler
+                       ,("a param", SpecificValues ["y"]) -- preceeds c-compiler
                        ]
                    }
 
