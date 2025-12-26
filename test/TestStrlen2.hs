@@ -114,7 +114,7 @@ strlen2SampleTests =
           m = "loopmerge"
       in do
         (sugar,sdesc) <- findSugarIn sugarCube (strlen2Samples sugarCube)
-        compareBags "expected" (expected $ head sugar)
+        compareBags "expected" (==) (expected $ head sugar)
           [
             exp2 "strlen_test2.boolector.loopmerge.good" (e "boolector") (e m)
             "strlen_test2.loopmerge.config"

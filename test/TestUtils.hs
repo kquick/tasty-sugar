@@ -4,8 +4,9 @@
 module TestUtils where
 
 import qualified Control.Exception as E
+import           Data.Function ( on )
 import qualified Data.List as L
-import           Data.Maybe ( catMaybes )
+import           Data.Maybe ( catMaybes, isNothing, isJust )
 import           Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
@@ -15,6 +16,7 @@ import           Test.Tasty.HUnit
 import           Text.Show.Pretty
 
 import           Test.Tasty.Sugar
+import           Test.Tasty.Sugar.Types
 
 
 genCube :: MonadGen m => m CUBE
@@ -54,21 +56,40 @@ safeElem idx lst = case drop idx lst of
                      [] -> Nothing
                      (e:_) -> Just e
 
-compareBags name gotBag expBag =
-  if gotBag `elem` L.permutations expBag
+eqParameterPatterns :: ParameterPattern -> ParameterPattern -> Bool
+eqParameterPatterns =
+  -- No comparison for ParameterPattern, but comparing the shown pretty
+  -- representation should be precise enough (this is just for testing...).
+  (==) `on` (show . prettyParamPattern)
+
+
+eqSweets :: Sweets -> Sweets -> Bool
+eqSweets s1 s2 = and [ rootBaseName s1 == rootBaseName s2
+                     , rootMatchName s1 == rootMatchName s2
+                     , rootFile s1 == rootFile s2
+                     , expected s1 == expected s2
+                     , eqListBy eqParameterPatterns (cubeParams s1) (cubeParams s2)
+                     ]
+
+eqListBy :: (a -> a -> Bool) -> [a] -> [a] -> Bool
+eqListBy fn l1 = and . fmap (uncurry fn) . zip l1
+
+compareBags :: Pretty a => String -> (a -> a -> Bool) -> [a] -> [a] -> IO ()
+compareBags name eqFn gotBag expBag =
+  if isJust $ L.find (eqListBy eqFn gotBag) $ L.permutations expBag
   then return ()
-  else mismatchedColl name gotBag expBag
+  else mismatchedColl name eqFn gotBag expBag
 
-
-mismatchedColl name gotBag expBag =
+mismatchedColl name eqFn gotBag expBag =
        let expCnt = length expBag
            gotCnt = length gotBag
-           uGot = L.nub gotBag
-           expUCnt = length $ L.nub expBag
+           uGot = L.nubBy eqFn gotBag
+           expUCnt = length $ L.nubBy eqFn expBag
            gotUCnt = length $ uGot
-           expUnique = L.filter (not . flip elem gotBag) expBag
-           gotUnique = L.filter (not . flip elem expBag) gotBag
-           nMatches = length $ L.filter (flip elem expBag) gotBag
+           inOtherBag bag e = isJust $ L.find (eqFn e) bag
+           expUnique = L.filter (not . inOtherBag gotBag) expBag
+           gotUnique = L.filter (not . inOtherBag expBag) gotBag
+           nMatches = length $ L.filter (inOtherBag expBag) gotBag
            plural n sing plu = show n <> " " <> if n == 1 then sing else plu
            showEnt nm ent = Just $ unwords [ "Unmatched", nm, "entry:"
                                            , show $ pretty ent
@@ -106,7 +127,7 @@ mismatchedColl name gotBag expBag =
                                                    , "copies of"
                                                    , show $ pretty e
                                                    ])
-                              nCopies e = length $ filter (== e) gotBag
+                              nCopies e = length $ filter (eqFn e) gotBag
                           in fmap showDup uGot)
           , if 0 == nMatches
             then Just "no common matches AT ALL"

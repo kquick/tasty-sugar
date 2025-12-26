@@ -38,7 +38,7 @@ singleAssocTests =
 
   , testCase "results" $ do
       (sugar1,_s1desc) <- findSugarIn sugarCube (sample1 sugarCube testInpPath)
-      compareBags "results" sugar1 $
+      compareBags "results" eqSweets sugar1 $
         let p = (testInpPath </>)
             exp1 e a f x =
               Expectation { expectedFile = p e

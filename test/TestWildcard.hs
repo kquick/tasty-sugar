@@ -97,7 +97,7 @@ wildcardAssocTests =
        -- n.b. cow.moo is not matched because there is no separator in cow.mooexp
        , testCase "full results" $ do
            (sweets, _desc) <- findSugarIn sugarCube (sample1 sugarCube)
-           compareBags "default result" sweets
+           compareBags "default result" eqSweets sweets
              [ sw "foo"      "foo"      "foo"      [ expE "foo.exp" "foo.ex" ]
              , sw "foo.ex"   "foo"      "foo.ex"   [ exp "foo.exp" ]
              , sw "bar."     "bar"      "bar."     [ expE "bar.exp" "bar-ex" ]
@@ -114,7 +114,7 @@ wildcardAssocTests =
            (sweets, _desc) <- findSugarIn (sugarCube
                                            { sweetAdjuster = const (return . distinctResults) })
                               (sample1 sugarCube)
-           compareBags "default result" sweets
+           compareBags "default result" eqSweets sweets
              [ sw "foo"      "foo"      "foo"      [ expE "foo.exp" "foo.ex" ]
              , sw "foo.ex"   "foo"      "foo.ex"   [ exp "foo.exp" ]
              , sw "bar."     "bar"      "bar."     [ expE "bar.exp" "bar-ex" ]
@@ -155,7 +155,7 @@ wildcardAssocTests =
          -- expectedSuffix that is not a known separator
        , testCase "full results" $ do
            (sweets, _desc) <- findSugarIn sugarCube (sample1 sugarCube)
-           compareBags "default result" sweets
+           compareBags "default result" eqSweets sweets
              [ sw "bar."    "bar."    "bar."    [ exp "bar.exp" ]
              , sw "cow.moo" "cow.moo" "cow.moo" [ expE "cow.mooexp" "cow.mooex" ]
              ]
@@ -204,7 +204,7 @@ wildcardAssocTests =
           -- n.b. cow.moo is not matched because there is no separator in cow.mooexp
         , testCase "full results" $ do
             (sweets, _desc) <- findSugarIn sugarCube (sample1 sugarCube)
-            compareBags "default result" sweets
+            compareBags "default result" eqSweets sweets
               [ sw "foo"    "foo" "foo"    [ expE "foo.exp" "foo.ex" ]
               , sw "foo.ex" "foo" "foo.ex" [ exp "foo.exp" ]
               , sw "bar."   "bar" "bar."   [ expE "bar.exp" "bar-ex" ]
@@ -243,7 +243,7 @@ wildcardAssocTests =
          \sugar -> length [ x | x <- sugar, rootMatchName x == "foo.ex" ]
        , testCase "full results" $ do
            (sweets, _desc) <- findSugarIn sugarCube (sample1 sugarCube)
-           compareBags "default result" sweets
+           compareBags "default result" eqSweets sweets
              [ sw "foo.ex" "foo" "foo.ex" [ exp "foo.exp" ]
              ]
        ]
@@ -277,7 +277,7 @@ wildcardAssocTests =
          \sugar -> length [ x | x <- sugar, rootMatchName x == "foo.ex" ]
        , testCase "full results" $ do
            (sweets, _desc) <- findSugarIn sugarCube (sample1 sugarCube)
-           compareBags "default result" sweets
+           compareBags "default result" eqSweets sweets
              [ sw "foo.ex" "foo" "foo.ex"
                [ exp "foo.exp"       (Assumed "left")
                , exp "foo.right.exp" (Explicit "right")

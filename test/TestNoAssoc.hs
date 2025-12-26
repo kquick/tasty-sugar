@@ -118,7 +118,7 @@ noAssocTests =
            a = Assumed
        in do
          (sugar1, _desc) <- findSugarIn sugarCube (sample1 sugarCube testInpPath)
-         compareBags "results" sugar1
+         compareBags "results" eqSweets sugar1
            [
              Sweets
              { rootMatchName = "global-max-good.c"

@@ -56,7 +56,7 @@ gcdSampleTests =
 
   , testCase "Expectations" $ do
       (sugar,_sdesc) <- findSugarIn sugarCube (gcdSamples sugarCube)
-      compareBags "expected" (expected $ head sugar) $
+      compareBags "expected" (==) (expected $ head sugar) $
         let p = (testInpPath </>)
             exp e s l c o =
               Expectation
