@@ -184,7 +184,7 @@ instance Show CUBE where
     , Just $ "expectedSuffix=" <> show (expectedSuffix c)
     , Just $ "separators=" <> show (separators c)
     , Just $ "associatedNames=" <> show (associatedNames c)
-    , Just $ "validParams=" <> show (validParams c)
+    , Just $ "validParams=" <> show (prettyParamPatterns $ validParams c)
     , Just "}"
     ]
 
@@ -199,7 +199,7 @@ instance Show CUBE where
 type ParameterPattern = (String, ParameterValues)
 
 data ParameterValues = AnyValue | SpecificValues [String]
-  deriving (Show, Eq, Ord)
+  deriving (Eq, Ord)
 
 isWildcardValue :: ParameterValues -> Bool
 isWildcardValue = (AnyValue ==)
@@ -332,7 +332,7 @@ data Sweets = Sweets
   , cubeParams :: [ParameterPattern] -- ^ parameters for match
   , expected :: [Expectation] -- ^ all expected files and associated
   }
-  deriving (Show, Eq)
+  deriving (Eq)
 
 instance Pretty Sweets where
   pretty inp = "Sweet" <+>
