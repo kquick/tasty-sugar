@@ -9,6 +9,7 @@ import           Data.Maybe ( catMaybes )
 import           Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
+import           Prettyprinter
 import qualified Test.Tasty as TT
 import           Test.Tasty.HUnit
 import           Text.Show.Pretty
@@ -70,7 +71,7 @@ mismatchedColl name gotBag expBag =
            nMatches = length $ L.filter (flip elem expBag) gotBag
            plural n sing plu = show n <> " " <> if n == 1 then sing else plu
            showEnt nm ent = Just $ unwords [ "Unmatched", nm, "entry:"
-                                           , ppShow ent
+                                           , show $ pretty ent
                                            ]
        in assertFailure $
           unlines $ catMaybes $
@@ -103,7 +104,7 @@ mismatchedColl name gotBag expBag =
                           let showDup e = unwords ([ "\n"
                                                    , show $ nCopies e
                                                    , "copies of"
-                                                   , ppShow e
+                                                   , show $ pretty e
                                                    ])
                               nCopies e = length $ filter (== e) gotBag
                           in fmap showDup uGot)
