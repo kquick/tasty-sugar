@@ -262,14 +262,17 @@ prettyAssocNames = \case
 prettyParamPatterns :: [ParameterPattern] -> Maybe (Doc ann)
 prettyParamPatterns = \case
   [] -> Nothing
-  prms -> Just $ "params:" <>
-          (let pp (pn,mpv) =
-                 pretty pn <+> equals <+>
-                 case mpv of
-                   AnyValue -> "*"
-                   SpecificValues vl ->
-                     hsep $ L.intersperse pipe $ map pretty vl
-            in indent 1 $ vsep $ map pp prms)
+  prms -> Just $ "params:" <> (indent 1 $ vsep $ map prettyParamPattern prms)
+
+
+-- | Pretty printing for a list of parameter patterns
+prettyParamPattern :: ParameterPattern -> Doc ann
+prettyParamPattern (pn, mpv) =
+  pretty pn <+> equals <+>
+  case mpv of
+    AnyValue -> "*"
+    SpecificValues vl -> hsep $ L.intersperse pipe $ map pretty vl
+
 
 ----------------------------------------------------------------------
 
