@@ -11,12 +11,18 @@ module Test.Tasty.Sugar.ParamCheck
   , pmatchCmp
   , pmatchMax
   , isCompatible
+  , PValue(..)
+  , eachPValueFromParameter
+  , pValueSamePrefixLen
+  , pValueMatch
   )
   where
 
 import           Control.Monad
 import           Data.Function ( on )
 import qualified Data.List as DL
+import           Data.Maybe ( fromMaybe )
+import           Numeric.Natural ( Natural )
 
 import           Test.Tasty.Sugar.Types
 import           Test.Tasty.Sugar.Iterations ( LogicI, eachFrom )
@@ -109,3 +115,28 @@ isCompatible pvals candidatFile =
         let nps = filter ((n ==) . fst) $ candidatePMatch candidatFile
         in null nps || any ((`isCompatParamV` mbv) . snd) nps
   in all isCompatParam pvals
+
+----------------------------------------------------------------------
+
+data PValue = SpecificValue String
+            | PfxMatchValue String (String -> Maybe Natural)
+
+instance Show PValue where
+  show = \case
+    SpecificValue s -> s
+    PfxMatchValue p _ -> p <> "..."
+
+eachPValueFromParameter :: ParameterValues -> [PValue]
+eachPValueFromParameter = \case
+  AnyValue -> error "invalid to request pValues from an AnyValue parameter!"
+  SpecificValues vs -> (SpecificValue <$> DL.sort vs)
+
+pValueSamePrefixLen :: PValue -> String -> Maybe Natural
+pValueSamePrefixLen = \case
+  SpecificValue v -> \m -> let vl = DL.genericLength v
+                           in if v == DL.take (fromEnum vl) m
+                              then Just vl else Nothing
+
+pValueMatch :: PValue -> ParamMatch -> Bool
+pValueMatch = \case
+  SpecificValue v -> (Just v ==) . getParamVal

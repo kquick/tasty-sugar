@@ -52,6 +52,7 @@
 --
 -- See the README for more information.
 
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-deprecations #-}
 
@@ -118,6 +119,8 @@ import           Test.Tasty.Options
 import Test.Tasty.Sugar.Analysis
 import Test.Tasty.Sugar.Candidates
 import Test.Tasty.Sugar.Ranged ( rangedParamAdjuster )
+import Test.Tasty.Sugar.ParamCheck ( PValue(..)
+                                   , eachPValueFromParameter, pValueMatch )
 import Test.Tasty.Sugar.Report
 import Test.Tasty.Sugar.Types
 
@@ -260,7 +263,10 @@ findSugarIn' pat allFiles =
                    -> [ParameterPattern]
                    -> Either String [ParameterPattern]
     paramsAreValid seps p =
-      let existential = filter (isWildcardValue . snd) p
+      let wildcards = filter (isWildcardValue . snd) p
+          valuesFromParam = \case
+            AnyValue -> []
+            SpecificValues vs -> vs
           blankVals = filter (null . valuesFromParam . snd)
                       $ filter (not . isWildcardValue . snd) p
           emptyVal = filter (or . fmap null . valuesFromParam . snd) p
@@ -291,7 +297,7 @@ findSugarIn' pat allFiles =
             let notSwapped ((a',b'),_) = not $ or [ a == a' && b == b'
                                                   , a == b' && b == a' ]
             in e : rmvOrderSwapped (filter notSwapped es)
-      in do when (length existential > 1) $
+      in do when (length wildcards > 1) $
               Left "Only one parameter can have unconstrained values (i.e. Nothing)"
             unless (null blankVals) $
               Left ("Blank validParams values are not allowed (" <>
@@ -396,13 +402,13 @@ withSugarGroups sweets mkGroup mkLeaf =
                   in mkGroup gn <$> mkParams sweet es ps
                 f [] = mkGroup (name <> " not specified") <$> mkParams sweet [] ps
             in sequence (f <$> expGrps)
-          SpecificValues vs -> let f v = mkGroup (name <> "=" <> v)
+          SpecificValues vs -> let f v = mkGroup (name <> "=" <> show v)
                                          <$> mkParams sweet (subExp v) ps
-                                   subExp v = expMatching name v exp
+                                   subExp v = expMatching name (SpecificValue v) exp
                                in sequence $ f <$> L.sort vs
 
-      expMatching :: String -> String -> [Expectation] -> [Expectation]
+      expMatching :: String -> PValue -> [Expectation] -> [Expectation]
       expMatching p v exp =
-        filter (\e -> maybe False (paramMatchVal v) (lookup p (expParamsMatch e))) exp
+        filter (\e -> maybe False (pValueMatch v) (lookup p (expParamsMatch e))) exp
 
   in mapM mkSweetTests $ L.sortBy (compare `on` rootMatchName) sweets

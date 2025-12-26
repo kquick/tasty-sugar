@@ -218,10 +218,6 @@ ordParameterValues = \case
     AnyValue -> LT
     SpecificValues vs2 -> compare vs1 vs2
 
-valuesFromParam :: ParameterValues -> [String]
-valuesFromParam = \case
-  AnyValue -> []
-  SpecificValues vs -> vs
 
 -- | Separators for the path and suffix specifications.  Any separator
 -- is accepted in any position between parameters and prior to the

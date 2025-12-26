@@ -18,6 +18,7 @@ where
 import           Control.Monad ( filterM, guard )
 import           Data.Bifunctor ( first )
 import qualified Data.List as DL
+import           Data.Maybe ( isJust, fromMaybe )
 import           Numeric.Natural
 import           System.Directory ( doesDirectoryExist, getCurrentDirectory
                                   , listDirectory, doesDirectoryExist )
@@ -26,6 +27,7 @@ import           System.FilePath ( (</>), isRelative, makeRelative
 
 import           Test.Tasty.Sugar.Iterations
 import           Test.Tasty.Sugar.Types
+import           Test.Tasty.Sugar.ParamCheck ( eachPValueFromParameter, pValueSamePrefixLen )
 
 
 -- | Given a CUBE and a target directory, find all files in that directory and
@@ -94,28 +96,35 @@ makeCandidate cube topDir subPath fName =
       -- single filename.
       pmatches = fst $ observeIAll
                  $ do p <- eachFrom "param for candidate" $ validParams cube
-                      v <- eachFrom "value for param" $ valuesFromParam $ snd p
                       guard (not $ isWildcardValue $ snd p)
+                      v <- eachFrom "parameter value" $ eachPValueFromParameter $ snd p
                       -- Note: there maybe multiple v values for a single p that
                       -- are matched in the name.  This is accepted here (and
                       -- this file presumably satisfies either with an Explicit
                       -- match).
-                      let vl = DL.length v
                       i <- eachFrom "param starts"
                            $ DL.findIndices (`elem` (separators cube)) fName
                       let vs = i + 1
-                      let ve = vs + vl
-                      let chkStart = do guard $ v `elem` subPath
-                                        return ((fst p, Explicit v), (0, 0))
-                      if and [ ve + 1 < fl  -- v fits in fName[i..]
-                             , v == DL.take vl (DL.drop vs fName)
-                             ]
-                         then case DL.drop ve fName of
-                                (fnc:_) -> if fnc `elem` (separators cube)
-                                           then return ((fst p, Explicit v), (toEnum vs, ve))
-                                           else chkStart
-                                [] -> chkStart
-                         else chkStart
+                      let fv = DL.drop vs fName
+                      let pvm = pValueSamePrefixLen v
+                      let chkStart =
+                            do let vsps = zip subPath (pvm <$> subPath)
+                               vsp <- eachFrom "filepath param candidate" vsps
+                               guard $ and [ isJust $ snd vsp
+                                           , DL.genericLength (fst vsp) == fromMaybe 0 (snd vsp)
+                                           ]
+                               return ((fst p, Explicit (fst vsp)), (0, 0))
+                      case pvm fv of
+                         Just ve ->
+                           case DL.drop (fromEnum ve) fv of
+                             (fnc:_) ->
+                               if fnc `elem` (separators cube)
+                               then return ((fst p
+                                            , Explicit $ DL.take (fromEnum ve) fv),
+                                             (toEnum vs, vs+(fromEnum ve)))
+                               else chkStart
+                             [] -> chkStart
+                         Nothing -> chkStart
       -- pmatchArbitrary will find a parameter with an unspecified value and
       -- assigned otherwise unmatched portions of the filename to that parameter.
       pmatchArbitrary =
