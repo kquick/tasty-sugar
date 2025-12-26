@@ -95,6 +95,7 @@ makeCandidate cube topDir subPath fName =
       pmatches = fst $ observeIAll
                  $ do p <- eachFrom "param for candidate" $ validParams cube
                       v <- eachFrom "value for param" $ valuesFromParam $ snd p
+                      guard (not $ isWildcardValue $ snd p)
                       -- Note: there maybe multiple v values for a single p that
                       -- are matched in the name.  This is accepted here (and
                       -- this file presumably satisfies either with an Explicit
