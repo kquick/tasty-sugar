@@ -112,6 +112,12 @@ paramsAssocTests =
                             $ do (ss, _desc) <- findSugarIn sugarCube (sample sugarCube)
                                  let s = safeElem sn ss
                                  (safeElem n . expected =<< s) @?= Just (g f c o)
+      chkParams sn n f w =
+        testCase n
+        $ do (ss, _desc) <- findSugarIn sugarCube (sample sugarCube)
+             let s = safeElem sn ss
+             let cp = maybe (error "fail") cubeParams s
+             assertBool "same params" $ eqListBy eqParameterPatterns cp w
   in [ testCase "valid sample" $ 36 @=? length (sample sugarCube)
 
      , TT.testGroup "candidates"
@@ -166,7 +172,7 @@ paramsAssocTests =
 
      , let sweetNum = 6
            chkF = chkFld sweetNum
-           chkP = chkFld sweetNum
+           chkP = chkParams sweetNum
            chkE = chkExp sweetNum (mkEr p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
@@ -180,7 +186,7 @@ paramsAssocTests =
 
      , let sweetNum = 9
            chkF = chkFld sweetNum
-           chkP = chkFld sweetNum
+           chkP = chkParams sweetNum
            chkE = chkExp sweetNum (mkEc p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
@@ -197,7 +203,7 @@ paramsAssocTests =
 
      , let sweetNum = 10
            chkF = chkFld sweetNum
-           chkP = chkFld sweetNum
+           chkP = chkParams sweetNum
            chkE = chkExp sweetNum (mkEc p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
@@ -214,7 +220,7 @@ paramsAssocTests =
 
      , let sweetNum = 11
            chkF = chkFld sweetNum
-           chkP = chkFld sweetNum
+           chkP = chkParams sweetNum
            chkE = chkExp sweetNum (mkEc p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
@@ -233,7 +239,7 @@ paramsAssocTests =
          -- result in different Expectations.
      , let sweetNum = 8
            chkF = chkFld sweetNum
-           chkP = chkFld sweetNum
+           chkP = chkParams sweetNum
            chkE = chkExp sweetNum (mkEc p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
@@ -255,7 +261,7 @@ paramsAssocTests =
          -- supply a potential value for this parameter.
      , let sweetNum = 7
            chkF = chkFld sweetNum
-           chkP = chkFld sweetNum
+           chkP = chkParams sweetNum
            chkE = chkExp sweetNum (mkEc p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
@@ -277,7 +283,7 @@ paramsAssocTests =
        -- (sorted).
      , let sweetNum = 0
            chkF = chkFld sweetNum
-           chkP = chkFld sweetNum
+           chkP = chkParams sweetNum
            chkE n cs ca f c = chkExp sweetNum (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
@@ -295,7 +301,7 @@ paramsAssocTests =
        -- name).
      , let sweetNum = 1
            chkF = chkFld sweetNum
-           chkP = chkFld sweetNum
+           chkP = chkParams sweetNum
            chkE n cs ca f c = chkExp sweetNum (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
@@ -312,7 +318,7 @@ paramsAssocTests =
        -- other side.
      , let sweetNum = 4
            chkF = chkFld sweetNum
-           chkP = chkFld sweetNum
+           chkP = chkParams sweetNum
            chkE n cs ca f c = chkExp sweetNum (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
@@ -328,7 +334,7 @@ paramsAssocTests =
        -- This is the same as beta, but with a higher-precedence parameter
      , let sweetNum = 2
            chkF = chkFld sweetNum
-           chkP = chkFld sweetNum
+           chkP = chkParams sweetNum
            chkE n cs ca f c = chkExp sweetNum (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
@@ -346,7 +352,7 @@ paramsAssocTests =
        -- other side.
      , let sweetNum = 3
            chkF = chkFld sweetNum
-           chkP = chkFld sweetNum
+           chkP = chkParams sweetNum
            chkE n cs ca f c = chkExp sweetNum (mkE' [] cs ca p) n f c NotSpecified
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
@@ -362,7 +368,7 @@ paramsAssocTests =
 
      , let sweetNum = 5
            chkF = chkFld sweetNum
-           chkP = chkFld sweetNum
+           chkP = chkParams sweetNum
            chkE = chkExp sweetNum (mkE' [("c-source", p "gcc/hole-here.c")] Assumed Assumed p)
        in TT.testGroup ("Sweet #" <> show sweetNum)
           [
