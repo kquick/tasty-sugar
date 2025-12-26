@@ -1,9 +1,9 @@
 module Main where
 
+import Prettyprinter
 import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.Sugar
-import Text.Show.Pretty
 
 
 cube :: CUBE
@@ -50,7 +50,7 @@ main =
                           if f == "examples/params/samples/simple.noopt.gcc.exe"
                           then runCTestOn f
                           else runUnexpTestOn sweets expectation f
-         putStrLn $ ppShow sweets
+         putStrLn $ show $ pretty sweets
          r @?= e
      defaultMainWithIngredients ingredients $ testGroup "elf" elfTests
 
@@ -64,4 +64,4 @@ runHaskellTestOn :: FilePath -> IO String
 runHaskellTestOn _ = return "Haskell expected"
 
 runUnexpTestOn :: Sweets -> Expectation -> FilePath -> IO String
-runUnexpTestOn s e _ = return $ "unassociated " <> (ppShow s) <> " to " <> (show e)
+runUnexpTestOn s e _ = return $ "unassociated " <> (show $ pretty s) <> " to " <> (show e)

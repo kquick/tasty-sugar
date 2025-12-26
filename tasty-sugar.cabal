@@ -204,7 +204,7 @@ test-suite test-params
                     -threaded -with-rtsopts=-N
   main-is:          test-params.hs
   build-depends: base < 5
-               , pretty-show
+               , prettyprinter
                , tasty
                , tasty-hunit
                , tasty-sugar
