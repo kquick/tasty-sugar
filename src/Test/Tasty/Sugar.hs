@@ -281,7 +281,7 @@ findSugarIn' pat allFiles =
                return ((fst p1, fst p2), pv)
           sepVals = observeAll $
                     do (n,vl) <- choose p
-                       guard (vl /= AnyValue)
+                       guard (not $ isWildcardValue vl)
                        v <- choose $ valuesFromParam vl
                        s <- choose seps
                        guard (s `elem` v)

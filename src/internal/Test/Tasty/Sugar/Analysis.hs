@@ -57,7 +57,7 @@ checkRoot :: CUBE
           -> CandidateFile  --  root path
           -> (([Sweets], [SweetExplanation]), IterStat)
 checkRoot pat allFiles rootF =
-  let params = L.sort $ validParams pat
+  let params = L.sortBy ordParameterPattern $ validParams pat
       combineExpRes (swts, expl) = bimap (swts :) (expl :)
 
       roots = [ ( candidatePMatch rootF

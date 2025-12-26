@@ -199,10 +199,24 @@ instance Show CUBE where
 type ParameterPattern = (String, ParameterValues)
 
 data ParameterValues = AnyValue | SpecificValues [String]
-  deriving (Eq, Ord)
 
 isWildcardValue :: ParameterValues -> Bool
-isWildcardValue = (AnyValue ==)
+isWildcardValue = \case
+  AnyValue -> True
+  _ -> False
+
+ordParameterPattern :: ParameterPattern -> ParameterPattern -> Ordering
+ordParameterPattern a b = (compare `on` fst) a b
+                          <> (ordParameterValues `on` snd) a b
+
+ordParameterValues :: ParameterValues -> ParameterValues -> Ordering
+ordParameterValues = \case
+  AnyValue -> \case
+    AnyValue -> EQ
+    _ -> GT  -- wildcards to the end
+  SpecificValues vs1 -> \case
+    AnyValue -> LT
+    SpecificValues vs2 -> compare vs1 vs2
 
 valuesFromParam :: ParameterValues -> [String]
 valuesFromParam = \case
@@ -332,7 +346,6 @@ data Sweets = Sweets
   , cubeParams :: [ParameterPattern] -- ^ parameters for match
   , expected :: [Expectation] -- ^ all expected files and associated
   }
-  deriving (Eq)
 
 instance Pretty Sweets where
   pretty inp = "Sweet" <+>
