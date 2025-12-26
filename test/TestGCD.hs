@@ -8,6 +8,7 @@ import           System.FilePath ( (</>) )
 import qualified Test.Tasty as TT
 import           Test.Tasty.HUnit
 import           Test.Tasty.Sugar
+import           Test.Tasty.Sugar.Types ( prettyParamPatterns )
 import           TestUtils
 import           Text.RawString.QQ
 
@@ -52,7 +53,10 @@ gcdSampleTests =
       step "rootFile"
       (rootFile <$> sugar) @?= [ testInpPath </> "gcd-test.c" ]
       step "cubeParams"
-      (cubeParams <$> sugar) @?= [ validParams sugarCube ]
+      -- Compare via pretty output so that Eq instances are not required on the
+      -- ParamPatterns.
+      (show . prettyParamPatterns . cubeParams <$> sugar) @?=
+        [ show $ prettyParamPatterns $ validParams sugarCube ]
 
   , testCase "Expectations" $ do
       (sugar,_sdesc) <- findSugarIn sugarCube (gcdSamples sugarCube)

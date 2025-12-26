@@ -3,6 +3,7 @@ module TestParams ( paramTests ) where
 import qualified Test.Tasty as TT
 import           Test.Tasty.HUnit
 import           Test.Tasty.Sugar
+import           Test.Tasty.Sugar.Types ( prettyParamPatterns )
 import           TestUtils
 
 
@@ -54,8 +55,8 @@ paramTests =
 
         , testCase "cubeParams" $ do
             (res, _) <- op
-            cubeParams <$> (safeElem 0 res) @?=
-              Just [ ("p1", SpecificValues [ "one", "two", "three" ]) ]
+            (show . prettyParamPatterns . cubeParams <$> safeElem 0 res)
+              @?= Just "Just params: p1 = one | two | three"
 
         , testCase "num expecteds" $ do
             (res, _) <- op

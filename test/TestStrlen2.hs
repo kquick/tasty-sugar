@@ -8,6 +8,7 @@ import           System.FilePath ( (</>) )
 import qualified Test.Tasty as TT
 import           Test.Tasty.HUnit
 import           Test.Tasty.Sugar
+import           Test.Tasty.Sugar.Types ( prettyParamPatterns )
 import           TestUtils
 import           Text.RawString.QQ
 
@@ -96,7 +97,10 @@ strlen2SampleTests =
         step "rootFile"
         (rootFile <$> sugar) @?= [ testInpPath </> "strlen_test2.c" ]
         step "cubeParams"
-        (cubeParams <$> sugar) @?= [ validParams sugarCube ]
+        -- Compare via pretty output so that Eq instances are not required on the
+        -- ParamPatterns.
+        (show . prettyParamPatterns . cubeParams <$> sugar) @?=
+          [ show $ prettyParamPatterns $ validParams sugarCube ]
 
     , testCase "Expectations" $
       let p = (testInpPath </>)
