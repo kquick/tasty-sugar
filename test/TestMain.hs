@@ -7,7 +7,7 @@ module Main where
 
 import           Control.Exception ( SomeException, try )
 import           Control.Monad
-import           Data.Bifunctor ( bimap )
+import           Data.Bifunctor ( bimap, first )
 import qualified Hedgehog as HH
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -162,7 +162,7 @@ main =
 
 
 runTestOrErr :: CUBE -> IO (Either String String)
-runTestOrErr c = bimap (head . lines . show) show <$>
+runTestOrErr c = bimap (head . lines . show) (show . first (fmap pretty)) <$>
                  (try (do !r <- findSugarIn c []
                           -- the following is to force the evaluation of
                           -- findSugarIn within the try context.  If this isn't
