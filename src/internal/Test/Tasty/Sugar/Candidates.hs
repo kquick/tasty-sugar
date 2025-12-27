@@ -153,6 +153,7 @@ makeCandidate cube topDir subPath fName =
                   in (, (0,0)) <$> filter (not . (`elem` pvals) . Just) subPath
             in (first ((p,) . Explicit)) <$> (holeVals <> dirVals)
       pAll = pmatches <> pmatchArbitrary
+
       dropSeps i =
         let lst = last $ DL.group $ DL.take (fromEnum i) fName
         in case lst of
@@ -160,10 +161,13 @@ makeCandidate cube topDir subPath fName =
                        then i - (toEnum (length lst) - 1)
                        else i
              _ -> i
+
       mtchIdx = dropSeps
                 $ minimum
                 $ toEnum fle
-                : filter (/= 0) (fst . snd <$> pAll)
+                : filter (/= 0)  -- remove subdirs portions of matches
+                  (fst . snd <$> pAll)
+
   in CandidateFile { candidateDir = topDir
                    , candidateSubdirs = subPath
                    , candidateFile = fName
@@ -212,11 +216,11 @@ candidateToPath c =
 candidateMatchPrefix :: Separators -> CandidateFile -> CandidateFile -> Bool
 candidateMatchPrefix seps mf cf =
   let mStart = candidateFile mf
-      mStartLen = length mStart
+      mStartLen = DL.genericLength mStart
       f = candidateFile cf
       pfxlen = let cl = candidateMatchIdx cf
-               in if fromEnum cl == length f
-                  then if null seps then toEnum mStartLen else cl
+               in if cl == DL.genericLength f
+                  then if null seps then mStartLen else cl
                   else cl - 1
   in mStart == DL.take (fromEnum pfxlen) f
 

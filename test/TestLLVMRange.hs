@@ -3,7 +3,7 @@ module TestLLVMRange ( llvmRangeTests ) where
 
 import           Control.Applicative
 import           Control.Monad.Trans.Writer
-import           Data.Function ( on )
+import           Data.Function ( on, (&) )
 import qualified Data.List as L
 import           Data.Maybe
 import           System.FilePath ( (</>), takeFileName )
@@ -204,9 +204,12 @@ llvmRange2 (mode, matchClang) = do
                     -- which (by convention) is the default match.  Also, for
                     -- T847-fail2.c there are two defaults, the second is the 5th
                     -- original entry.
-                    tail $ if rootMatchName sweet == "T847-fail2.c"
-                           then take 5 baseExps <> drop 6 baseExps
-                           else baseExps
+                    (if rootMatchName sweet == "T847-fail2.c"
+                     then take 5 baseExps <> drop 6 baseExps
+                     else baseExps
+                    ) & \case
+                    [] -> error "expected non-empty baseExps list"
+                    (_:t) -> t
                   "ranged" ->
                     -- Since there's no default, there are no expectations
                     -- generated if the local clang version is 14 or above

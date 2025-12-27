@@ -8,7 +8,7 @@ module Test.Tasty.Sugar.Ranged
   )
 where
 
-import           Control.Applicative ( liftA2 )
+import           Control.Applicative ( liftA2 ) -- n.b. moved to Prelude in GHC 9.12
 import           Control.Monad.IO.Class ( MonadIO )
 import           Data.Function ( on )
 import qualified Data.List as L
@@ -53,13 +53,13 @@ import           Test.Tasty.Sugar.Types
 -- these two expectations.  The callback might check the actual version of clang
 -- available to run in the environment.  If it detected clang version 10 was
 -- available, the best file would be the @foo-pre_clang11.good@, even though the
--- parameters didn't mention @clang9@ and the @foo.good@ would be the usual match
+-- parameters didn't mention @clang10@ and the @foo.good@ would be the usual match
 -- to pick when there was no explicit match.
 --
 -- To handle this case, the 'rangedParam' function is used to filter the sweets,
 -- and is also given the version of clang locally available:
 --
--- > let rangedSweets = rangedParam "clang-range" extract (<=) (Just "9") sweets
+-- > let rangedSweets = rangedParam "clang-range" extract (<=) (Just "10") sweets
 -- >     extract = readMaybe . drop (length "pre-clang")
 -- > withSugarGroups rangedSweets TT.testGroup $ \sweet instnum exp ->
 -- >   ... generate test ...
@@ -131,8 +131,8 @@ rangedParam pname extractVal cmpVal targetVal cube sweets =
       expInRange =
         case targetVal of
           Nothing ->
-            -- User did not specify which target version of clang was desired.
-            -- Iterate through the possible parameter values, extract the version
+            -- User did not specify which target version was desired.  Iterate
+            -- through the possible parameter values, extract the version
             -- associated with each, and return the expectations that would have
             -- been chosen for that version.  Also use a version that is the succ
             -- of the highest and the pred of the lowest, to ensure
@@ -162,8 +162,8 @@ rangedParam pname extractVal cmpVal targetVal cube sweets =
                       Nothing -> filter notRange exps
                       Just v -> expInRangeFor v exps
                     vals' = Set.fromList (extractVal <$> vals)
-                            -- Use a Set to eliminate duplicates, especially of
-                            -- Nothing results.
+                            --  ^ Use a Set to eliminate duplicates, especially
+                            --    of Nothing results.
                     vals'' = let vs = Nothing `Set.delete` vals'
                                  lower = pred <$> minimum vs
                                  higher = succ <$> maximum vs
@@ -171,7 +171,7 @@ rangedParam pname extractVal cmpVal targetVal cube sweets =
                                 then vs
                                 else lower `Set.insert` (higher `Set.insert` vs)
                 in Set.toList $ Set.unions
-                   -- Set operations combine/eliminate identical results
+                   --  ^ Set operations combine/eliminate identical results
                    $ foldr (Set.insert . Set.fromList . withPVal) mempty vals''
           Just tv -> expInRangeFor tv
 
