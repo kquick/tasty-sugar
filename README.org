@@ -401,6 +401,32 @@
 # 
 #     KWQ...
 
+** Parameter matching
+
+  There are three forms of matching against the different parameters that may
+  appear in a filename:
+
+  1. Wildcard
+  2. Specific Values
+  3. Prefix and match function
+
+  The first form will match any value between separators, but there can only be
+  one Parameter of this kind.
+
+  The second form is the most common: a list of possible parameter values is
+  provided, and when one of these values appears between separators in a
+  candidate filename (or as a subdirectory name) then it is recognized as an
+  Explicit match.  All values which are not explicitly matched will be specified
+  as Assumed matches.
+
+  The last form provides for more flexibility.  It specifies a prefix which must
+  match the start of a value between separators, and it also specifies a matching
+  function (supplied by the user) that is called whenever the prefix matches.
+  This allows for more free form matching and can be useful when the number or
+  variations of possible parameter values is not easily handled by the second
+  form (specific values).  For example, ~"tempNNN"~ where ~NNN~ is a value from 0
+  to 100.
+
 * Comparisons
 
 ** tasty-KAT

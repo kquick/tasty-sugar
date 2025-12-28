@@ -173,6 +173,9 @@ rangedParam pname extractVal cmpVal targetVal cube sweets =
                 in Set.toList $ Set.unions
                    --  ^ Set operations combine/eliminate identical results
                    $ foldr (Set.insert . Set.fromList . withPVal) mempty vals''
+              Just (PrefixMatch _ _) ->
+                -- There are no explicit set of known values to constrain
+                id
           Just tv -> expInRangeFor tv
 
       -- expInRangeFor :: a -> [Expectation] -> [Expectation]

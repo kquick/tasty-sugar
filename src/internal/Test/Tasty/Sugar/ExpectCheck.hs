@@ -15,6 +15,7 @@ module Test.Tasty.Sugar.ExpectCheck
 import           Control.Applicative ( (<|>) )
 import           Control.Monad
 import           Data.Bifunctor ( first )
+import           Data.Foldable ( asum )
 import           Data.Function ( on )
 import qualified Data.List as L
 
@@ -138,28 +139,46 @@ expectedSearch rootN rootPrefix rootPVMatches seps params expSuffix
               $ filter expMatch allNames
      guard $ isCompatible pvals efile
 
-     let onlyOneOfEach r c@(p,v) =
-           -- Note: there may be multiple c with same p and different v because
-           -- the candidate file has multiple specifications for a particular
-           -- parameter.  Here, we want the one that matches what is in pvals or
-           -- if there is not a match just take the first one.
-           let matchesP = (p ==) . fst
-               rootVals = filter matchesP pvals
-           in case L.find (maybe False (`paramMatchVal` v) . snd)  rootVals of
-                Just _ ->
-                  -- matches rootVal, so use it and discard any others
-                  return $ c : filter (not . matchesP) r
-                Nothing -> case lookup p r of
-                             Nothing -> return $ c : r -- first p, so use it
-                             Just _ -> return r
-     rAndeMatches <- (foldM onlyOneOfEach rmatch (candidatePMatch $ efile))
+     let onlyOneOfEach :: [NamedParamMatch] -> [NamedParamMatch]
+                       -> LogicI [NamedParamMatch]
+                       -- -> m [NamedParamMatch]
+         onlyOneOfEach r = \case
+           [] -> return r
+           pvs@((p,_):_) ->
+             -- pvs is [NamedParamMatch] where name p is the same for all. There will
+             -- be one entry for each parammatch in the candidate efile.
+             --
+             -- Note: there may be multiple c with same p and different v because
+             -- the candidate file has multiple specifications for a particular
+             -- parameter.  Here, we want the one that matches what is in pvals or
+             -- if there is not a match just take the first one.
+             let matchesP = (p ==) . fst
+                 rootVals = filter matchesP pvals
+                 isRootMatch :: (String, Maybe String) -> NamedParamMatch -> Bool
+                 isRootMatch = maybe (const False) (\s -> paramMatchVal s . snd) . snd
+                 eachRootMatch :: [NamedParamMatch -> Bool]
+                 eachRootMatch = isRootMatch <$> rootVals
+                 rootMatched :: [Maybe NamedParamMatch]
+                 rootMatched = ($ pvs) <$> (L.find <$> eachRootMatch)
+             in eachFrom "paramReconciliation"
+                $ case rootMatched of
+                    [] -> []
+                    _ -> case asum rootMatched of
+                           Just c ->
+                             -- matches rootVal, so use it and discard any others
+                             [c : filter (not . matchesP) r]
+                           Nothing ->
+                             -- no constraint, so match on each possible pval
+                             (:r) <$> pvs
+     rAndeMatches <- (foldM onlyOneOfEach rmatch
+                      (L.groupBy ((==) `on` fst) $ candidatePMatch $ efile))
                      <|> (if null unconstrained
                            then mzero
                           else let unConstr = (`elem` unconstrained) . fst
                                    rm = filter (not . unConstr) (candidatePMatch efile)
                                in if null rm
                                   then mzero
-                                  else foldM onlyOneOfEach rmatch rm
+                                  else foldM onlyOneOfEach rmatch [rm]
                          )
 
 

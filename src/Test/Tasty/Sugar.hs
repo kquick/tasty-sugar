@@ -267,6 +267,7 @@ findSugarIn' pat allFiles =
           valuesFromParam = \case
             AnyValue -> []
             SpecificValues vs -> vs
+            PrefixMatch pfx _ -> [pfx]
           blankVals = filter (null . valuesFromParam . snd)
                       $ filter (not . isWildcardValue . snd) p
           emptyVal = filter (or . fmap null . valuesFromParam . snd) p
@@ -389,23 +390,26 @@ withSugarGroups sweets mkGroup mkLeaf =
       mkParams sweet exp [] = concat <$> (mapM (uncurry $ mkLeaf sweet)
                                           $ zip [1..] exp)
       mkParams sweet exp ((name,vspec):ps) =
-        case vspec of
-          AnyValue ->
-            let pVal = lookup name . expParamsMatch
-                expSrt = L.sortBy (compare `on` pVal) exp
-                expGrps = L.groupBy ((==) `on` pVal) expSrt
-                f es@(eh:_) =
-                  let gn = fromMaybe (name <> " not specified")
-                           $ (getParamVal =<<
-                              (lookup name $ expParamsMatch eh)
-                             )
-                  in mkGroup gn <$> mkParams sweet es ps
-                f [] = mkGroup (name <> " not specified") <$> mkParams sweet [] ps
-            in sequence (f <$> expGrps)
-          SpecificValues vs -> let f v = mkGroup (name <> "=" <> show v)
-                                         <$> mkParams sweet (subExp v) ps
-                                   subExp v = expMatching name (SpecificValue v) exp
-                               in sequence $ f <$> L.sort vs
+        let mkPms = let f v = mkGroup (name <> "=" <> show v)
+                              <$> mkParams sweet (subExp v) ps
+                        subExp v = expMatching name v exp
+                    in sequence $ f <$> eachPValueFromParameter vspec
+        in case vspec of
+             AnyValue ->
+               let pVal = lookup name . expParamsMatch
+                   expSrt = L.sortBy (compare `on` pVal) exp
+                   expGrps = L.groupBy ((==) `on` pVal) expSrt
+                   f es@(eh:_) =
+                     let gn = fromMaybe (name <> " not specified")
+                              $ (getParamVal =<<
+                                 (lookup name $ expParamsMatch eh)
+                                )
+                     in mkGroup gn <$> mkParams sweet es ps
+                   f [] = mkGroup (name <> " not specified")
+                          <$> mkParams sweet [] ps
+               in sequence (f <$> expGrps)
+             SpecificValues _ -> mkPms
+             PrefixMatch _ _ -> mkPms
 
       expMatching :: String -> PValue -> [Expectation] -> [Expectation]
       expMatching p v exp =

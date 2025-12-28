@@ -198,7 +198,9 @@ instance Show CUBE where
 
 type ParameterPattern = (String, ParameterValues)
 
-data ParameterValues = AnyValue | SpecificValues [String]
+data ParameterValues = AnyValue
+                     | SpecificValues [String]
+                     | PrefixMatch String (String -> Maybe Natural)
 
 isWildcardValue :: ParameterValues -> Bool
 isWildcardValue = \case
@@ -217,6 +219,19 @@ ordParameterValues = \case
   SpecificValues vs1 -> \case
     AnyValue -> LT
     SpecificValues vs2 -> compare vs1 vs2
+    PrefixMatch pfx _ ->
+      let cmp x = case compare x pfx of
+                    EQ -> LT -- just prefix, actual will be longer/greater
+                    o -> o
+      in mconcat (cmp <$> vs1)
+  PrefixMatch pfx1 _ -> \case
+    AnyValue -> LT
+    SpecificValues vs ->
+      let cmp x = case compare pfx1 x of
+                    EQ -> GT -- prefix matched, actual will be longer/greater
+                    o -> o
+      in mconcat (cmp <$> vs)
+    PrefixMatch pfx2 _ -> compare pfx1 pfx2
 
 
 -- | Separators for the path and suffix specifications.  Any separator
@@ -282,6 +297,7 @@ prettyParamPattern (pn, mpv) =
   case mpv of
     AnyValue -> "*"
     SpecificValues vl -> hsep $ L.intersperse pipe $ map pretty vl
+    PrefixMatch pfx _ -> pretty pfx <> "..."
 
 
 ----------------------------------------------------------------------

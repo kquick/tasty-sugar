@@ -38,18 +38,20 @@ import           Test.Tasty.Sugar.Iterations ( LogicI, eachFrom )
 getSinglePVals :: [NamedParamMatch] -> [ParameterPattern]
                -> LogicI ([NamedParamMatch], [(String, Maybe String)])
 getSinglePVals sel = fmap (fmap DL.sort) . foldM eachVal (mempty, mempty)
-  where eachVal (an,av) (pn, AnyValue) =
-          case filter ((pn ==) . fst) sel of
-            [] -> return (an, (pn, Nothing) : av)
-            pvsets -> do npv <- snd <$> eachFrom "assigned param value" pvsets
-                         return ((pn, npv) : an, (pn, getParamVal npv) : av)
-        eachVal (an,av) (pn, SpecificValues pvs) =
-          case filter ((pn ==) . fst) sel of
-            [] -> do pv <- eachFrom "assumed (non-root) param value" $ DL.sort pvs
-                     return (an, (pn, Just pv) : av)
-            pvsets -> do npv <- eachFrom "matched param value" (snd <$> pvsets)
-                         return ((pn, npv) : an, (pn, getParamVal npv) : av)
+  where
 
+    eachVal (an,av) (pn, paramval) =
+      case filter ((pn ==) . fst) sel of
+        [] -> noMatch an av pn paramval
+        pvsets -> do npv <- snd <$> eachFrom "assigned param value" pvsets
+                     return ((pn, npv) : an, (pn, getParamVal npv) : av)
+
+    noMatch an av pn = \case
+      AnyValue -> return (an, (pn, Nothing) : av)
+      SpecificValues pvs ->
+        do pv <- eachFrom "assumed (non-root) param value" $ DL.sort pvs
+           return (an, (pn, Just pv) : av)
+      PrefixMatch _ _ -> return (an, (pn, Nothing) : av)
 
 -- | namedPMatches supplements the core set of named matches with the extended
 -- set of parameter values, marking all parameters not in the core set as Assumed
@@ -130,13 +132,20 @@ eachPValueFromParameter :: ParameterValues -> [PValue]
 eachPValueFromParameter = \case
   AnyValue -> error "invalid to request pValues from an AnyValue parameter!"
   SpecificValues vs -> (SpecificValue <$> DL.sort vs)
+  PrefixMatch s f -> pure $ PfxMatchValue s f
 
 pValueSamePrefixLen :: PValue -> String -> Maybe Natural
 pValueSamePrefixLen = \case
   SpecificValue v -> \m -> let vl = DL.genericLength v
                            in if v == DL.take (fromEnum vl) m
                               then Just vl else Nothing
+  PfxMatchValue s f -> \m -> if s `DL.isPrefixOf` m then f m else Nothing
 
 pValueMatch :: PValue -> ParamMatch -> Bool
 pValueMatch = \case
   SpecificValue v -> (Just v ==) . getParamVal
+  PfxMatchValue s f -> \pm ->
+    fromMaybe False $ do ms <- getParamVal pm
+                         guard (s `DL.isPrefixOf` ms)
+                         r <- f ms
+                         pure $ r == DL.genericLength ms
