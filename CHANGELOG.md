@@ -1,5 +1,9 @@
 # Revision history for tasty-sugar
 
+## 2.2.3.3 -- 2026-01-03
+
+ * Fix to support matching multiple parameter values in a single candidate file.
+
 ## 2.2.3.2 -- 2025-12-15
 
  * Widen tasty-hedgehog constraints to allow earlier v1.3.
