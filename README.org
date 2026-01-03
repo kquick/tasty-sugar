@@ -9,9 +9,14 @@
   parameterization, and there can be associated files that are
   presented to the test as well.
 
-  The primary use of tasty-sugar is to _generate test cases_ based on
-  the contents of a directory, where the presence of various files
-  determine which tests are generated.
+  The primary use of tasty-sugar is to _generate test cases_ based on the
+  contents of a directory, where the presence of various files determine which
+  tests are generated.  More specifically, ~tasty-sugar~ identifies combinations
+  of files that match the described pattern and invokes a user-supplied test
+  generator function for each combination; the generator function creates tests
+  that are then run via Tasty.  The user's test generator function may perform
+  additional validation to determine if one or more tests will be generated for
+  each call.
 
 ** Elements of tasty-sugar:
 
