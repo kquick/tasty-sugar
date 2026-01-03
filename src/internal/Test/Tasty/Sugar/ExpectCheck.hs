@@ -163,11 +163,14 @@ expectedSearch rootN rootPrefix rootPVMatches seps params expSuffix
                                   else foldM onlyOneOfEach rmatch rm
                          )
 
+
      let pmatch = namedPMatches rAndeMatches pvals
      assocFiles <- getAssoc rootPrefix seps
                    pmatch
                    assocNames
                    $ filter (rootN /=) allNames
+
+
      return $ Expectation { expectedFile = candidateToPath efile
                           , associated = fmap candidateToPath <$> assocFiles
                           , expParamsMatch = L.sort pmatch

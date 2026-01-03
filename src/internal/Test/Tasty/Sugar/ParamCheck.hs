@@ -52,13 +52,10 @@ getSinglePVals sel = fmap (fmap DL.sort) . foldM eachVal (mempty, mempty)
 namedPMatches :: [NamedParamMatch] -> [(String, Maybe String)]
               -> [NamedParamMatch]
 namedPMatches pmatch =
-  let inCore = (`elem` (fst <$> pmatch))
-      go = \case
-        [] -> pmatch
-        ((p, Just  v):r) | not (inCore p) -> (p, Assumed v) : go r
-        ((p, Nothing):r) | not (inCore p) -> (p, NotSpecified) : go r
-        (_:r) -> go r
-    in go
+  let addIfMissing (n,mbv) = maybe ((n, maybe NotSpecified Assumed mbv):)
+                             (flip const)
+                             $ lookup n pmatch
+    in foldr addIfMissing pmatch
 
 
 -- | This provides an Ordering result of comparing two sets of NamedParamMatch.
@@ -79,11 +76,10 @@ pmatchCmp p1 p2 =
         <> map (\k -> compare `on` (lookup k)) (fst <$> p1)
   in cascadeCompare comparisons p1 p2
 
+-- Runs multiple comparisons on two elements until the first comparison
+-- thatreturns a non-EQ result.
 cascadeCompare :: [ a -> a -> Ordering ] -> a -> a -> Ordering
-cascadeCompare [] _ _ = EQ
-cascadeCompare (o:os) a b = case o a b of
-                              EQ -> cascadeCompare os a b
-                              x -> x
+cascadeCompare fs x y = mconcat [ f x y | f <- fs ]
 
 
 -- | Returns the maximum of two arguments based on comparing the
