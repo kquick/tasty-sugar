@@ -52,8 +52,7 @@ files2 cube = makeCandidate cube testInpPath []
                   , "T847-fail2.clang12+.z3.good"
                   , "T847-fail2.z3.good"
                   , "T972-fail.c"
-                  , "T972-fail.clang12+.z3.good"
-                  , "T972-fail.clang14+.z3.good"
+                  , "T972-fail.clang12+.clang14+.z3.good"
                   , "T972-fail.z3.good"
                   , "abd-test-file-32.c"
                   , "abd-test-file-32.config"
@@ -641,9 +640,9 @@ mkTest2 mode matchClang sweet exp =
               case mode of
                 "direct" ->
                   [ expA "T972-fail.z3.good" "z3" "older-clang"
-                  , expE "T972-fail.clang14+.z3.good" "z3" "clang14+"
+                  , expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang14+"
                   , expA "T972-fail.z3.good" "z3" "clang13+"
-                  , expE "T972-fail.clang12+.z3.good" "z3" "clang12+"
+                  , expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang12+"
                   , expA "T972-fail.z3.good" "z3" "clang11+"
                   ]
                 "ranged" ->
@@ -657,16 +656,16 @@ mkTest2 mode matchClang sweet exp =
                       [ expA "T972-fail.z3.good" "z3" "clang11+"
                       ]
                     Just 12 ->
-                      [ expE "T972-fail.clang12+.z3.good" "z3" "clang12+"
+                      [ expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang12+"
                       ]
                     Just 13 ->
-                      [ expE "T972-fail.clang12+.z3.good" "z3" "clang12+"
+                      [ expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang12+"
                       ]
                     Just 14 ->
-                      [ expE "T972-fail.clang14+.z3.good" "z3" "clang14+"
+                      [ expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang14+"
                       ]
                     Just 16 ->
-                      [ expE "T972-fail.clang14+.z3.good" "z3" "clang14+"
+                      [ expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang14+"
                       ]
                     Nothing -> []
 

@@ -99,12 +99,17 @@ pmatchMax f a b = case pmatchCmp (f a) (f b) of
 -- file is compatible with the provided parameters and chosen parameter values.
 -- One principle compatibility check is ensuring that there is no *other*
 -- parameter value in the filename that conflicts with a chosen parameter value.
+--
+-- Note that a particular candidate file may have multiple matching values for a
+-- parameter.
 isCompatible :: [(String, Maybe String)]
              -> CandidateFile
              -> Bool
-isCompatible pvals fname =
-  let isCompatParam (n,v) = case DL.lookup n pvals of
-                              Nothing -> True
-                              Just Nothing -> True
-                              Just (Just cv) -> paramMatchVal cv v
-  in all isCompatParam $ candidatePMatch fname
+isCompatible pvals candidatFile =
+  let isCompatParamV v = \case
+        Nothing -> True
+        (Just cv) -> paramMatchVal cv v
+      isCompatParam (n,mbv) =
+        let nps = filter ((n ==) . fst) $ candidatePMatch candidatFile
+        in null nps || any ((`isCompatParamV` mbv) . snd) nps
+  in all isCompatParam pvals

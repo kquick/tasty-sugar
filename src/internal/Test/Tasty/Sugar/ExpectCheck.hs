@@ -139,17 +139,28 @@ expectedSearch rootN rootPrefix rootPVMatches seps params expSuffix
               $ filter expMatch allNames
      guard $ isCompatible pvals efile
 
-     let onlyOneOfEach (p,v) r = case lookup p r of
-                                   Nothing -> (p,v) : r
-                                   Just _ -> r
-     rAndeMatches <- return (foldr onlyOneOfEach rmatch (candidatePMatch efile))
+     let onlyOneOfEach r c@(p,v) =
+           -- Note: there may be multiple c with same p and different v because
+           -- the candidate file has multiple specifications for a particular
+           -- parameter.  Here, we want the one that matches what is in pvals or
+           -- if there is not a match just take the first one.
+           let matchesP = (p ==) . fst
+               rootVals = filter matchesP pvals
+           in case L.find (maybe False (`paramMatchVal` v) . snd)  rootVals of
+                Just _ ->
+                  -- matches rootVal, so use it and discard any others
+                  return $ c : filter (not . matchesP) r
+                Nothing -> case lookup p r of
+                             Nothing -> return $ c : r -- first p, so use it
+                             Just _ -> return r
+     rAndeMatches <- (foldM onlyOneOfEach rmatch (candidatePMatch $ efile))
                      <|> (if null unconstrained
                            then mzero
                           else let unConstr = (`elem` unconstrained) . fst
                                    rm = filter (not . unConstr) (candidatePMatch efile)
                                in if null rm
                                   then mzero
-                                  else return (foldr onlyOneOfEach rmatch rm)
+                                  else foldM onlyOneOfEach rmatch rm
                          )
 
      let pmatch = namedPMatches rAndeMatches pvals
