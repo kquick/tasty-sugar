@@ -18,7 +18,7 @@ where
 import           Control.Monad ( filterM, guard )
 import           Data.Bifunctor ( first )
 import qualified Data.List as DL
-import           Data.Maybe ( isJust, fromMaybe )
+import           Data.Maybe ( isJust )
 import           Numeric.Natural
 import           System.Directory ( doesDirectoryExist, getCurrentDirectory
                                   , listDirectory, doesDirectoryExist )
@@ -27,7 +27,9 @@ import           System.FilePath ( (</>), isRelative, makeRelative
 
 import           Test.Tasty.Sugar.Iterations
 import           Test.Tasty.Sugar.Types
-import           Test.Tasty.Sugar.ParamCheck ( eachPValueFromParameter, pValueSamePrefixLen )
+import           Test.Tasty.Sugar.ParamCheck ( eachPValueFromParameter
+                                             , pValueMatchParam
+                                             )
 
 
 -- | Given a CUBE and a target directory, find all files in that directory and
@@ -106,22 +108,22 @@ makeCandidate cube topDir subPath fName =
                            $ DL.findIndices (`elem` (separators cube)) fName
                       let vs = i + 1
                       let fv = DL.drop vs fName
-                      let pvm = pValueSamePrefixLen v
+                      let pvm = pValueMatchParam v
                       let chkStart =
                             do let vsps = zip subPath (pvm <$> subPath)
                                vsp <- eachFrom "filepath param candidate" vsps
                                guard $ and [ isJust $ snd vsp
-                                           , DL.genericLength (fst vsp) == fromMaybe 0 (snd vsp)
+                                           , fst vsp `elem` (maybe [] snd (snd vsp))
                                            ]
                                return ((fst p, Explicit (fst vsp)), (0, 0))
                       case pvm fv of
-                         Just ve ->
+                         Just (ve, vms) ->
                            case DL.drop (fromEnum ve) fv of
                              (fnc:_) ->
                                if fnc `elem` (separators cube)
-                               then return ((fst p
-                                            , Explicit $ DL.take (fromEnum ve) fv),
-                                             (toEnum vs, vs+(fromEnum ve)))
+                               then let rVal rv = ((fst p, Explicit rv), rng)
+                                        rng = (toEnum vs, vs+(fromEnum ve))
+                                    in eachFrom "PrefixMatch values" $ rVal <$> vms
                                else chkStart
                              [] -> chkStart
                          Nothing -> chkStart

@@ -13,7 +13,7 @@ module Test.Tasty.Sugar.ParamCheck
   , isCompatible
   , PValue(..)
   , eachPValueFromParameter
-  , pValueSamePrefixLen
+  , pValueMatchParam
   , pValueMatch
   )
   where
@@ -121,12 +121,13 @@ isCompatible pvals candidatFile =
 ----------------------------------------------------------------------
 
 data PValue = SpecificValue String
-            | PfxMatchValue String (String -> Maybe Natural)
+            | PfxMatchValue String PfxMatchFunc
 
 instance Show PValue where
   show = \case
     SpecificValue s -> s
     PfxMatchValue p _ -> p <> "..."
+
 
 eachPValueFromParameter :: ParameterValues -> [PValue]
 eachPValueFromParameter = \case
@@ -134,11 +135,12 @@ eachPValueFromParameter = \case
   SpecificValues vs -> (SpecificValue <$> DL.sort vs)
   PrefixMatch s f -> pure $ PfxMatchValue s f
 
-pValueSamePrefixLen :: PValue -> String -> Maybe Natural
-pValueSamePrefixLen = \case
+
+pValueMatchParam :: PValue -> PfxMatchFunc
+pValueMatchParam = \case
   SpecificValue v -> \m -> let vl = DL.genericLength v
                            in if v == DL.take (fromEnum vl) m
-                              then Just vl else Nothing
+                              then Just (vl, [v]) else Nothing
   PfxMatchValue s f -> \m -> if s `DL.isPrefixOf` m then f m else Nothing
 
 pValueMatch :: PValue -> ParamMatch -> Bool
@@ -148,4 +150,4 @@ pValueMatch = \case
     fromMaybe False $ do ms <- getParamVal pm
                          guard (s `DL.isPrefixOf` ms)
                          r <- f ms
-                         pure $ r == DL.genericLength ms
+                         pure $ ms `elem` snd r

@@ -88,10 +88,10 @@ files3 cube = uncurry (makeCandidate cube testInpPath)
                   , "clang15/T847-fail2.cvc5.good"
                   , "clang16/T847-fail2.cvc5.good"
 
-                  , "clang10+/T972-fail.c"
-                  , "clang13+/T972-fail.c"
+                  , "clang10/T972-fail.c"
+                  , "clang13/T972-fail.c"
                   , "clang14/T972-fail.c"
-                  , "clang15+/T972-fail.c"
+                  , "clang15/T972-fail.c"
                   , "T972-fail.clang12+.z3.good"
                   , "T972-fail.clang14+.z3.good"
                   , "T972-fail.z3.good"
@@ -108,8 +108,7 @@ files3 cube = uncurry (makeCandidate cube testInpPath)
                   , "clang14/freeze.c"
 
                   , "freeze.ll"
-                  , "freeze.clang12+.clang13.clang14.z3.good"
-                  , "freeze.clang11.z3.good"
+                  , "freeze.clang11.clang12--14.z3.good"
                   , "freeze.z3.good"
 
                   , "shrink.c"
@@ -356,6 +355,8 @@ llvmRange3 (mode, matchClang) = do
 
 -- The llvmRange4 tests use the PrefixMatch parameter specifications to determine
 -- the best associated parameter match based on the PrefixMatch results.
+--
+-- llvmRange4 when called with files2 should be comparable to llvmRange3.
 
 llvmRange4 :: String -> (CUBE -> [CandidateFile]) -> IO [TT.TestTree]
 llvmRange4 name mkFiles = do
@@ -366,21 +367,32 @@ llvmRange4 name mkFiles = do
                     , validParams = [
                         ("solver", SpecificValues [ "z3", "cvc5" ])
                         , ("clang", PrefixMatch "clang" matchClang
-                            -- (const $ Just 6)
                           )
                         ]
                     }
-      matchClang s =
+      -- This is supplied as the PrefixMatch function.  It will match:
+      --    * "clangN" where N is one or more decimal digits
+      --    * "clangN+"
+      --    * "clangN--M" where N and M are one or more decimal digits and
+      --      specify an entire range that will be matched.
+      matchClang s = -- Nothing
         let st = drop (length "clang") s
-            (pfx,st') = case st of
-                          ('.':'.':r) -> ("..", r)
-                          _ -> ("", st)
-            v = takeWhile isDigit st'
-            sfx = case drop (length v) st' of
-                    ('+':_) -> "+"
-                    _ -> ""
+            v = takeWhile isDigit st
         in if null v then Nothing
-           else Just $ sum (L.genericLength <$> ["clang", pfx, v, sfx])
+           else do vs <- readMaybe v
+                   (sfx, vals) <- case drop (length v) st of
+                                    ('+':_) ->
+                                      let maxClang = 16 in
+                                      -- arbitrary point in the future
+                                      return (1, [vs .. maxClang])
+                                    ('-':'-':m) -> do
+                                      let vfp = takeWhile isDigit m
+                                      vf <- readMaybe vfp
+                                      return (2 + L.genericLength vfp, [vs .. vf])
+                                    _ -> return (0, [vs :: Int])
+                   let rstrs = (\i -> "clang" <> show i) <$> vals
+                   let ln = sum (L.genericLength <$> ["clang", v]) + sfx
+                   return (ln, rstrs)
 
   (sweets,_) <- findSugarIn cube $ mkFiles cube
   -- putStrLn $ show $ pretty sweets
@@ -411,9 +423,10 @@ llvmRange4 name mkFiles = do
                                            _ -> error "badcnt LLVM Range4 name")
       : testCase "correct # processed via withSugarGroups"
             (sum calls @?= case name of
-                             -- ttl# non-NotSpecified expectations
-                             "files2" -> 6
-                             "files3" -> 17
+                             -- ttl# non-NotSpecified expectations, some will be
+                             -- post-mkTest filtered
+                             "files2" -> 23
+                             "files3" -> 20
                              _ -> error "badprocessed LLVM Range4 name")
       : tests
     ]
@@ -830,6 +843,7 @@ mkTest2 mode matchClang sweet exp =
 
   in exps
 
+-- Currently only used for expected results for LLVM Range 4 with files2
 mkTest3 sweet exp =
   let exp0 f s c = Expectation
                  { expectedFile = testInpPath </> f
@@ -847,32 +861,49 @@ mkTest3 sweet exp =
 
                "freeze.c" ->
                   [ expN "freeze.z3.good" "z3"
-                  , expE "freeze.clang12+.z3.good" "z3" "clang12+"
+                  , expE "freeze.clang12+.z3.good" "z3" "clang12"
+                  , expE "freeze.clang12+.z3.good" "z3" "clang13"
+                  , expE "freeze.clang12+.z3.good" "z3" "clang14"
+                  , expE "freeze.clang12+.z3.good" "z3" "clang15"
+                  , expE "freeze.clang12+.z3.good" "z3" "clang16"
                   ]
 
                "T847-fail2.c" ->
                   [ expN "T847-fail2.z3.good" "z3"
-                  , expE "T847-fail2.clang12+.z3.good" "z3" "clang12+"
-                  , expE "T847-fail2.cvc5.clang13+.good" "cvc5" "clang13+"
-
+                  , expE "T847-fail2.clang12+.z3.good" "z3" "clang12"
+                  , expE "T847-fail2.clang12+.z3.good" "z3" "clang13"
+                  , expE "T847-fail2.clang12+.z3.good" "z3" "clang14"
+                  , expE "T847-fail2.clang12+.z3.good" "z3" "clang15"
+                  , expE "T847-fail2.clang12+.z3.good" "z3" "clang16"
+                  , expE "T847-fail2.cvc5.clang13+.good" "cvc5" "clang13"
+                  , expE "T847-fail2.cvc5.clang13+.good" "cvc5" "clang14"
+                  , expE "T847-fail2.cvc5.clang13+.good" "cvc5" "clang15"
+                  , expE "T847-fail2.cvc5.clang13+.good" "cvc5" "clang16"
                   , expN "T847-fail2.cvc5.good" "cvc5"
                   ]
 
                "T972-fail.c" ->
                   [ expN "T972-fail.z3.good" "z3"
-                  , expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang12+"
-                  , expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang14+"
+                  , expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang12"
+                  , expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang13"
+                  , expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang14"
+                  , expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang15"
+                  , expE "T972-fail.clang12+.clang14+.z3.good" "z3" "clang16"
                   ]
 
                "abd-test-file-32.c" ->
                   [ expN "abd-test-file-32.cvc5.good" "cvc5"
-                  , expE "abd-test-file-32.clang13+.cvc5.good" "cvc5" "clang13+"
+                  , expE "abd-test-file-32.clang13+.cvc5.good" "cvc5" "clang13"
+                  , expE "abd-test-file-32.clang13+.cvc5.good" "cvc5" "clang14"
+                  , expE "abd-test-file-32.clang13+.cvc5.good" "cvc5" "clang15"
+                  , expE "abd-test-file-32.clang13+.cvc5.good" "cvc5" "clang16"
                   ]
 
                _ -> error $ "Unexpected root sweet: " <> rootMatchName sweet
 
   in exps
 
+-- Currently only used for expected results with LLVM Range 4 with files3
 mkTest4 sweet exp =
   let exp0 f s c = Expectation
                  { expectedFile = testInpPath </> f
@@ -899,25 +930,33 @@ mkTest4 sweet exp =
              ]
         else
           if
-            | rootFile sweet == testInpPath </> "clang10+" </> "T972-fail.c"
-              -> [ expE "T972-fail.z3.good" "z3" "clang10+" ]
-            | rootFile sweet == testInpPath </> "clang13+" </> "T972-fail.c"
-              -> [ expE "T972-fail.z3.good" "z3" "clang13+" ]
+            | rootFile sweet == testInpPath </> "clang10" </> "T972-fail.c"
+              -> [ expE "T972-fail.z3.good" "z3" "clang10" ]
+            | rootFile sweet == testInpPath </> "clang13" </> "T972-fail.c"
+              -> [ expE "T972-fail.clang12+.z3.good" "z3" "clang13" ]
             | rootFile sweet == testInpPath </> "clang14" </> "T972-fail.c"
-              -> [ expE "T972-fail.z3.good" "z3" "clang14" ]
-            | rootFile sweet == testInpPath </> "clang15+" </> "T972-fail.c"
-              -> [ expE "T972-fail.z3.good" "z3" "clang15+" ]
+              -> [ expE "T972-fail.clang12+.z3.good" "z3" "clang14"
+                 -- Note: both "T972-fail.clang14+.z3.good" and
+                 -- "T972-fail.clang14+.z3.good" match, but only one is chosed
+                 -- and 12 sorts before 14.
+                 ]
+            | rootFile sweet == testInpPath </> "clang15" </> "T972-fail.c"
+              -> [ expE "T972-fail.clang12+.z3.good" "z3" "clang15"
+                 -- Note: both "T972-fail.clang14+.z3.good" and
+                 -- "T972-fail.clang14+.z3.good" match, but only one is chosed
+                 -- and 12 sorts before 14.
+                 ]
 
             | rootFile sweet == testInpPath </> "clang10" </> "freeze.c"
               -> [ expE "freeze.z3.good" "z3" "clang10" ]
             | rootFile sweet == testInpPath </> "clang11" </> "freeze.c"
-              -> [ expE "freeze.clang11.z3.good" "z3" "clang11" ]
+              -> [ expE "freeze.clang11.clang12--14.z3.good" "z3" "clang11" ]
             | rootFile sweet == testInpPath </> "clang12" </> "freeze.c"
-              -> [ expE "freeze.z3.good" "z3" "clang12" ]
+              -> [ expE "freeze.clang11.clang12--14.z3.good" "z3" "clang12" ]
             | rootFile sweet == testInpPath </> "clang13" </> "freeze.c"
-              -> [ expE "freeze.clang12+.clang13.clang14.z3.good" "z3" "clang13" ]
+              -> [ expE "freeze.clang11.clang12--14.z3.good" "z3" "clang13" ]
             | rootFile sweet == testInpPath </> "clang14" </> "freeze.c"
-              -> [ expE "freeze.clang12+.clang13.clang14.z3.good" "z3" "clang14" ]
+              -> [ expE "freeze.clang11.clang12--14.z3.good" "z3" "clang14" ]
 
             | otherwise ->
                 case rootMatchName sweet of
@@ -927,7 +966,10 @@ mkTest4 sweet exp =
 
                   "abd-test-file-32.c" ->
                     [ expN "abd-test-file-32.cvc5.good" "cvc5"
-                    , expE "abd-test-file-32.clang13+.cvc5.good" "cvc5" "clang13+"
+                    , expE "abd-test-file-32.clang13+.cvc5.good" "cvc5" "clang13"
+                    , expE "abd-test-file-32.clang13+.cvc5.good" "cvc5" "clang14"
+                    , expE "abd-test-file-32.clang13+.cvc5.good" "cvc5" "clang15"
+                    , expE "abd-test-file-32.clang13+.cvc5.good" "cvc5" "clang16"
                     ]
 
                   _ -> error ("Unexpected root sweet: " <> rootFile sweet

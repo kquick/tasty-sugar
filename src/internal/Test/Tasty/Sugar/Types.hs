@@ -198,9 +198,11 @@ instance Show CUBE where
 
 type ParameterPattern = (String, ParameterValues)
 
+type PfxMatchFunc = String -> Maybe (Natural, [String])
+
 data ParameterValues = AnyValue
                      | SpecificValues [String]
-                     | PrefixMatch String (String -> Maybe Natural)
+                     | PrefixMatch String PfxMatchFunc
 
 isWildcardValue :: ParameterValues -> Bool
 isWildcardValue = \case
