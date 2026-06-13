@@ -30,13 +30,26 @@
       url = "github:stevenfontanella/microlens";
       flake = false;
     };
+    named-text = {
+      url = "github:kquick/named-text";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.levers.follows = "levers";
+      inputs.microlens-src.follows = "microlens-src";
+      inputs.sayable.follows = "sayable";
+      inputs.parameterized-utils-src.follows = "parameterized-utils-src";
+      inputs.tasty-checklist.follows = "tasty-checklist";
+    };
     parameterized-utils-src = {
       url = "github:GaloisInc/parameterized-utils";
       flake = false;
     };
+    sayable = {
+      url = "github:kquick/sayable";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.levers.follows = "levers";
+    };
     tasty-checklist = {
-      url = "/home/kquick/Projects/orgmode-daedalus/omd-260612/subproj/tasty-checklist";
-      # url = "github:kquick/tasty-checklist";
+      url = "github:kquick/tasty-checklist";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.levers.follows = "levers";
       inputs.microlens-src.follows = "microlens-src";
@@ -46,8 +59,10 @@
 
   outputs = { self, nixpkgs, levers
             , microlens-src
+            , named-text
             , parameterized-utils-src
             , kvitable
+            , sayable
             , tasty-checklist
             }:
     rec
