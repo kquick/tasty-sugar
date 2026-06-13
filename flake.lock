@@ -65,6 +65,22 @@
         "type": "github"
       }
     },
+    "microlens-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1758506353,
+        "narHash": "sha256-m4qQXZcHffx1OW1a6JVX3d/XzfSL9cFcTUR+O8yyFYo=",
+        "owner": "stevenfontanella",
+        "repo": "microlens",
+        "rev": "7d509d465c54dba45b182f9c60452b3b3aa71d1a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "stevenfontanella",
+        "repo": "microlens",
+        "type": "github"
+      }
+    },
     "named-text": {
       "inputs": {
         "levers": [
@@ -135,6 +151,7 @@
       "inputs": {
         "kvitable": "kvitable",
         "levers": "levers",
+        "microlens-src": "microlens-src",
         "nixpkgs": "nixpkgs",
         "parameterized-utils-src": "parameterized-utils-src"
       }
