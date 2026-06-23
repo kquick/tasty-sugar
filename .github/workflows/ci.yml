@@ -7,22 +7,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        ghc-version: [ "ghc912", "ghc910", "ghc98", "ghc96", "ghc94" ]
-    steps:
-      - uses: cachix/install-nix-action@v31
-        with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: cachix/cachix-action@v16
-        with:
-          name: kquick
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - name: build ${{ matrix.ghc-version }}
-        shell: bash
-        run: nix build github:${{ github.repository }}/${{ github.sha }}#tasty-sugar.${{ matrix.ghc-version }}
   nixbuilds:
     runs-on: ubuntu-latest
     steps:
