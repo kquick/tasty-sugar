@@ -20,6 +20,12 @@ dev
      testrunner
        cabal_test
          exec = cabal test {TestName}
+
+   flake_update =
+      Update flake dependencies =
+        in dir = {TopDir}
+        exec = nix flake update --option tarball-ttl 60
+
    nixbuild:old
      Uses nix to build with old GHC versions
        in dir = {TopDir}
