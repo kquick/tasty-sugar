@@ -39,7 +39,7 @@ dev
    nixbuild
      Uses nix to build with current GHC versions
        in dir = {TopDir}
-       exec = nix build --no-link .#tasty-sugar.ghc910 .#tasty-sugar.ghc912
+       exec = nix build --no-link .#tasty-sugar.ghc910 .#tasty-sugar.ghc912 .#tasty-sugar.ghc914
    nixbuild:all =
      Uses nix to build with all supported GHC versions =
        in dir = {TopDir}
