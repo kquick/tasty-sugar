@@ -42,11 +42,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782221162,
-        "narHash": "sha256-u/NNGWJ96TROKwDxi2RZJLbTgnwbKV2lReajy1g9bQk=",
+        "lastModified": 1783377015,
+        "narHash": "sha256-rMszn1ea6DUz14YoPf0cPkCL/O7WyDNleUVXzWxEZIA=",
         "owner": "kquick",
         "repo": "kvitable",
-        "rev": "84c4e26ebe755745de1942f739ae4b04e8344a1e",
+        "rev": "4ab5810538d5e994c853772dcb52eba846c7815e",
         "type": "github"
       },
       "original": {
@@ -62,11 +62,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782220499,
-        "narHash": "sha256-SA9O16SWzOSqeznfzEGHt9KHW6b62c1HuyJLNwE42Ew=",
+        "lastModified": 1782566967,
+        "narHash": "sha256-8GfhviRj8giYrwmsNluCQuNsy6z0oRjQJzgLBuKa9jw=",
         "owner": "kquick",
         "repo": "nix-levers",
-        "rev": "9ae6567ccaa82887b328219b26d5e833a298f03a",
+        "rev": "603a167b59cb89ff0f24bae89075f48554d5ee0f",
         "type": "github"
       },
       "original": {
@@ -113,11 +113,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782219765,
-        "narHash": "sha256-JQja/BovgSgYFckd2y9O8RmS75sKevnfK5A32eqtBNo=",
+        "lastModified": 1783345106,
+        "narHash": "sha256-sRVjQW/sqNuRiK/4u48dfrBP6QWwI7jMcy4HeHDq+uA=",
         "owner": "kquick",
         "repo": "named-text",
-        "rev": "36a32e7d2d1e54765c495039f109cc38a6245026",
+        "rev": "ec872649cf7f3cdadf0a7b1bf767026ade4f5fb2",
         "type": "github"
       },
       "original": {
@@ -128,11 +128,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1781268102,
-        "narHash": "sha256-Zn5KTggEmUB3lXn/ccERNcBdddE6IaOFber9dWViWDg=",
+        "lastModified": 1783279667,
+        "narHash": "sha256-/NAkDSsve+GNM0Bt6tleJdCGfsTlK89nPjkVOzZMo0s=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "49a4bd0573c376468dd7996ddb6f9fa31d8c4d97",
+        "rev": "f205b5574fd0cb7da5b702a2da51507b7f4fdd1b",
         "type": "github"
       },
       "original": {
@@ -145,11 +145,11 @@
     "parameterized-utils-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1782137001,
-        "narHash": "sha256-EkXMzAleFsKoiaQnYnuGxRPflrtnP1WkA7wc1oXcToA=",
+        "lastModified": 1783343938,
+        "narHash": "sha256-/e1EJzJdYi+TnpESmEMjWgZa1VbcnK+FT8Xtst/ykrE=",
         "owner": "GaloisInc",
         "repo": "parameterized-utils",
-        "rev": "f4be8cb7aec4b1fb9a1089b38810c9d02b841dbc",
+        "rev": "0cb92df7f68593b5ce3312af12f0db6b33ad2ff1",
         "type": "github"
       },
       "original": {
