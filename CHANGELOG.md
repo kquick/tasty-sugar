@@ -1,5 +1,9 @@
 # Revision history for tasty-sugar
 
+## 2.2.4.0 -- 2026-07-06
+
+ * Update to support new kvitable version 1.2.  No functional changes.
+
 ## 2.2.3.3 -- 2026-01-03
 
  * Fix to support matching multiple parameter values in a single candidate file.
