@@ -55,4 +55,4 @@ sweetsTextTable (c:_) s =
                          : (fromString . fst <$> take 1 (validParams c))
             , rowRepeat = False
             }
-  in render cfg $ sweetsKVITable s
+  in render Nothing cfg $ sweetsKVITable s

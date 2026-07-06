@@ -1,7 +1,7 @@
 cabal-version:       2.0
 
 name:                tasty-sugar
-version:             2.2.3.3
+version:             2.2.4.0
 synopsis:            Tests defined by Search Using Golden Answer References
 description:
   .
@@ -135,7 +135,7 @@ library tasty-sugar-internal
                    , directory
                    , filepath
                    , filemanip
-                   , kvitable >= 1.1.0.0 && < 1.2
+                   , kvitable >= 1.2 && < 1.3
                    , logict
                    , microlens >= 0.4 && < 0.6
                    , mtl
