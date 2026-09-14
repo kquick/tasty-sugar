@@ -85,7 +85,9 @@
           };
 
         packages = levers.eachSystem (system:
-          let mkHaskell = levers.mkHaskellPkg { inherit nixpkgs system; };
+          let mkHaskell = levers.mkHaskellPkg { inherit nixpkgs system;
+                                                nix-deriv-srcs = "${self}/nix";
+                                              };
               pkgs = import nixpkgs { inherit system; };
           in rec {
             default = tasty-sugar;
