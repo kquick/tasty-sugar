@@ -24,12 +24,16 @@ dev
    flake_update =
       Update flake dependencies =
         in dir = {TopDir}
-        exec = |
+        exec = nix flake update --option tarball-ttl 60
+
+   update_nix_derivs =
+     Update local static nix derivations
+       in dir = {TopDir}/nix
+       exec = |
           set -e
-          nix flake update --option tarball-ttl 60
-          nix run nixpkgs#cabal2nix . > nix/tasty-sugar.nix
-          nix run nixpkgs#cabal2nix https://github.com/monadfix/microlens -- --subpath=microlens --revision=$(nix flake metadata --json | nix run nixpkgs#jq '.locks.nodes."microlens-src".locked.rev' | sed -e 's,",,g') > nix/microlens.nix
-          nix run nixpkgs#cabal2nix https://github.com/GaloisInc/parameterized-utils -- --revision=$(nix flake metadata --json | nix run nixpkgs#jq '.locks.nodes."parameterized-utils-src".locked.rev' | sed -e 's,",,g') > nix/parameterized-utils.nix
+          nix run nixpkgs#cabal2nix .. > tasty-sugar.nix
+          nix run nixpkgs#cabal2nix https://github.com/monadfix/microlens -- --subpath=microlens --revision=$(nix flake metadata --json | nix run nixpkgs#jq '.locks.nodes."microlens-src".locked.rev' | sed -e 's,",,g') > microlens.nix
+          nix run nixpkgs#cabal2nix https://github.com/GaloisInc/parameterized-utils -- --revision=$(nix flake metadata --json | nix run nixpkgs#jq '.locks.nodes."parameterized-utils-src".locked.rev' | sed -e 's,",,g') > parameterized-utils.nix
 
    nixbuild:old
      Uses nix to build with old GHC versions

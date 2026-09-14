@@ -7,7 +7,7 @@
 mkDerivation {
   pname = "tasty-sugar";
   version = "2.2.4.0";
-  src = ./.;
+  src = ./..;
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
