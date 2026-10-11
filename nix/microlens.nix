@@ -3,7 +3,7 @@ mkDerivation {
   pname = "microlens";
   version = "0.5.0.0";
   src = fetchgit {
-    url = "https://github.com/monadfix/microlens";
+    url = "https://github.com/stevenfontanella/microlens";
     sha256 = "12hmnb63nzj49mfc3xcbyk6xgpyxayayhnkd75szqz87jxfr12lv";
     rev = "7d509d465c54dba45b182f9c60452b3b3aa71d1a";
     fetchSubmodules = true;

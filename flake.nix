@@ -70,6 +70,7 @@
         apps = levers.eachSystem (s:
           rec
           {
+            depmgr = levers.apps.${s}.depmgr;
             test-passthru-ascii = {
               type = "app";
               program = "${self.packages.${s}.tasty-sugar}/bin/test-passthru-ascii";

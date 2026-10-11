@@ -21,19 +21,28 @@ dev
        cabal_test
          exec = cabal test {TestName}
 
-   flake_update =
-      Update flake dependencies =
+   update_deps =
+      Update all dependencies =
         in dir = {TopDir}
-        exec = nix flake update --option tarball-ttl 60
-
-   update_nix_derivs =
-     Update local static nix derivations
-       in dir = {TopDir}/nix
-       exec = |
+        exec = |
           set -e
-          nix run nixpkgs#cabal2nix .. > tasty-sugar.nix
-          nix run nixpkgs#cabal2nix https://github.com/monadfix/microlens -- --subpath=microlens --revision=$(nix flake metadata --json | nix run nixpkgs#jq '.locks.nodes."microlens-src".locked.rev' | sed -e 's,",,g') > microlens.nix
-          nix run nixpkgs#cabal2nix https://github.com/GaloisInc/parameterized-utils -- --revision=$(nix flake metadata --json | nix run nixpkgs#jq '.locks.nodes."parameterized-utils-src".locked.rev' | sed -e 's,",,g') > parameterized-utils.nix
+          nix run .#depmgr flake_update
+          nix run .#depmgr cabal2nix ./nix microlens-src microlens
+
+   update_deps:local =
+      Update local development dependencies =
+        needs = build:nix-deriv
+        in dir = {TopDir}
+        exec = |
+          set -e
+          nix run .#depmgr flake_update kquick
+          nix run .#depmgr flake_update galoisinc
+          nix run .#depmgr cabal2nix ./nix parameterized-utils-src
+
+   build:nix-deriv
+      Builds local (cached) derivation
+        in dir = {TopDir}/nix
+        exec = nix run nixpkgs#cabal2nix .. > tasty-sugar.nix
 
    nixbuild:old
      Uses nix to build with old GHC versions
