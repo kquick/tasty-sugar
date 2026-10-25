@@ -42,11 +42,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791733487,
-        "narHash": "sha256-wcdUxww/aUDMocG2iS0/2urqEqX4oUmRBLrcVZcY800=",
+        "lastModified": 1792942158,
+        "narHash": "sha256-POthJdOtSnLEWdObSF9hT42plOfj0OtIvUbJgyM7q8E=",
         "owner": "kquick",
         "repo": "kvitable",
-        "rev": "346b5bb77bb5563a28f35ccae95e421a0c648b11",
+        "rev": "44eda46d083b79390f2c7b811ddb0de6ec4e0a28",
         "type": "github"
       },
       "original": {
@@ -62,11 +62,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791584265,
-        "narHash": "sha256-Gb8t+F+o9iA7rbFA7Ku276PaBQtfa2sUDm0XexXTD6M=",
+        "lastModified": 1792849693,
+        "narHash": "sha256-Wpoie6O7n/37bK47EtwxOgkQRSfaI2Ywb7cElIN2ZNY=",
         "owner": "kquick",
         "repo": "nix-levers",
-        "rev": "c2448b3df1cca8a14f7fbf97eea37eb868d23fa4",
+        "rev": "ab48a7c89b2e79a81fb8c7881373bd95f17edef1",
         "type": "github"
       },
       "original": {
@@ -113,11 +113,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791733133,
-        "narHash": "sha256-UgFfbOb/pHSpFhyY/2qM3r32ra1nV/701guiOIyq8FU=",
+        "lastModified": 1792935745,
+        "narHash": "sha256-lqL8wB/RBeOZ66Zt1VCB1lESQ61g6kpLgUUxn2brbuc=",
         "owner": "kquick",
         "repo": "named-text",
-        "rev": "c9261795aeb4b9761e52b6c2042a1e8d70977d2d",
+        "rev": "1cf5438f4184882bd5514e13052a0867fb85df29",
         "type": "github"
       },
       "original": {
@@ -180,11 +180,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791587581,
-        "narHash": "sha256-3e7pRX4/ZVtHT1S5nFn5xwqL8VcIhKmE4HU5UVYtgTY=",
+        "lastModified": 1792935368,
+        "narHash": "sha256-8GO8TKU37uPJQ9bA3UW7grO0Q2GQDtYVMd/R44o5X6M=",
         "owner": "kquick",
         "repo": "sayable",
-        "rev": "86ea579f3c2163896a176e14455fc5a438655047",
+        "rev": "c40b9130300736c86a86e29afa9c97dacd8d69c8",
         "type": "github"
       },
       "original": {
@@ -209,11 +209,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791732561,
-        "narHash": "sha256-pRMgc/BnV9hWG7d++9VLzSQhEEVhGUnHma6PXu3S260=",
+        "lastModified": 1792935510,
+        "narHash": "sha256-CVCpTLRVlSxguHySg0AQP+DwkcB5dxmcyELg3aDxqN0=",
         "owner": "kquick",
         "repo": "tasty-checklist",
-        "rev": "46774d099e852de0ea406e47cab65817b9f58abb",
+        "rev": "70125813358f05d8d8f22f6a5cf1291e31a59f2f",
         "type": "github"
       },
       "original": {
